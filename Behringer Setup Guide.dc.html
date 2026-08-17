@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent);} a:hover{color:var(--color-accent-700);}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+
+  <header style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+    <div style="font-family:var(--font-heading);font-size:17px;white-space:nowrap;">TD-3 &amp; RD-6 Guide</div>
+    <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
+        <span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span>
+      </div>
+      <div style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+        <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
+          <div>
+            <h1 style="margin:0;">Beginner Hardware Setup &amp; Performance Guide</h1>
+            <h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Behringer TD-3-MO &amp; Behringer RD-6-BK</h3>
+          </div>
+          <div>
+            <h4 style="margin:0 0 8px;">Course Overview</h4>
+            <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
+              <li>Target Audience: Absolute Beginners</li>
+              <li>Duration: 4 Weeks (2 Hours / Week)</li>
+              <li>Equipment Needed:
+                <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
+                  <li>Behringer TD-3-MO Acid Synthesizer</li>
+                  <li>Behringer RD-6-BK Drum Machine</li>
+                  <li>1x 3.5mm TS patch cable (Clock Sync)</li>
+                  <li>2x 1/4" TS audio cables</li>
+                  <li>Audio Mixer or Audio Interface with Headphones/Speakers</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWeekIntro }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);">
+          <span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span>
+          <h2 style="margin:0;">{{ currentStep.title }}</h2>
+          <p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);">
+          <div>
+            <span class="tag tag-neutral">{{ currentStep.weekTag }}</span>
+            <h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2>
+            <sc-if value="{{ currentStep.hasNote }}" hint-placeholder-val="{{ false }}">
+              <span class="tag tag-accent-2" style="margin-top:8px;display:inline-block;">{{ currentStep.note }}</span>
+            </sc-if>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                  <input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                  <span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span>
+                </label>
+                <sc-if value="{{ item.hasSub }}" hint-placeholder-val="{{ false }}">
+                  <ul style="margin:0 0 0 30px;padding-left:18px;font-size:13.5px;opacity:.8;display:flex;flex-direction:column;gap:3px;">
+                    <sc-for list="{{ item.subitems }}" as="sub" hint-placeholder-count="4">
+                      <li>{{ sub }}</li>
+                    </sc-for>
+                  </ul>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ currentStep.showKnobs }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:10px;">Knob positions</div>
+              <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;">
+                <sc-for list="{{ currentStep.knobs }}" as="knob" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-300);box-shadow:var(--shadow-sm);position:relative;">
+                      <div style="position:absolute;bottom:50%;left:50%;width:3px;height:22px;margin-left:-1.5px;background:var(--color-accent-700);border-radius:2px;transform-origin:50% 100%;transform:rotate({{ knob.rot }}deg);"></div>
+                    </div>
+                    <div style="font-size:11.5px;font-weight:600;text-align:center;">{{ knob.label }}</div>
+                    <div style="font-size:10.5px;opacity:.6;">{{ knob.hourLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showSwitches }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <sc-for list="{{ currentStep.switches }}" as="sw" hint-placeholder-count="2">
+                <span class="tag tag-outline">{{ sw.label }}: {{ sw.value }}</span>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showCablesAudio }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
+              <sc-for list="{{ cablesAudio }}" as="c" hint-placeholder-count="2">
+                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
+                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
+                  <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
+                  <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showSync }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Sync cable — tap to mark connected</div>
+              <sc-for list="{{ syncCable }}" as="c" hint-placeholder-count="1">
+                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
+                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
+                  <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
+                  <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showRd6 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">RD-6 pattern — 4-on-the-floor</div>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}">{{ rd6PlayLabel }}</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <div style="display:flex;flex-direction:column;gap:5px;min-width:600px;padding:2px;">
+                  <sc-for list="{{ rd6Rows }}" as="row" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:64px;font-size:11px;font-weight:700;flex:none;">{{ row.label }}</div>
+                      <div style="display:flex;gap:4px;">
+                        <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="16">
+                          <button type="button" onclick="{{ cell.toggle }}" style="{{ cell.style }}"></button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTd3Pitch }}" hint-placeholder-val="{{ false }}">
+            <div style="overflow-x:auto;">
+              <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
+                <sc-for list="{{ td3PitchCells }}" as="c" hint-placeholder-count="16">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:40px;">
+                    <div style="font-size:9px;opacity:.5;">{{ c.num }}</div>
+                    <div style="width:40px;height:36px;border-radius:8px;background:var(--color-neutral-200);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">{{ c.note }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTd3Time }}" hint-placeholder-val="{{ false }}">
+            <div style="overflow-x:auto;">
+              <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
+                <sc-for list="{{ td3TimeCells }}" as="c" hint-placeholder-count="16">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:40px;">
+                    <div style="font-size:9px;opacity:.5;">{{ c.num }}</div>
+                    <div style="width:40px;height:28px;border-radius:8px;background:var(--color-neutral-200);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">{{ c.note }}</div>
+                    <button type="button" onclick="{{ c.toggleAccent }}" style="{{ c.accentBtnStyle }}">ACC</button>
+                    <button type="button" onclick="{{ c.toggleSlide }}" style="{{ c.slideBtnStyle }}">SLIDE</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTd3Play }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Full bassline</div>
+                <button type="button" class="btn btn-primary" onclick="{{ td3PlayToggle }}">{{ td3PlayLabel }}</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
+                  <sc-for list="{{ td3PlayCells }}" as="c" hint-placeholder-count="16">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:40px;">
+                      <div style="width:40px;height:40px;border-radius:8px;background:{{ c.bg }};border:{{ c.border }};display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:11px;font-weight:700;color:{{ c.textColor }};">{{ c.note }}</span>
+                      </div>
+                      <div style="display:flex;gap:2px;height:6px;align-items:center;">
+                        <sc-if value="{{ c.accent }}" hint-placeholder-val="{{ false }}">
+                          <span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-2-600);"></span>
+                        </sc-if>
+                        <sc-if value="{{ c.slide }}" hint-placeholder-val="{{ false }}">
+                          <span style="width:12px;height:3px;border-radius:2px;background:var(--color-accent-700);"></span>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showAccentSweep }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Accent sweep speed</div>
+              <div class="seg" style="align-self:flex-start;">
+                <sc-for list="{{ accentSweepOptions }}" as="opt" hint-placeholder-count="2">
+                  <label class="seg-opt">
+                    <input type="radio" name="accentsweep" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                    {{ opt.label }}
+                  </label>
+                </sc-for>
+              </div>
+              <p style="font-size:13px;opacity:.75;margin:8px 0 0;">{{ accentSweepDesc }}</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showPerfmap }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <span class="tag tag-accent-2" style="align-self:flex-start;">Suggested arrangement — adjust to taste</span>
+              <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
+                <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="7">
+                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}">{{ sec.title }}</button>
+                </sc-for>
+              </div>
+              <div class="card" style="background:var(--color-accent-100);">
+                <div style="font-family:var(--font-heading);font-size:16px;">{{ selectedSection.title }} · {{ selectedSection.time }}</div>
+                <p style="margin:6px 0 0;font-size:13.5px;opacity:.85;">{{ selectedSection.desc }}</p>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
+          <h2 style="margin:0;">You're ready to play.</h2>
+          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed a drum pattern and an acid bassline, synced them together, and mapped a five-minute set. Run through the weeks again any time to tighten up a step.</p>
+          <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <footer style="display:flex;justify-content:space-between;padding:var(--space-4);border-top:1px solid var(--color-divider);">
+    <button type="button" class="btn btn-secondary" onclick="{{ goBack }}" disabled="{{ isFirst }}">← Back</button>
+    <button type="button" class="btn btn-primary" onclick="{{ goNext }}" disabled="{{ isLast }}">Next →</button>
+  </footer>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog" onclick="{{ stopProp }}" style="max-height:80vh;overflow:auto;">
+        <div class="dialog-title">Course map</div>
+        <sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="6">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin:12px 0 6px;">{{ grp.label }}</div>
+            <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="2">
+              <button type="button" onclick="{{ it.go }}" style="{{ it.rowStyle }}">{{ it.title }}</button>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary" onclick="{{ closeDialog }}">Close</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    step: 0,
+    dialogOpen: false,
+    checks: {},
+    rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
+    rd6Playing: false, rd6Col: -1,
+    td3Accent: [0,4,10], td3Slide: [2,4,7,13],
+    td3Playing: false, td3Col: -1,
+    cablesAudio: [false,false],
+    cablesSync: [false],
+    accentSweep: 'FAST',
+    perfmapSel: 0,
+  };
+
+  NOTE_FREQ = { C2:65.41, D2:73.42, 'D#2':77.78, F2:87.31, G2:98.00, 'A#2':116.54, C3:130.81 };
+  NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
+
+  PERF_SECTIONS = [
+    { title:'Intro', time:'0:00–0:30', dur:30, desc:"RD-6 Pattern 1 alone (Bass Drum and Closed Hi-Hat only). Filter fully closed on the TD-3, waiting." },
+    { title:'Bassline In', time:'0:30–1:30', dur:60, desc:"Queue the TD-3 bassline on step 1 of the next bar. Slowly open the Cutoff knob from 9 o'clock toward 12 as the groove builds." },
+    { title:'Breakdown', time:'1:30–2:00', dur:30, desc:"Mute the RD-6 (or drop to hats only) and let the acid line run alone. Push Resonance up for a squelchier sweep." },
+    { title:'Filter Drop', time:'2:00–2:30', dur:30, desc:"On step 13 of a bar, cut the Cutoff fully off. On step 1 of the next bar, snap it wide open and bring the full drum pattern back in." },
+    { title:'Full Groove', time:'2:30–4:00', dur:90, desc:"Queue a second RD-6 pattern for variation, then queue back to Pattern 1 for the final push." },
+    { title:'Wind Down', time:'4:00–4:30', dur:30, desc:"Mute the bassline. Drop the RD-6 back to Bass Drum and Closed Hi-Hat only." },
+    { title:'Outro', time:'4:30–5:00', dur:30, desc:"Close the Cutoff back down over the last bars and hit START/STOP on the RD-6 to end in sync." },
+  ];
+
+  constructor(props) {
+    super(props);
+    this.NOTES = this.NOTE_NAMES.map(n => this.NOTE_FREQ[n]);
+    this.STEPS = this.buildSteps();
+  }
+
+  componentWillUnmount() {
+    this.stopRd6();
+    this.stopTd3();
+    if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+  }
+
+  buildSteps() {
+    const W = n => `Week ${n}`;
+    return [
+      { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview',
+        title:'Week 1: Unboxing, Connections & Basic Drum Sequencing',
+        objective:"Wire up both units, establish signal paths, and program a fundamental 4-on-the-floor drum loop." },
+      { id:'w1-1', kind:'content', weekTag:W(1), title:'1. Physical Signal Setup', widget:'cablesAudio',
+        items:[
+          { text:"Power: Plug in the DC power supplies for both units." },
+          { text:"Audio Out: Run 1/4\" instrument cables from the Line Out of the RD-6 and Output of the TD-3-MO into your mixer or audio interface inputs. Set main output levels to 12 o'clock." },
+        ],
+        knobs:[ { label:'Main Output', hour:12 } ],
+      },
+      { id:'w1-2', kind:'content', weekTag:W(1), title:'2. Programming Your First RD-6 Pattern', widget:'rd6',
+        items:[
+          { text:"Clear Memory: Turn the Mode switch to PATTERN WRITE. Turn the Pattern Selector to 1. Hold PATTERN CLEAR and press Step 1." },
+          { text:"Enter Drum Steps: Set the Voice Selector knob to each instrument and activate the following step buttons:", subitems:[
+            "Bass Drum (BD): Steps 1, 5, 9, 13",
+            "Snare / Clap (SD/CP): Steps 5, 13",
+            "Closed Hi-Hat (CH): Steps 3, 7, 11, 15",
+            "Open Hi-Hat (OH): Step 16",
+            "Accent: Steps 1, 5, 9, 13",
+          ] },
+          { text:"Play & Adjust: Press START/STOP. Set BD Level to 2 o'clock and CH/OH Level to 1 o'clock." },
+        ],
+        knobs:[ { label:'BD Level', hour:2 }, { label:'CH/OH Level', hour:1 } ],
+      },
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview',
+        title:'Week 2: TD-3-MO Subtractive Synthesis & Pitch Entry',
+        objective:"Understand basic analog synthesizer controls and program a classic 16-step bassline." },
+      { id:'w2-1', kind:'content', weekTag:W(2), title:'1. Synthesis Control Basics',
+        items:[
+          { text:"VCO: Set waveform to SAW (Sawtooth). Turn Sub-Oscillator switch to OFF." },
+          { text:"VCF Filter: Set Cutoff to 9 o'clock, Resonance to 3 o'clock, Env Mod to 2 o'clock, and Decay to 10 o'clock. Set Accent to 3 o'clock." },
+        ],
+        knobs:[ { label:'Cutoff', hour:9 }, { label:'Resonance', hour:3 }, { label:'Env Mod', hour:2 }, { label:'Decay', hour:10 }, { label:'Accent', hour:3 } ],
+        switches:[ { label:'Waveform', value:'SAW' }, { label:'Sub-Oscillator', value:'OFF' } ],
+      },
+      { id:'w2-2a', kind:'content', weekTag:W(2), title:'2. Programming the Acid Bassline', note:'Clear Memory',
+        items:[ { text:"Clear Memory: Turn Mode switch to PATTERN WRITE. Select Pattern 1. Press CLEAR, then tap Pattern Button 1." } ],
+      },
+      { id:'w2-2b', kind:'content', weekTag:W(2), title:'Step A: Note Pitch Entry', widget:'td3pitch',
+        items:[
+          { text:"Switch Mode switch to PITCH MODE." },
+          { text:"Tap WRITE/NEXT to cycle through 16 steps using the keyboard buttons and UP/DOWN octave keys:", subitems:[
+            "Steps 1–4: C2, C2, C3 (UP), C2",
+            "Steps 5–8: D#2, C2, C2, G2 (UP)",
+            "Steps 9–12: C2, C2, A#2 (UP), C2",
+            "Steps 13–16: C2, D2, D#2, F2",
+          ] },
+        ],
+      },
+      { id:'w2-2c', kind:'content', weekTag:W(2), title:'Step B: Timing & Expressive Attributes', widget:'td3time',
+        items:[
+          { text:"Switch Mode switch to TIME MODE." },
+          { text:"Tap WRITE/NEXT through steps 1–16 and add attributes:", subitems:[
+            "Step 1: Accent","Step 3: Slide","Step 5: Accent + Slide","Step 8: Slide","Step 11: Accent","Step 14: Slide",
+          ] },
+        ],
+      },
+      { id:'w2-2d', kind:'content', weekTag:W(2), title:'Playback', widget:'td3play',
+        items:[ { text:"Switch Mode switch to PATTERN PLAY and hit START/STOP." } ],
+      },
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview',
+        title:'Week 3: Hardware Syncing & Modded-Out Features',
+        objective:"Lock unit tempos together via 3.5mm sync and introduce the unique TD-3-MO tone parameters." },
+      { id:'w3-1', kind:'content', weekTag:W(3), title:'1. Hardware Synchronization Procedure', widget:'sync',
+        items:[
+          { text:"Connect a 3.5mm patch cable from Sync Out on the RD-6 to Sync In on the TD-3-MO." },
+          { text:"Hold FUNCTION on the TD-3-MO and press Step 3 or Step 4 to select Trigger/Sync mode." },
+          { text:"Hit START/STOP on the RD-6. Both devices will start simultaneously and play in tight temporal sync." },
+        ],
+      },
+      { id:'w3-2', kind:'content', weekTag:W(3), title:'2. Modded Out (MO) Tone Tweaks', widget:'moTweaks',
+        items:[
+          { text:"Sub-Oscillator: Flip the switch to LOW to drop a bass sub-octave beneath steps 1, 2, and 4." },
+          { text:"Filter FM Depth: Dial FM Depth to 12 o'clock to introduce metallic, raw distortion harmonics." },
+          { text:"Accent Sweep Speed: Toggle between FAST (sharp, popping attack) and SOFT (squelchy vocal sweep) on accented notes." },
+        ],
+        knobs:[ { label:'Filter FM Depth', hour:12 } ],
+        switches:[ { label:'Sub-Oscillator', value:'LOW' } ],
+      },
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview',
+        title:'Week 4: 5-Minute Live Arrangement & Performance',
+        objective:"Map out and perform a complete 5-minute track using pattern variation, mutes, and real-time knob modulation." },
+      { id:'w4-1', kind:'content', weekTag:W(4), title:'1. Performance Map (120 BPM)', widget:'perfmap', items:[] },
+      { id:'w4-2', kind:'content', weekTag:W(4), title:'2. Essential Live Performance Tips',
+        items:[
+          { text:"Pattern Queuing: You can select a new pattern on either device while one is running; the hardware seamlessly transitions on step 1 of the next bar." },
+          { text:"Filter Snap Drops: Cut the Cutoff fully off on step 13 of a bar, then snap it wide open on step 1 of the drop for instant dynamic impact." },
+        ],
+      },
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to play." },
+    ];
+  }
+
+  // ── navigation ──
+  goToStep(i) {
+    this.stopRd6(); this.stopTd3();
+    const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
+    this.setState({ step: idx, dialogOpen: false });
+  }
+  goNext() { this.goToStep(this.state.step + 1); }
+  goBack() { this.goToStep(this.state.step - 1); }
+  restart() { this.stopRd6(); this.stopTd3(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
+
+  // ── checklist ──
+  toggleCheck(stepId, idx) {
+    this.setState(s => {
+      const arr = (s.checks[stepId] || []).slice();
+      arr[idx] = !arr[idx];
+      return { checks: { ...s.checks, [stepId]: arr } };
+    });
+  }
+  buildItems(step) {
+    if (!step.items) return [];
+    const checks = this.state.checks[step.id] || [];
+    return step.items.map((it, i) => ({
+      text: it.text,
+      checked: !!checks[i],
+      toggle: () => this.toggleCheck(step.id, i),
+      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
+      hasSub: !!(it.subitems && it.subitems.length),
+      subitems: it.subitems || [],
+    }));
+  }
+  buildKnobs(step) {
+    if (!step.knobs) return [];
+    return step.knobs.map(k => ({ label: k.label, hourLabel: `${k.hour} o'clock`, rot: (k.hour % 12) * 30 }));
+  }
+
+  // ── cables ──
+  toggleCable(idx) { this.setState(s => { const arr = s.cablesAudio.slice(); arr[idx] = !arr[idx]; return { cablesAudio: arr }; }); }
+  toggleSyncCable() { this.setState(s => ({ cablesSync: [!s.cablesSync[0]] })); }
+  buildCablesAudio() {
+    const defs = [ { from:'RD-6 Line Out', to:'Mixer Input 1' }, { from:'TD-3 Output', to:'Mixer Input 2' } ];
+    return defs.map((d, i) => {
+      const connected = !!this.state.cablesAudio[i];
+      return { ...d, toggle: () => this.toggleCable(i),
+        dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
+        lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
+        statusText: connected ? 'Connected' : 'Click to connect' };
+    });
+  }
+  buildSyncCable() {
+    const connected = !!this.state.cablesSync[0];
+    return [{ from:'RD-6 Sync Out', to:'TD-3 Sync In', toggle: () => this.toggleSyncCable(),
+      dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
+      lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
+      statusText: connected ? 'Connected' : 'Click to connect' }];
+  }
+
+  // ── RD-6 ──
+  toggleRd6Cell(rowKey, idx) {
+    this.setState(s => {
+      const arr = s.rd6[rowKey].slice();
+      const pos = arr.indexOf(idx);
+      if (pos >= 0) arr.splice(pos, 1); else arr.push(idx);
+      return { rd6: { ...s.rd6, [rowKey]: arr } };
+    });
+  }
+  buildRd6Rows() {
+    const defs = [ { key:'bd', label:'BD' }, { key:'sd', label:'SD/CP' }, { key:'ch', label:'CH' }, { key:'oh', label:'OH' }, { key:'ac', label:'ACCENT' } ];
+    const color = { bd:'var(--color-accent)', sd:'var(--color-accent)', ch:'var(--color-accent)', oh:'var(--color-accent)', ac:'var(--color-accent-2-600)' };
+    return defs.map(d => ({
+      key: d.key, label: d.label,
+      cells: Array.from({ length: 16 }, (_, i) => {
+        const active = this.state.rd6[d.key].includes(i);
+        const isCurrent = this.state.rd6Playing && this.state.rd6Col === i;
+        const bg = active ? color[d.key] : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
+        const border = isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent';
+        return { idx: i, toggle: () => this.toggleRd6Cell(d.key, i),
+          style: `width:28px;height:28px;border-radius:8px;background:${bg};border:${border};cursor:pointer;padding:0;flex:none;` };
+      }),
+    }));
+  }
+
+  // ── TD-3 ──
+  toggleTd3Flag(key, idx) {
+    this.setState(s => {
+      const arr = s[key].slice();
+      const pos = arr.indexOf(idx);
+      if (pos >= 0) arr.splice(pos, 1); else arr.push(idx);
+      return { [key]: arr };
+    });
+  }
+  chipStyle(active, color) {
+    return active
+      ? `font-size:8px;padding:2px 6px;border-radius:999px;border:1px solid ${color};background:${color};color:var(--color-bg);cursor:pointer;`
+      : `font-size:8px;padding:2px 6px;border-radius:999px;border:1px solid var(--color-divider);background:transparent;color:var(--color-text);opacity:.6;cursor:pointer;`;
+  }
+  buildTd3PitchCells() { return this.NOTE_NAMES.map((note, i) => ({ num: i + 1, note })); }
+  buildTd3TimeCells() {
+    return this.NOTE_NAMES.map((note, i) => {
+      const accent = this.state.td3Accent.includes(i);
+      const slide = this.state.td3Slide.includes(i);
+      return { num: i + 1, note,
+        toggleAccent: () => this.toggleTd3Flag('td3Accent', i),
+        toggleSlide: () => this.toggleTd3Flag('td3Slide', i),
+        accentBtnStyle: this.chipStyle(accent, 'var(--color-accent)'),
+        slideBtnStyle: this.chipStyle(slide, 'var(--color-accent-2-600)') };
+    });
+  }
+  buildTd3PlayCells() {
+    return this.NOTE_NAMES.map((note, i) => {
+      const accent = this.state.td3Accent.includes(i);
+      const slide = this.state.td3Slide.includes(i);
+      const isCurrent = this.state.td3Playing && this.state.td3Col === i;
+      return { note, accent, slide,
+        bg: isCurrent ? 'var(--color-accent-700)' : (accent ? 'var(--color-accent-200)' : 'var(--color-neutral-200)'),
+        border: isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent',
+        textColor: isCurrent ? 'var(--color-bg)' : 'var(--color-text)' };
+    });
+  }
+
+  // ── perf map ──
+  buildPerfSections() {
+    return this.PERF_SECTIONS.map((s, i) => {
+      const sel = this.state.perfmapSel === i;
+      return { ...s, select: () => this.setState({ perfmapSel: i }),
+        barStyle: `flex:${s.dur} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:4px;cursor:pointer;background:${sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};border-right:1px solid var(--color-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` };
+    });
+  }
+
+  // ── nav dialog ──
+  buildNavGroups() {
+    const groups = [];
+    this.STEPS.forEach((s, i) => {
+      let g = groups.find(g => g.label === s.weekTag);
+      if (!g) { g = { label: s.weekTag, items: [] }; groups.push(g); }
+      g.items.push({
+        title: s.navLabel || s.title,
+        go: () => this.goToStep(i),
+        rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
+      });
+    });
+    return groups;
+  }
+
+  // ── audio ──
+  ensureAudio() {
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const size = this.audioCtx.sampleRate * 0.3;
+      const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+      this.noiseBuffer = buf;
+    }
+    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+  }
+  playKick(t, vol) {
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(160, t);
+    osc.frequency.exponentialRampToValueAtTime(48, t + 0.13);
+    g.gain.setValueAtTime(0.9 * vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.2);
+  }
+  playNoise(t, opts) {
+    const ctx = this.audioCtx;
+    const src = ctx.createBufferSource(); src.buffer = this.noiseBuffer;
+    const filter = ctx.createBiquadFilter(); filter.type = opts.filterType; filter.frequency.value = opts.freq;
+    if (opts.Q) filter.Q.value = opts.Q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(opts.gain, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
+    src.connect(filter).connect(g).connect(ctx.destination);
+    src.start(t); src.stop(t + opts.duration + 0.02);
+  }
+  playRd6Step(col) {
+    const t = this.audioCtx.currentTime;
+    const r = this.state.rd6;
+    const accent = r.ac.includes(col);
+    const vol = accent ? 1 : 0.7;
+    if (r.bd.includes(col)) this.playKick(t, vol);
+    if (r.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
+    if (r.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
+    if (r.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
+  }
+  playRd6() {
+    this.ensureAudio(); this.stopRd6();
+    let col = 0;
+    this.playRd6Step(col);
+    this.setState({ rd6Playing: true, rd6Col: col });
+    this.rd6Timer = setInterval(() => {
+      col = (col + 1) % 16;
+      this.playRd6Step(col);
+      this.setState({ rd6Col: col });
+    }, 125);
+  }
+  stopRd6() {
+    if (this.rd6Timer) { clearInterval(this.rd6Timer); this.rd6Timer = null; }
+    if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1 });
+  }
+  playTd3() {
+    this.ensureAudio(); this.stopTd3();
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+    const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
+    const gain = ctx.createGain(); gain.gain.value = 0.0001;
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.start();
+    this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter;
+    let col = 0;
+    const trigger = c => {
+      const t = ctx.currentTime;
+      const freq = this.NOTES[c];
+      const accent = this.state.td3Accent.includes(c);
+      const prev = (c - 1 + 16) % 16;
+      const slide = this.state.td3Slide.includes(prev);
+      if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
+      else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
+      const peak = accent ? 0.5 : 0.32;
+      const cutoff = accent ? 1800 : 900;
+      filter.frequency.cancelScheduledValues(t);
+      filter.frequency.setValueAtTime(cutoff, t);
+      filter.frequency.exponentialRampToValueAtTime(300, t + 0.18);
+      gain.gain.cancelScheduledValues(t);
+      if (!slide) {
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(peak, t + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.09);
+      } else {
+        gain.gain.setValueAtTime(peak, t);
+      }
+    };
+    trigger(col);
+    this.setState({ td3Playing: true, td3Col: col });
+    this.td3Timer = setInterval(() => {
+      col = (col + 1) % 16;
+      trigger(col);
+      this.setState({ td3Col: col });
+    }, 125);
+  }
+  stopTd3() {
+    if (this.td3Timer) { clearInterval(this.td3Timer); this.td3Timer = null; }
+    if (this.td3Osc) {
+      const osc = this.td3Osc; const g = this.td3Gain;
+      try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
+      setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
+      this.td3Osc = null;
+    }
+    if (this.state.td3Playing) this.setState({ td3Playing: false, td3Col: -1 });
+  }
+
+  renderVals() {
+    const step = this.STEPS[this.state.step];
+    const items = this.buildItems(step);
+    const knobs = this.buildKnobs(step);
+    const switches = step.switches || [];
+    return {
+      weekLabel: step.weekTag,
+      stepNumber: this.state.step + 1,
+      totalSteps: this.STEPS.length,
+      progressPct: Math.round((this.state.step) / (this.STEPS.length - 1) * 100),
+      isOverview: step.kind === 'overview',
+      isWeekIntro: step.kind === 'weekintro',
+      isContent: step.kind === 'content',
+      isComplete: step.kind === 'complete',
+      currentStep: {
+        weekTag: step.weekTag, title: step.title, objective: step.objective,
+        hasNote: !!step.note, note: step.note, items, knobs, switches,
+        showKnobs: knobs.length > 0, showSwitches: switches.length > 0,
+        showCablesAudio: step.widget === 'cablesAudio', showRd6: step.widget === 'rd6',
+        showTd3Pitch: step.widget === 'td3pitch', showTd3Time: step.widget === 'td3time',
+        showTd3Play: step.widget === 'td3play', showSync: step.widget === 'sync',
+        showAccentSweep: step.widget === 'moTweaks', showPerfmap: step.widget === 'perfmap',
+      },
+      rd6Rows: step.widget === 'rd6' ? this.buildRd6Rows() : [],
+      rd6PlayLabel: this.state.rd6Playing ? 'Stop' : 'Play Pattern',
+      rd6PlayToggle: this.state.rd6Playing ? () => this.stopRd6() : () => this.playRd6(),
+      td3PitchCells: step.widget === 'td3pitch' ? this.buildTd3PitchCells() : [],
+      td3TimeCells: step.widget === 'td3time' ? this.buildTd3TimeCells() : [],
+      td3PlayCells: step.widget === 'td3play' ? this.buildTd3PlayCells() : [],
+      td3PlayLabel: this.state.td3Playing ? 'Stop' : 'Play Bassline',
+      td3PlayToggle: this.state.td3Playing ? () => this.stopTd3() : () => this.playTd3(),
+      cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
+      syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
+      accentSweepOptions: step.widget === 'moTweaks' ? [
+        { label: 'FAST', checked: this.state.accentSweep === 'FAST', select: () => this.setState({ accentSweep: 'FAST' }) },
+        { label: 'SOFT', checked: this.state.accentSweep === 'SOFT', select: () => this.setState({ accentSweep: 'SOFT' }) },
+      ] : [],
+      accentSweepDesc: this.state.accentSweep === 'FAST' ? 'Sharp, popping attack on accented notes.' : 'Squelchy, vocal-like sweep on accented notes.',
+      perfSections: step.widget === 'perfmap' ? this.buildPerfSections() : [],
+      selectedSection: step.widget === 'perfmap' ? this.PERF_SECTIONS[this.state.perfmapSel] : null,
+      navGroups: this.buildNavGroups(),
+      dialogOpen: this.state.dialogOpen,
+      openDialog: () => this.setState({ dialogOpen: true }),
+      closeDialog: () => this.setState({ dialogOpen: false }),
+      stopProp: e => e.stopPropagation(),
+      goNext: () => this.goNext(),
+      goBack: () => this.goBack(),
+      isFirst: this.state.step === 0,
+      isLast: this.state.step === this.STEPS.length - 1,
+      restart: () => this.restart(),
+    };
+  }
+}
+</script>
+</body>
+</html>

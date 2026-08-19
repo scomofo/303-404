@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDJ-FLX4 Guide</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -23,7 +24,7 @@
       <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
         <span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span>
       </div>
-      <div style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
         <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div>
       </div>
     </div>
@@ -109,7 +110,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
               <sc-for list="{{ cablesList }}" as="c" hint-placeholder-count="2">
-                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
                   <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
@@ -144,9 +145,9 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Deck B tempo fader</div>
               <div style="display:flex;align-items:center;gap:12px;">
-                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}">−</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}" aria-label="Decrease Deck B tempo">−</button>
                 <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
-                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}">+</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}" aria-label="Increase Deck B tempo">+</button>
               </div>
             </div>
           </sc-if>
@@ -180,22 +181,22 @@
                 <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px;">
                   <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck A Channel Fader</div>
                   <div style="display:flex;align-items:center;gap:10px;">
-                    <button type="button" class="btn btn-secondary" onclick="{{ faderA.dec }}">−</button>
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderA.dec }}" aria-label="Lower Deck A channel fader">−</button>
                     <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
                       <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ faderA.pct }}%;"></div>
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="{{ faderA.inc }}">+</button>
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderA.inc }}" aria-label="Raise Deck A channel fader">+</button>
                     <div style="width:40px;font-size:12px;font-weight:700;text-align:right;">{{ faderA.label }}</div>
                   </div>
                 </div>
                 <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px;">
                   <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck B Channel Fader</div>
                   <div style="display:flex;align-items:center;gap:10px;">
-                    <button type="button" class="btn btn-secondary" onclick="{{ faderB.dec }}">−</button>
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderB.dec }}" aria-label="Lower Deck B channel fader">−</button>
                     <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
                       <div style="height:100%;border-radius:999px;background:var(--color-accent-2-600);width:{{ faderB.pct }}%;"></div>
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="{{ faderB.inc }}">+</button>
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderB.inc }}" aria-label="Raise Deck B channel fader">+</button>
                     <div style="width:40px;font-size:12px;font-weight:700;text-align:right;">{{ faderB.label }}</div>
                   </div>
                 </div>
@@ -203,11 +204,11 @@
               <div style="display:flex;flex-direction:column;gap:6px;">
                 <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Crossfader — A ←→ B</div>
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <button type="button" class="btn btn-secondary" onclick="{{ crossCtl.dec }}">← A</button>
+                  <button type="button" class="btn btn-secondary" onclick="{{ crossCtl.dec }}" aria-label="Move crossfader toward Deck A">← A</button>
                   <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-300);position:relative;">
                     <div style="position:absolute;top:50%;left:{{ crossCtl.pct }}%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:var(--color-accent-700);box-shadow:var(--shadow-sm);"></div>
                   </div>
-                  <button type="button" class="btn btn-secondary" onclick="{{ crossCtl.inc }}">B →</button>
+                  <button type="button" class="btn btn-secondary" onclick="{{ crossCtl.inc }}" aria-label="Move crossfader toward Deck B">B →</button>
                 </div>
               </div>
             </div>
@@ -226,13 +227,13 @@
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:12px;">
-                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}">−</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}" aria-label="Decrease Deck B tempo">−</button>
                 <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
-                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}">+</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}" aria-label="Increase Deck B tempo">+</button>
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                <button type="button" class="btn btn-secondary" onclick="{{ nudgeBack }}">Nudge −</button>
-                <button type="button" class="btn btn-secondary" onclick="{{ nudgeFwd }}">Nudge +</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ nudgeBack }}" aria-label="Nudge Deck B backward">Nudge −</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ nudgeFwd }}" aria-label="Nudge Deck B forward">Nudge +</button>
                 <button type="button" class="btn btn-primary" onclick="{{ syncNow }}" style="margin-left:auto;">SYNC</button>
               </div>
             </div>
@@ -241,7 +242,7 @@
           <sc-if value="{{ currentStep.showHotCues }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <sc-for list="{{ hotCuePads }}" as="pad" hint-placeholder-count="4">
-                <button type="button" onclick="{{ pad.toggle }}" style="{{ pad.style }}">{{ pad.label }}</button>
+                <button type="button" onclick="{{ pad.toggle }}" style="{{ pad.style }}" aria-pressed="{{ pad.pressed }}">{{ pad.label }}</button>
               </sc-for>
             </div>
           </sc-if>
@@ -282,7 +283,7 @@
               <span class="tag tag-accent-2" style="align-self:flex-start;">Suggested arrangement — adjust to taste</span>
               <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
                 <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="6">
-                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}">{{ sec.title }}</button>
+                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}" aria-pressed="{{ sec.pressed }}">{{ sec.title }}</button>
                 </sc-for>
               </div>
               <div class="card" style="background:var(--color-accent-100);">
@@ -313,7 +314,7 @@
 
   <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
     <div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;">
-      <div class="dialog" onclick="{{ stopProp }}" style="max-height:80vh;overflow:auto;">
+      <div class="dialog" onclick="{{ stopProp }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;">
         <div class="dialog-title">Course map</div>
         <sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="6">
           <div>
@@ -333,20 +334,25 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = {
-    step: 0,
-    dialogOpen: false,
-    checks: {},
-    cableToggles: {},
-    deckA: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75 },
-    deckB: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75, tempoPct: 4 },
-    crossfader: 0,
-    enginePlaying: false, colA: -1, colB: -1,
-    hotCues: [null, null, null, null],
-    loopOn: false, loopLen: 16,
-    fxOn: false, fxLevel: 0.2,
-    perfmapSel: 0,
-  };
+  // Every resettable field lives here so the initial state and restart() can't drift apart.
+  initialState() {
+    return {
+      step: 0,
+      dialogOpen: false,
+      checks: {},
+      cableToggles: {},
+      deckA: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75 },
+      deckB: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75, tempoPct: 4 },
+      crossfader: 0,
+      enginePlaying: false, colA: -1, colB: -1,
+      hotCues: [null, null, null, null],
+      loopOn: false, loopLen: 16,
+      fxOn: false, fxLevel: 0.2,
+      perfmapSel: 0,
+    };
+  }
+
+  state = this.initialState();
 
   DECK_A_BPM = 124;
 
@@ -489,13 +495,7 @@ class Component extends DCLogic {
   goBack() { this.goToStep(this.state.step - 1); }
   restart() {
     this.stopEngine();
-    this.setState({
-      step: 0, checks: {}, dialogOpen: false,
-      deckA: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75 },
-      deckB: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75, tempoPct: 4 },
-      crossfader: 0, hotCues: [null, null, null, null], loopOn: false, loopLen: 16,
-      fxOn: false, fxLevel: 0.2,
-    });
+    this.setState(this.initialState());
   }
 
   // ── checklist ──
@@ -528,7 +528,7 @@ class Component extends DCLogic {
     return step.cables.map((d, i) => {
       const key = `${step.id}:${i}`;
       const connected = !!this.state.cableToggles[key];
-      return { from: d.from, to: d.to, toggle: () => this.toggleCable(key),
+      return { from: d.from, to: d.to, toggle: () => this.toggleCable(key), pressed: connected ? 'true' : 'false',
         dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
         lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
         statusText: connected ? 'Connected' : 'Click to connect' };
@@ -763,7 +763,7 @@ class Component extends DCLogic {
   buildPerfSections() {
     return this.PERF_SECTIONS.map((s, i) => {
       const sel = this.state.perfmapSel === i;
-      return { ...s, select: () => this.setState({ perfmapSel: i }),
+      return { ...s, select: () => this.setState({ perfmapSel: i }), pressed: sel ? 'true' : 'false',
         barStyle: `flex:${s.dur} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:4px;cursor:pointer;background:${sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};border-right:1px solid var(--color-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` };
     });
   }
@@ -823,7 +823,7 @@ class Component extends DCLogic {
       syncNow: () => this.syncDecks(),
       hotCuePads: this.state.hotCues.map((v, i) => {
         const set = v != null;
-        return { idx: i, toggle: () => this.toggleHotCue(i),
+        return { idx: i, toggle: () => this.toggleHotCue(i), pressed: set ? 'true' : 'false',
           label: set ? `Cue ${i + 1} · step ${v + 1}` : `Set Cue ${i + 1}`,
           style: `flex:1;min-width:130px;padding:14px;border-radius:var(--radius-md);border:none;cursor:pointer;font-weight:700;font-size:12.5px;background:${set ? 'var(--color-accent)' : 'var(--color-neutral-300)'};color:${set ? 'var(--color-bg)' : 'var(--color-text)'};` };
       }),

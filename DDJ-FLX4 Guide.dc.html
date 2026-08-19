@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>
+  a{color:var(--color-accent);} a:hover{color:var(--color-accent-700);}
+  @keyframes dc-jog-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+
+  <header style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+    <div style="font-family:var(--font-heading);font-size:17px;white-space:nowrap;">DDJ-FLX4 Guide</div>
+    <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
+        <span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span>
+      </div>
+      <div style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+        <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
+          <div>
+            <h1 style="margin:0;">Beginner Hardware &amp; Mixing Guide</h1>
+            <h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Pioneer DJ DDJ-FLX4</h3>
+          </div>
+          <div>
+            <h4 style="margin:0 0 8px;">Course Overview</h4>
+            <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
+              <li>Target Audience: Absolute Beginners</li>
+              <li>Duration: 7 Weeks (2 Hours / Week)</li>
+              <li>Equipment Needed:
+                <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
+                  <li>Pioneer DJ DDJ-FLX4 controller</li>
+                  <li>USB-C cable (included)</li>
+                  <li>Laptop or computer with Serato DJ Lite (bundled, free) or rekordbox installed</li>
+                  <li>Headphones (1/4" or 1/8" stereo jack)</li>
+                  <li>Powered speakers, monitors, or a DJ mixer/amp for the Master Out</li>
+                  <li>Internet connection for initial software activation</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <p style="margin:0;font-size:12.5px;opacity:.7;">The mixer/beatmatching/hot-cue/loop/FX practice widgets in this course run on two synthesized reference loops (a simple kick + hi-hat pattern), not real music — so you can practice the mechanics of mixing without needing licensed audio. Everything you learn transfers directly to mixing real tracks.</p>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWeekIntro }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);">
+          <span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span>
+          <h2 style="margin:0;">{{ currentStep.title }}</h2>
+          <p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);">
+          <div>
+            <span class="tag tag-neutral">{{ currentStep.weekTag }}</span>
+            <h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                  <input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                  <span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span>
+                </label>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ currentStep.showKnobs }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:10px;">Knob positions</div>
+              <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;">
+                <sc-for list="{{ currentStep.knobs }}" as="knob" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-300);box-shadow:var(--shadow-sm);position:relative;">
+                      <div style="position:absolute;bottom:50%;left:50%;width:3px;height:22px;margin-left:-1.5px;background:var(--color-accent-700);border-radius:2px;transform-origin:50% 100%;transform:rotate({{ knob.rot }}deg);"></div>
+                    </div>
+                    <div style="font-size:11.5px;font-weight:600;text-align:center;">{{ knob.label }}</div>
+                    <div style="font-size:10.5px;opacity:.6;">{{ knob.hourLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showCables }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
+              <sc-for list="{{ cablesList }}" as="c" hint-placeholder-count="2">
+                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
+                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
+                  <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
+                  <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showEngine }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:var(--radius-md);background:var(--color-accent-100);">
+              <span style="font-size:12.5px;font-weight:600;">Practice decks — two synthesized reference loops</span>
+              <button type="button" class="btn btn-primary" onclick="{{ engineToggle }}">{{ engineLabel }}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showJogSpin }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:var(--space-6);">
+              <sc-for list="{{ jogDecks }}" as="jog" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                  <div style="width:72px;height:72px;border-radius:50%;background:var(--color-neutral-300);box-shadow:var(--shadow-sm);position:relative;{{ jog.spinStyle }}">
+                    <div style="position:absolute;top:8px;left:50%;width:3px;height:18px;margin-left:-1.5px;background:var(--color-accent-700);border-radius:2px;"></div>
+                  </div>
+                  <div style="font-size:12px;font-weight:700;">{{ jog.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTempo }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Deck B tempo fader</div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}">−</button>
+                <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}">+</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showMixerEQ }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;">
+              <sc-for list="{{ mixerEQDecks }}" as="deck" hint-placeholder-count="2">
+                <div style="flex:1;min-width:230px;display:flex;flex-direction:column;gap:12px;">
+                  <div style="font-family:var(--font-heading);font-size:15px;">{{ deck.deckLabel }}</div>
+                  <sc-for list="{{ deck.controls }}" as="ctl" hint-placeholder-count="4">
+                    <div>
+                      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;margin-bottom:4px;">{{ ctl.name }}</div>
+                      <div class="seg">
+                        <sc-for list="{{ ctl.options }}" as="opt" hint-placeholder-count="3">
+                          <label class="seg-opt">
+                            <input type="radio" name="{{ ctl.radioName }}" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                            {{ opt.label }}
+                          </label>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showMixerFader }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-5);">
+              <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;">
+                <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px;">
+                  <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck A Channel Fader</div>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderA.dec }}">−</button>
+                    <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+                      <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ faderA.pct }}%;"></div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderA.inc }}">+</button>
+                    <div style="width:40px;font-size:12px;font-weight:700;text-align:right;">{{ faderA.label }}</div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px;">
+                  <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck B Channel Fader</div>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderB.dec }}">−</button>
+                    <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+                      <div style="height:100%;border-radius:999px;background:var(--color-accent-2-600);width:{{ faderB.pct }}%;"></div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="{{ faderB.inc }}">+</button>
+                    <div style="width:40px;font-size:12px;font-weight:700;text-align:right;">{{ faderB.label }}</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Crossfader — A ←→ B</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <button type="button" class="btn btn-secondary" onclick="{{ crossCtl.dec }}">← A</button>
+                  <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-300);position:relative;">
+                    <div style="position:absolute;top:50%;left:{{ crossCtl.pct }}%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:var(--color-accent-700);box-shadow:var(--shadow-sm);"></div>
+                  </div>
+                  <button type="button" class="btn btn-secondary" onclick="{{ crossCtl.inc }}">B →</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showSync }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;">
+                <div class="card" style="flex:1;min-width:140px;text-align:center;">
+                  <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck A BPM</div>
+                  <div style="font-family:var(--font-heading);font-size:22px;margin-top:4px;">{{ bpmALabel }}</div>
+                </div>
+                <div class="card" style="flex:1;min-width:140px;text-align:center;">
+                  <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck B BPM</div>
+                  <div style="font-family:var(--font-heading);font-size:22px;margin-top:4px;">{{ bpmBLabel }}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}">−</button>
+                <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
+                <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}">+</button>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <button type="button" class="btn btn-secondary" onclick="{{ nudgeBack }}">Nudge −</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ nudgeFwd }}">Nudge +</button>
+                <button type="button" class="btn btn-primary" onclick="{{ syncNow }}" style="margin-left:auto;">SYNC</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showHotCues }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <sc-for list="{{ hotCuePads }}" as="pad" hint-placeholder-count="4">
+                <button type="button" onclick="{{ pad.toggle }}" style="{{ pad.style }}">{{ pad.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showLoop }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Loop length (Deck A, in steps)</div>
+              <div class="seg" style="align-self:flex-start;">
+                <sc-for list="{{ loopOptions }}" as="opt" hint-placeholder-count="4">
+                  <label class="seg-opt">
+                    <input type="radio" name="loopLen" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                    {{ opt.label }}
+                  </label>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showBeatFx }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Beat FX (synced echo)</div>
+                <button type="button" class="btn btn-primary" onclick="{{ fxToggle }}">{{ fxOnLabel }}</button>
+              </div>
+              <div class="seg" style="align-self:flex-start;">
+                <sc-for list="{{ fxLevelOptions }}" as="opt" hint-placeholder-count="3">
+                  <label class="seg-opt">
+                    <input type="radio" name="fxLevel" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                    {{ opt.label }}
+                  </label>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showPerfmap }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <span class="tag tag-accent-2" style="align-self:flex-start;">Suggested arrangement — adjust to taste</span>
+              <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
+                <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="6">
+                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}">{{ sec.title }}</button>
+                </sc-for>
+              </div>
+              <div class="card" style="background:var(--color-accent-100);">
+                <div style="font-family:var(--font-heading);font-size:16px;">{{ selectedSection.title }} · {{ selectedSection.time }}</div>
+                <p style="margin:6px 0 0;font-size:13.5px;opacity:.85;">{{ selectedSection.desc }}</p>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
+          <h2 style="margin:0;">You're ready to mix.</h2>
+          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired up the controller and installed your software, learned gain staging, EQ, faders and the crossfader, beatmatched by ear and with SYNC, used hot cues and loops, thrown in Beat FX, and mapped a full three-minute mix. Run through the weeks again any time to tighten up a technique.</p>
+          <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <footer style="display:flex;justify-content:space-between;padding:var(--space-4);border-top:1px solid var(--color-divider);">
+    <button type="button" class="btn btn-secondary" onclick="{{ goBack }}" disabled="{{ isFirst }}">← Back</button>
+    <button type="button" class="btn btn-primary" onclick="{{ goNext }}" disabled="{{ isLast }}">Next →</button>
+  </footer>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog" onclick="{{ stopProp }}" style="max-height:80vh;overflow:auto;">
+        <div class="dialog-title">Course map</div>
+        <sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="6">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin:12px 0 6px;">{{ grp.label }}</div>
+            <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="2">
+              <button type="button" onclick="{{ it.go }}" style="{{ it.rowStyle }}">{{ it.title }}</button>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary" onclick="{{ closeDialog }}">Close</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    step: 0,
+    dialogOpen: false,
+    checks: {},
+    cableToggles: {},
+    deckA: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75 },
+    deckB: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75, tempoPct: 4 },
+    crossfader: 0,
+    enginePlaying: false, colA: -1, colB: -1,
+    hotCues: [null, null, null, null],
+    loopOn: false, loopLen: 16,
+    fxOn: false, fxLevel: 0.2,
+    perfmapSel: 0,
+  };
+
+  DECK_A_BPM = 124;
+
+  PERF_SECTIONS = [
+    { title:'Deck A Solo', time:'0:00–0:45', dur:45, desc:"Deck A plays alone. Get Deck B cued up and beatmatched (tempo fader + nudge, or SYNC) while the crowd hears only A." },
+    { title:'Bring In B', time:'0:45–1:15', dur:30, desc:"Fade Deck B's channel fader up while its Low EQ is cut, so the basslines don't clash. Both decks are now audible." },
+    { title:'EQ Swap', time:'1:15–1:45', dur:30, desc:"Cut Deck A's Low as you bring Deck B's Low back in — the bassline hands off between tracks without doubling up." },
+    { title:'Crossfade', time:'1:45–2:15', dur:30, desc:"Move the crossfader from A toward B over several bars while trimming Deck A's channel fader down to match." },
+    { title:'B Solo + FX', time:'2:15–2:45', dur:30, desc:"Deck B plays alone. Throw in Beat FX briefly on a phrase boundary for a moment of contrast." },
+    { title:'Hot Cue Flourish', time:'2:45–3:00', dur:15, desc:"Drop back to a hot cue on Deck A and bring it in under Deck B to set up your next transition." },
+  ];
+
+  constructor(props) {
+    super(props);
+    this.STEPS = this.buildSteps();
+  }
+
+  componentWillUnmount() {
+    this.stopEngine();
+    if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+  }
+
+  buildSteps() {
+    const W = n => `Week ${n}`;
+    return [
+      { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
+
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview',
+        title:'Week 1: Unboxing, Connections & Software Setup',
+        objective:"Wire up the controller, install your DJ software, and confirm sound is flowing before you touch a single control." },
+      { id:'w1-1', kind:'content', weekTag:W(1), title:'1. Physical Connections', widget:'cables',
+        cables:[ { from:'DDJ-FLX4 USB-C Port', to:'Laptop USB Port' }, { from:'Master Out (RCA)', to:'Speakers / Mixer Input' } ],
+        items:[
+          { text:"Power: The DDJ-FLX4 is bus-powered — no separate power adapter. Plugging in the USB cable powers it on." },
+          { text:"Audio: Connect Master Out (RCA, red/white) to your powered speakers or a mixer input. Set Master Level to 12 o'clock as a safe starting point." },
+        ],
+        knobs:[ { label:'Master Level', hour:12 } ],
+      },
+      { id:'w1-2', kind:'content', weekTag:W(1), title:'2. Software Setup',
+        items:[
+          { text:"Install Serato DJ Lite (bundled free with the FLX4) or rekordbox from Pioneer DJ / AlphaTheta's website — both work with this controller." },
+          { text:"Launch the software with the FLX4 connected. It's class-compliant USB audio/MIDI, so most systems detect it automatically with no separate driver install." },
+          { text:"Complete any one-time online activation the software asks for, then check its audio preferences show the DDJ-FLX4 as the active output device." },
+        ],
+      },
+
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview',
+        title:'Week 2: Decks — Loading, Transport & Tempo',
+        objective:"Learn how tracks load and play, what the jog wheels actually do, and how the tempo fader changes a track's speed." },
+      { id:'w2-1', kind:'content', weekTag:W(2), title:'1. Loading & Transport', widget:'jogSpin',
+        items:[
+          { text:"Browse your library in the software and drag (or press Load) a track onto Deck 1 or Deck 2." },
+          { text:"PLAY/PAUSE starts and stops playback. CUE sets a temporary cue point when paused, and jumps back to it when pressed during playback." },
+          { text:"Jog wheels: in Vinyl mode, grabbing the top surface while playing scratches/stops the track like a record; releasing lets it resume. Out of Vinyl mode, the jog wheel only bends pitch — turning it nudges the track forward or back without a hard stop." },
+          { text:"Hit Start Decks below to hear two practice loops running — Deck A stays at a fixed reference tempo, Deck B is the one you'll adjust through the rest of this course." },
+        ],
+      },
+      { id:'w2-2', kind:'content', weekTag:W(2), title:'2. Tempo Fader', widget:'tempo',
+        items:[ { text:"The tempo fader speeds up or slows down a deck's playback rate, shown as a percentage. Move Deck B's tempo below and listen for it drifting in and out of time with Deck A." } ],
+      },
+
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview',
+        title:'Week 3: Mixer Fundamentals',
+        objective:"Understand gain staging, EQ, channel faders and the crossfader — the controls that shape what the audience actually hears." },
+      { id:'w3-1', kind:'content', weekTag:W(3), title:'1. Gain & EQ', widget:'mixerEQ',
+        items:[
+          { text:"Trim (Gain): sets a channel's input level before anything else. Too low and you lose signal in the mix noise floor; too high and you clip. Unity is a safe starting point for most tracks." },
+          { text:"3-band EQ (Low/Mid/High): cuts or boosts a frequency range per channel. The classic \"EQ swap\" — cutting one deck's Low while boosting the other's — is how DJs blend basslines without them clashing." },
+        ],
+      },
+      { id:'w3-2', kind:'content', weekTag:W(3), title:'2. Channel Faders & Crossfader', widget:'mixerFader',
+        items:[
+          { text:"Each channel fader controls that deck's level into the mix, independent of the crossfader." },
+          { text:"The crossfader blends between Deck A (left) and Deck B (right). Centered, both decks are audible; hard left or right isolates one deck completely." },
+        ],
+      },
+
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview',
+        title:'Week 4: Beatmatching & Sync',
+        objective:"Learn to match two tracks' tempo and phase by ear, then see what the SYNC button automates for you." },
+      { id:'w4-1', kind:'content', weekTag:W(4), title:'1. Manual Beatmatching & Sync', widget:'sync',
+        items:[
+          { text:"Manual beatmatching: use the tempo fader to bring Deck B's BPM close to Deck A's, then use small jog wheel nudges (Nudge − / Nudge + below) to correct any remaining drift in the beat's timing (phase)." },
+          { text:"SYNC instantly matches a deck's tempo and phase to the other deck's, using the software's beat analysis. It's a huge shortcut, but understanding the manual technique first is what lets you fix sync when it's imperfect, or mix without it." },
+        ],
+      },
+
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview',
+        title:'Week 5: Hot Cues & Loops',
+        objective:"Mark key moments in a track and repeat sections on the fly — two of the most-used performance features on any DJ controller." },
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Hot Cues', widget:'hotCues',
+        items:[ { text:"Press an unlit pad to set a hot cue at the track's current position. Press a lit pad to jump straight back to it — instantly, even mid-mix. Try setting a cue below, letting the loop play on, then jumping back." } ],
+      },
+      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Loops', widget:'loop',
+        items:[ { text:"Auto Loop instantly repeats a fixed number of beats from the current position — shorten it for a stutter/glitch effect, lengthen it to vamp on a section while you set up your next move. Try the loop lengths below." } ],
+      },
+
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview',
+        title:'Week 6: Beat FX & Your First Mix',
+        objective:"Add a tempo-synced effect, then put everything from this course together into a mapped three-minute mix." },
+      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Beat FX', widget:'beatFx',
+        items:[ { text:"Beat FX apply a tempo-synced effect (this practice engine uses a synced echo) across the mix. Turn it on and try the level presets below — tasteful use is a quick flourish on a transition, not something left on for the whole track." } ],
+      },
+      { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Your First 3-Minute Mix', widget:'perfmap', items:[] },
+
+      { id:'w7-intro', kind:'weekintro', weekTag:W(7), navLabel:'Week Overview',
+        title:'Week 7: Care, Troubleshooting & Software Tips',
+        objective:"Keep the controller reliable and know how to solve the handful of problems every beginner runs into." },
+      { id:'w7-1', kind:'content', weekTag:W(7), title:'1. Troubleshooting Checklist',
+        items:[
+          { text:"No sound: check Master Level isn't at zero, the RCA cable is fully seated, and the software's audio preferences show the DDJ-FLX4 as the selected output." },
+          { text:"Controller not detected: try a different USB port or cable (some USB-C cables are charge-only and carry no data), and confirm no other program is holding the audio device." },
+          { text:"Headphone cue not audible: check the headphone volume knob and the cue/mix blend knob aren't turned all the way down, and that CUE is enabled on the channel you want to hear." },
+        ],
+      },
+      { id:'w7-2', kind:'content', weekTag:W(7), title:'2. Firmware, Drivers & Switching Software',
+        items:[
+          { text:"The FLX4 is class-compliant — no separate driver is required on most systems. Check Pioneer DJ / AlphaTheta's site occasionally for firmware updates, applied through their dedicated update utility." },
+          { text:"Switching between Serato DJ Lite and rekordbox just means opening the other program with the controller connected — both auto-map its controls, no reconfiguration needed." },
+        ],
+      },
+      { id:'w7-3', kind:'content', weekTag:W(7), title:'3. Physical Care',
+        items:[
+          { text:"Wipe the case and jog wheels with a dry or barely damp cloth — avoid liquid near the fader and knob gaps." },
+          { text:"Store and transport it in a padded case; faders and jog wheel bearings are the most failure-prone points if the controller is dropped or knocked around loose." },
+        ],
+      },
+
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to mix." },
+    ];
+  }
+
+  // ── navigation ──
+  goToStep(i) {
+    this.stopEngine();
+    const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
+    this.setState({ step: idx, dialogOpen: false });
+  }
+  goNext() { this.goToStep(this.state.step + 1); }
+  goBack() { this.goToStep(this.state.step - 1); }
+  restart() {
+    this.stopEngine();
+    this.setState({
+      step: 0, checks: {}, dialogOpen: false,
+      deckA: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75 },
+      deckB: { trim: 1, low: 0, mid: 0, high: 0, fader: 0.75, tempoPct: 4 },
+      crossfader: 0, hotCues: [null, null, null, null], loopOn: false, loopLen: 16,
+      fxOn: false, fxLevel: 0.2,
+    });
+  }
+
+  // ── checklist ──
+  toggleCheck(stepId, idx) {
+    this.setState(s => {
+      const arr = (s.checks[stepId] || []).slice();
+      arr[idx] = !arr[idx];
+      return { checks: { ...s.checks, [stepId]: arr } };
+    });
+  }
+  buildItems(step) {
+    if (!step.items) return [];
+    const checks = this.state.checks[step.id] || [];
+    return step.items.map((it, i) => ({
+      text: it.text,
+      checked: !!checks[i],
+      toggle: () => this.toggleCheck(step.id, i),
+      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
+    }));
+  }
+  buildKnobs(step) {
+    if (!step.knobs) return [];
+    return step.knobs.map(k => ({ label: k.label, hourLabel: `${k.hour} o'clock`, rot: (k.hour % 12) * 30 }));
+  }
+
+  // ── cables (generic, per-step) ──
+  toggleCable(key) { this.setState(s => ({ cableToggles: { ...s.cableToggles, [key]: !s.cableToggles[key] } })); }
+  buildCables(step) {
+    if (!step.cables) return [];
+    return step.cables.map((d, i) => {
+      const key = `${step.id}:${i}`;
+      const connected = !!this.state.cableToggles[key];
+      return { from: d.from, to: d.to, toggle: () => this.toggleCable(key),
+        dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
+        lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
+        statusText: connected ? 'Connected' : 'Click to connect' };
+    });
+  }
+
+  // ── audio engine ──
+  ensureAudio() {
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const size = this.audioCtx.sampleRate * 0.3;
+      const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+      this.noiseBuffer = buf;
+    }
+    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+  }
+  playKickTo(out, t, vol) {
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(160, t);
+    osc.frequency.exponentialRampToValueAtTime(48, t + 0.13);
+    g.gain.setValueAtTime(0.9 * vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
+    osc.connect(g).connect(out);
+    osc.start(t); osc.stop(t + 0.2);
+  }
+  playNoiseTo(out, t, opts) {
+    const ctx = this.audioCtx;
+    const src = ctx.createBufferSource(); src.buffer = this.noiseBuffer;
+    const filter = ctx.createBiquadFilter(); filter.type = opts.filterType; filter.frequency.value = opts.freq;
+    if (opts.Q) filter.Q.value = opts.Q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(opts.gain, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
+    src.connect(filter).connect(g).connect(out);
+    src.start(t); src.stop(t + opts.duration + 0.02);
+  }
+
+  buildDeckChain() {
+    const ctx = this.audioCtx;
+    const low = ctx.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 200;
+    const mid = ctx.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 1000; mid.Q.value = 0.7;
+    const high = ctx.createBiquadFilter(); high.type = 'highshelf'; high.frequency.value = 4000;
+    const trim = ctx.createGain();
+    const fader = ctx.createGain();
+    const cross = ctx.createGain();
+    low.connect(mid); mid.connect(high); high.connect(trim); trim.connect(fader); fader.connect(cross);
+    cross.connect(this.masterGain);
+    cross.connect(this.fxSend);
+    return { input: low, low, mid, high, trim, fader, cross };
+  }
+  initChains() {
+    const ctx = this.audioCtx;
+    this.masterGain = ctx.createGain(); this.masterGain.gain.value = 0.9;
+    this.masterGain.connect(ctx.destination);
+
+    this.fxSend = ctx.createGain(); this.fxSend.gain.value = 1;
+    this.fxDelay = ctx.createDelay(1.0); this.fxDelay.delayTime.value = 60 / this.DECK_A_BPM / 2; // eighth-note echo synced to the reference deck's tempo
+    this.fxFeedback = ctx.createGain(); this.fxFeedback.gain.value = 0.35;
+    this.fxWet = ctx.createGain(); this.fxWet.gain.value = 0;
+    this.fxSend.connect(this.fxDelay);
+    this.fxDelay.connect(this.fxFeedback).connect(this.fxDelay);
+    this.fxDelay.connect(this.fxWet).connect(this.masterGain);
+
+    this.chainA = this.buildDeckChain();
+    this.chainB = this.buildDeckChain();
+    this.applyDeckParams('deckA');
+    this.applyDeckParams('deckB');
+    this.applyCrossfader();
+    this.applyFx();
+  }
+  teardownChains() {
+    if (this.masterGain) { try { this.masterGain.disconnect(); } catch (e) {} }
+    this.masterGain = null; this.chainA = null; this.chainB = null;
+    this.fxSend = null; this.fxDelay = null; this.fxFeedback = null; this.fxWet = null;
+  }
+  applyDeckParams(key) {
+    const chain = key === 'deckA' ? this.chainA : this.chainB;
+    if (!chain) return;
+    const d = this.state[key];
+    chain.low.gain.value = d.low * 15;
+    chain.mid.gain.value = d.mid * 12;
+    chain.high.gain.value = d.high * 15;
+    chain.trim.gain.value = d.trim;
+    chain.fader.gain.value = d.fader;
+  }
+  applyCrossfader() {
+    if (!this.chainA || !this.chainB) return;
+    const x = this.state.crossfader;
+    this.chainA.cross.gain.value = x <= 0 ? 1 : 1 - x;
+    this.chainB.cross.gain.value = x >= 0 ? 1 : 1 + x;
+  }
+  applyFx() {
+    if (!this.fxWet) return;
+    this.fxWet.gain.value = this.state.fxOn ? this.state.fxLevel : 0;
+  }
+
+  deckStepAudio(chain, col) {
+    const t = this.audioCtx.currentTime;
+    if ([0, 4, 8, 12].includes(col)) this.playKickTo(chain.input, t, 1);
+    if ([2, 6, 10, 14].includes(col)) this.playNoiseTo(chain.input, t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.3 });
+  }
+  scheduleA(col) {
+    this.deckStepAudio(this.chainA, col);
+    this.setState({ colA: col });
+    const loopLen = this.state.loopOn ? this.state.loopLen : 16;
+    const stepMs = 60000 / this.DECK_A_BPM / 4;
+    // Read colA fresh at fire time (not the closured col) so a hot-cue jump made
+    // while this timer is pending actually takes effect on the next tick.
+    this.tA = setTimeout(() => { this.scheduleA((this.state.colA + 1) % loopLen); }, stepMs);
+  }
+  scheduleB(col) {
+    this.deckStepAudio(this.chainB, col);
+    this.setState({ colB: col });
+    const bpm = this.DECK_A_BPM * (1 + this.state.deckB.tempoPct / 100);
+    const stepMs = 60000 / bpm / 4;
+    // Read colB fresh at fire time (not the closured col) so Nudge/SYNC — which write
+    // colB directly — aren't silently overwritten by this already-scheduled tick.
+    this.tB = setTimeout(() => { this.scheduleB((this.state.colB + 1) % 16); }, stepMs);
+  }
+  startEngine() {
+    this.ensureAudio(); this.stopEngine(); this.initChains();
+    this.setState({ enginePlaying: true });
+    this.scheduleA(0);
+    this.scheduleB(0);
+  }
+  stopEngine() {
+    if (this.tA) { clearTimeout(this.tA); this.tA = null; }
+    if (this.tB) { clearTimeout(this.tB); this.tB = null; }
+    this.teardownChains();
+    if (this.state.enginePlaying) this.setState({ enginePlaying: false, colA: -1, colB: -1 });
+  }
+
+  stepTempo(delta) {
+    this.setState(s => ({ deckB: { ...s.deckB, tempoPct: Math.max(-8, Math.min(8, s.deckB.tempoPct + delta)) } }));
+  }
+  nudge(deckKey, delta) {
+    if (!this.state.enginePlaying) return;
+    const colKey = deckKey === 'deckB' ? 'colB' : 'colA';
+    this.setState(s => ({ [colKey]: (s[colKey] + delta + 16) % 16 }));
+  }
+  syncDecks() {
+    this.setState(s => ({ deckB: { ...s.deckB, tempoPct: 0 }, colB: s.colA }));
+  }
+
+  setDeckParam(deckKey, ctlKey, value) {
+    this.setState(s => ({ [deckKey]: { ...s[deckKey], [ctlKey]: value } }));
+    this.applyDeckParams(deckKey);
+  }
+  stepFader(deckKey, delta) {
+    this.setState(s => {
+      const v = Math.max(0, Math.min(1, +(s[deckKey].fader + delta).toFixed(2)));
+      return { [deckKey]: { ...s[deckKey], fader: v } };
+    });
+    this.applyDeckParams(deckKey);
+  }
+  stepCrossfader(delta) {
+    this.setState(s => ({ crossfader: Math.max(-1, Math.min(1, +(s.crossfader + delta).toFixed(2))) }));
+    this.applyCrossfader();
+  }
+
+  toggleHotCue(padIdx) {
+    this.setState(s => {
+      const cues = s.hotCues.slice();
+      if (cues[padIdx] == null) {
+        cues[padIdx] = Math.max(0, s.colA);
+        return { hotCues: cues };
+      }
+      return { colA: cues[padIdx] };
+    });
+  }
+  setLoop(value) {
+    if (value === 16) this.setState({ loopOn: false, loopLen: 16 });
+    else this.setState({ loopOn: true, loopLen: value });
+  }
+  toggleFx() {
+    this.setState(s => ({ fxOn: !s.fxOn }));
+    this.applyFx();
+  }
+  setFxLevel(value) {
+    this.setState({ fxLevel: value });
+    this.applyFx();
+  }
+
+  buildEqControls(deckKey) {
+    const d = this.state[deckKey];
+    const mk = (ctlKey, label, options, current) => ({
+      name: label,
+      radioName: `${deckKey}-${ctlKey}`,
+      options: options.map(o => ({
+        label: o.label,
+        checked: current === o.value,
+        select: () => this.setDeckParam(deckKey, ctlKey, o.value),
+      })),
+    });
+    return [
+      mk('trim', 'Trim', [{ label: 'Low', value: 0.6 }, { label: 'Unity', value: 1 }, { label: 'Hot', value: 1.4 }], d.trim),
+      mk('low', 'Low EQ', [{ label: 'Cut', value: -1 }, { label: 'Flat', value: 0 }, { label: 'Boost', value: 1 }], d.low),
+      mk('mid', 'Mid EQ', [{ label: 'Cut', value: -1 }, { label: 'Flat', value: 0 }, { label: 'Boost', value: 1 }], d.mid),
+      mk('high', 'High EQ', [{ label: 'Cut', value: -1 }, { label: 'Flat', value: 0 }, { label: 'Boost', value: 1 }], d.high),
+    ];
+  }
+  buildFaderStepper(deckKey) {
+    const pct = Math.round(this.state[deckKey].fader * 100);
+    return { pct, label: `${pct}%`, dec: () => this.stepFader(deckKey, -0.25), inc: () => this.stepFader(deckKey, 0.25) };
+  }
+  tempoLabel() {
+    const pct = this.state.deckB.tempoPct;
+    const bpm = (this.DECK_A_BPM * (1 + pct / 100)).toFixed(1);
+    return `${pct >= 0 ? '+' : ''}${pct}% (${bpm} BPM)`;
+  }
+
+  // ── nav dialog ──
+  buildNavGroups() {
+    const groups = [];
+    this.STEPS.forEach((s, i) => {
+      let g = groups.find(g => g.label === s.weekTag);
+      if (!g) { g = { label: s.weekTag, items: [] }; groups.push(g); }
+      g.items.push({
+        title: s.navLabel || s.title,
+        go: () => this.goToStep(i),
+        rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
+      });
+    });
+    return groups;
+  }
+
+  // ── perf map ──
+  buildPerfSections() {
+    return this.PERF_SECTIONS.map((s, i) => {
+      const sel = this.state.perfmapSel === i;
+      return { ...s, select: () => this.setState({ perfmapSel: i }),
+        barStyle: `flex:${s.dur} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:4px;cursor:pointer;background:${sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};border-right:1px solid var(--color-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` };
+    });
+  }
+
+  renderVals() {
+    const step = this.STEPS[this.state.step];
+    const items = this.buildItems(step);
+    const knobs = this.buildKnobs(step);
+    const engineWidgets = ['jogSpin', 'tempo', 'mixerEQ', 'mixerFader', 'sync', 'hotCues', 'loop', 'beatFx'];
+    const tempoCtl = { label: this.tempoLabel(), dec: () => this.stepTempo(-1), inc: () => this.stepTempo(1) };
+    return {
+      weekLabel: step.weekTag,
+      stepNumber: this.state.step + 1,
+      totalSteps: this.STEPS.length,
+      progressPct: Math.round((this.state.step) / (this.STEPS.length - 1) * 100),
+      isOverview: step.kind === 'overview',
+      isWeekIntro: step.kind === 'weekintro',
+      isContent: step.kind === 'content',
+      isComplete: step.kind === 'complete',
+      currentStep: {
+        weekTag: step.weekTag, title: step.title, items, knobs,
+        showKnobs: knobs.length > 0,
+        showCables: !!step.cables,
+        showEngine: engineWidgets.includes(step.widget),
+        showJogSpin: step.widget === 'jogSpin',
+        showTempo: step.widget === 'tempo',
+        showMixerEQ: step.widget === 'mixerEQ',
+        showMixerFader: step.widget === 'mixerFader',
+        showSync: step.widget === 'sync',
+        showHotCues: step.widget === 'hotCues',
+        showLoop: step.widget === 'loop',
+        showBeatFx: step.widget === 'beatFx',
+        showPerfmap: step.widget === 'perfmap',
+      },
+      cablesList: this.buildCables(step),
+      engineLabel: this.state.enginePlaying ? 'Stop Decks' : 'Start Decks',
+      engineToggle: this.state.enginePlaying ? () => this.stopEngine() : () => this.startEngine(),
+      jogDecks: step.widget === 'jogSpin' ? ['Deck A', 'Deck B'].map(label => ({
+        label, spinStyle: this.state.enginePlaying ? 'animation:dc-jog-spin 1.8s linear infinite;' : '',
+      })) : [],
+      tempoCtl,
+      mixerEQDecks: step.widget === 'mixerEQ' ? [
+        { deckLabel: 'Deck A', controls: this.buildEqControls('deckA') },
+        { deckLabel: 'Deck B', controls: this.buildEqControls('deckB') },
+      ] : [],
+      faderA: this.buildFaderStepper('deckA'),
+      faderB: this.buildFaderStepper('deckB'),
+      crossCtl: {
+        pct: (this.state.crossfader + 1) / 2 * 100,
+        dec: () => this.stepCrossfader(-0.5),
+        inc: () => this.stepCrossfader(0.5),
+      },
+      bpmALabel: this.DECK_A_BPM.toFixed(1),
+      bpmBLabel: (this.DECK_A_BPM * (1 + this.state.deckB.tempoPct / 100)).toFixed(1),
+      nudgeBack: () => this.nudge('deckB', -1),
+      nudgeFwd: () => this.nudge('deckB', 1),
+      syncNow: () => this.syncDecks(),
+      hotCuePads: this.state.hotCues.map((v, i) => {
+        const set = v != null;
+        return { idx: i, toggle: () => this.toggleHotCue(i),
+          label: set ? `Cue ${i + 1} · step ${v + 1}` : `Set Cue ${i + 1}`,
+          style: `flex:1;min-width:130px;padding:14px;border-radius:var(--radius-md);border:none;cursor:pointer;font-weight:700;font-size:12.5px;background:${set ? 'var(--color-accent)' : 'var(--color-neutral-300)'};color:${set ? 'var(--color-bg)' : 'var(--color-text)'};` };
+      }),
+      loopOptions: [{ label: 'Off (16)', value: 16 }, { label: '8', value: 8 }, { label: '4', value: 4 }, { label: '2', value: 2 }].map(o => ({
+        label: o.label, checked: o.value === 16 ? !this.state.loopOn : (this.state.loopOn && this.state.loopLen === o.value),
+        select: () => this.setLoop(o.value),
+      })),
+      fxOnLabel: this.state.fxOn ? 'FX ON' : 'FX OFF',
+      fxToggle: () => this.toggleFx(),
+      fxLevelOptions: [{ label: 'Low', value: 0.2 }, { label: 'Med', value: 0.4 }, { label: 'High', value: 0.6 }].map(o => ({
+        label: o.label, checked: this.state.fxLevel === o.value, select: () => this.setFxLevel(o.value),
+      })),
+      perfSections: step.widget === 'perfmap' ? this.buildPerfSections() : [],
+      selectedSection: step.widget === 'perfmap' ? this.PERF_SECTIONS[this.state.perfmapSel] : null,
+      navGroups: this.buildNavGroups(),
+      dialogOpen: this.state.dialogOpen,
+      openDialog: () => this.setState({ dialogOpen: true }),
+      closeDialog: () => this.setState({ dialogOpen: false }),
+      stopProp: e => e.stopPropagation(),
+      goNext: () => this.goNext(),
+      goBack: () => this.goBack(),
+      isFirst: this.state.step === 0,
+      isLast: this.state.step === this.STEPS.length - 1,
+      restart: () => this.restart(),
+    };
+  }
+}
+</script>
+</body>
+</html>

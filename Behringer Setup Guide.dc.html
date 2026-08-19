@@ -40,7 +40,7 @@
             <h4 style="margin:0 0 8px;">Course Overview</h4>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
               <li>Target Audience: Absolute Beginners</li>
-              <li>Duration: 4 Weeks (2 Hours / Week)</li>
+              <li>Duration: 8 Weeks (2 Hours / Week)</li>
               <li>Equipment Needed:
                 <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
                   <li>Behringer TD-3-MO Acid Synthesizer</li>
@@ -48,6 +48,7 @@
                   <li>1x 3.5mm TS patch cable (Clock Sync)</li>
                   <li>2x 1/4" TS audio cables</li>
                   <li>Audio Mixer or Audio Interface with Headphones/Speakers</li>
+                  <li>USB or 5-pin MIDI cable (optional, for Week 6 external sync)</li>
                 </ul>
               </li>
             </ul>
@@ -151,7 +152,7 @@
           <sc-if value="{{ currentStep.showRd6 }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">RD-6 pattern — 4-on-the-floor</div>
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ rd6GridTitle }}</div>
                 <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}">{{ rd6PlayLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
@@ -168,6 +169,36 @@
                   </sc-for>
                 </div>
               </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showShuffle }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Shuffle amount</div>
+              <div class="seg" style="align-self:flex-start;">
+                <sc-for list="{{ shuffleOptions }}" as="opt" hint-placeholder-count="4">
+                  <label class="seg-opt">
+                    <input type="radio" name="shuffle" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                    {{ opt.label }}
+                  </label>
+                </sc-for>
+              </div>
+              <p style="font-size:13px;opacity:.75;margin:8px 0 0;">Hit Play Pattern above and compare — shuffle delays every other 16th note.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showRd6Chain }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Chain playback — Pattern 1 → Pattern 2</div>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6ChainPlayToggle }}">{{ rd6ChainPlayLabel }}</button>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <sc-for list="{{ rd6ChainSlots }}" as="slot" hint-placeholder-count="2">
+                  <div style="{{ slot.style }}">{{ slot.label }}</div>
+                </sc-for>
+              </div>
+              <p style="font-size:12.5px;opacity:.7;margin:0;">Each pattern loops once (16 steps), then the chain advances — just like PATTERN CHAIN mode on the hardware.</p>
             </div>
           </sc-if>
 
@@ -196,6 +227,71 @@
                   </div>
                 </sc-for>
               </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTd3Fx }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Overdrive</div>
+                <div class="seg" style="align-self:flex-start;">
+                  <sc-for list="{{ overdriveOptions }}" as="opt" hint-placeholder-count="4">
+                    <label class="seg-opt">
+                      <input type="radio" name="overdrive" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                      {{ opt.label }}
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content;">
+                <input type="checkbox" checked="{{ softAttackOn }}" onchange="{{ toggleSoftAttack }}" style="width:18px;height:18px;accent-color:var(--color-accent);" />
+                <span style="font-size:14px;">Soft Attack (rounder pluck)</span>
+              </label>
+              <p style="font-size:12.5px;opacity:.7;margin:0;">Hit Play Bassline below and compare with these on and off.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showSongBank }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Song cards — tap to load into the engine below</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
+                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}">
+                      <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
+                      <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpmLabel }}</div>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+              <sc-if value="{{ sbHasCard }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ sbTitle }}</div>
+                    <button type="button" class="btn btn-primary" onclick="{{ sbPlayToggle }}">{{ sbPlayLabel }}</button>
+                  </div>
+                  <div style="overflow-x:auto;">
+                    <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
+                      <sc-for list="{{ sbCells }}" as="c" hint-placeholder-count="16">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:40px;">
+                          <div style="width:40px;height:40px;border-radius:8px;background:{{ c.bg }};border:{{ c.border }};display:flex;align-items:center;justify-content:center;">
+                            <span style="font-size:11px;font-weight:700;color:{{ c.textColor }};">{{ c.note }}</span>
+                          </div>
+                          <div style="display:flex;gap:2px;height:6px;align-items:center;">
+                            <sc-if value="{{ c.accent }}" hint-placeholder-val="{{ false }}">
+                              <span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-2-600);"></span>
+                            </sc-if>
+                            <sc-if value="{{ c.slide }}" hint-placeholder-val="{{ false }}">
+                              <span style="width:12px;height:3px;border-radius:2px;background:var(--color-accent-700);"></span>
+                            </sc-if>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <p style="font-size:12px;opacity:.6;margin:0;">Cards marked "Practice pattern" are originals for drilling technique. Others are transcribed from real tutorial cards — any detail the source card left blank (tempo, accents, slides) loads as empty/default rather than guessed. Add your own by editing SONG_CARDS in the component script — see the README.</p>
             </div>
           </sc-if>
 
@@ -263,7 +359,7 @@
       <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
         <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
           <h2 style="margin:0;">You're ready to play.</h2>
-          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed a drum pattern and an acid bassline, synced them together, and mapped a five-minute set. Run through the weeks again any time to tighten up a step.</p>
+          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed drum patterns and an acid bassline, synced them together, chained patterns into a song, dialed in the MO tone mods, mapped a five-minute set, and know how to keep both units running on stage. Run through the weeks again any time to tighten up a step.</p>
           <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
         </div>
       </sc-if>
@@ -303,17 +399,92 @@ class Component extends DCLogic {
     dialogOpen: false,
     checks: {},
     rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
-    rd6Playing: false, rd6Col: -1,
+    rd6Fill: { bd:[0,4,8,12], sd:[4,6,12,14], ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], oh:[7], ac:[6,14] },
+    rd6Playing: false, rd6Col: -1, rd6PlayKind: null, rd6PatIdx: 0,
+    rd6Shuffle: 0,
     td3Accent: [0,4,10], td3Slide: [2,4,7,13],
     td3Playing: false, td3Col: -1,
+    td3Overdrive: 0, td3SoftAttack: false,
     cablesAudio: [false,false],
     cablesSync: [false],
     accentSweep: 'FAST',
     perfmapSel: 0,
+    sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
   };
 
-  NOTE_FREQ = { C2:65.41, D2:73.42, 'D#2':77.78, F2:87.31, G2:98.00, 'A#2':116.54, C3:130.81 };
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
+
+  SONG_CARDS = [
+    { id:'practice-1', title:'Rolling Eighths', tag:'Practice pattern', bpm:130,
+      notes:['C2','C2','C2','C2','C2','C2','D#2','C2','C2','C2','C2','C2','C2','C2','A#2','C2'],
+      accent:[0,6,14], slide:[1,7,13] },
+    { id:'practice-2', title:'Octave Jump', tag:'Practice pattern', bpm:125,
+      notes:['C2','C3','C2','C2','C2','C3','C2','C2','C2','C3','C2','C2','C2','C3','C2','G2'],
+      accent:[1,5,9,13], slide:[] },
+    { id:'practice-3', title:'Offbeat Squelch', tag:'Practice pattern', bpm:140,
+      notes:['C2','G2','C2','D2','C2','G2','C2','D#2','C2','G2','C2','D2','C2','G2','C2','F2'],
+      accent:[3,7,11,15], slide:[0,4,8,12] },
+    // Transcribed from a fan-made TD-3 tutorial card (Pattern I, Bank A). The card's "UP" row
+    // marks an octave-up shift on those steps; its Accent/Slide row and tempo were left
+    // unmarked, so those are loaded empty and the BPM below is a starting guess, not a printed fact.
+    { id:'on-the-run', title:'On the Run', tag:'Pattern I · Bank A · Square wave', bpm:130, waveform:'square',
+      notes:['E2','G2','A2','G2','D3','C3','D3','E3','E2','G2','A2','G2','D3','C3','D3','E3'],
+      accent:[], slide:[] },
+
+    // The following cards are transcribed from a scanned "ML-303 Pattern Chart" worksheet.
+    // That worksheet has a labeled ACC/SLIDE row pair plus a second, unlabeled ●/○/— row
+    // beneath it; on several cards the labeled row is blank and the ●/○ marks appear to carry
+    // the real accent/slide data instead (e.g. matching every audible step on busy patterns).
+    // Read here as ● = accent, ○ = slide, merged with the labeled row. No BPM was printed on
+    // any of these cards — the bpm below is a reasonable genre-typical guess, not a fact from
+    // the source.
+    { id:'fatboy-slim-everybody-needs-a-303', title:'Everybody Needs a 303', tag:'Fatboy Slim · Fan chart transcription', bpm:128, waveform:'square',
+      notes:['D2','D2','C#2','D2','G2','D2','D3','D2','C#3','D2','F3','D2','A2','C#3','D3','C#3'],
+      accent:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], slide:[0] },
+    { id:'josh-wink-higher-state', title:'Higher State of Consciousness', tag:'Josh Wink · Fan chart transcription', bpm:138,
+      notes:['G2','G1','G2','G2','G2','G2','B2','G2','B2','G2','G2','B2','G2','G2','G2','B2'],
+      accent:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], slide:[0,2,3,9,12,13] },
+    { id:'josh-wink-are-you-there', title:'Are You There', tag:'Josh Wink · Fan chart transcription · 10-step pattern', bpm:130,
+      notes:['D#3','D3','C#3','D3','E3','E2','E2','D#3','C#2','D#3'],
+      accent:[0,1,2,3,4,5,6,7,8,9], slide:[4,5,7,8] },
+    { id:'christopher-just-disco-dancer-1', title:"I'm a Disco Dancer (Part 1/2)", tag:'Christopher Just · Fan chart transcription', bpm:128,
+      notes:['C2','C#3','C2','C2','E3','E2','E2','D#2','D#3','C#3','D#2','D#2','D#2','D#2','E2','C2'],
+      accent:[], slide:[1,2,4,5,8,9] },
+    { id:'christopher-just-disco-dancer-2', title:"I'm a Disco Dancer (Part 2/2)", tag:'Christopher Just · Fan chart transcription', bpm:128,
+      notes:['C#2','C#2','C2','C1','C#3','C2','F#3','C1','F#2','C2','C#2','C#2','C2','C2','C#2','C#2'],
+      accent:[], slide:[] },
+    { id:'prodigy-claustrophobic-sting', title:'Claustrophobic Sting', tag:'The Prodigy · Fan chart transcription · 8-step pattern', bpm:140,
+      notes:['F2','F#2','F#2','F#2','F#3','C#2','F#3','F3'],
+      accent:[1,2,3,4,5,6,7], slide:[0,1,4] },
+    // Part 1/2 confirmed against a clearer digital card: BPM 120, and its combined
+    // Accent/Slide row uses "S" (slide) only — no accents on this pattern.
+    { id:'cut-paste-forget-it-1', title:'Forget It (Part 1/2)', tag:'Cut & Paste · Fan chart transcription', bpm:120, bpmConfirmed:true, waveform:'square',
+      notes:['A#1','A#1','A#2','A#2','F1','F1','F2','F2','G#2','G#2','F2','G#2','G#2','F2','A#2','A#2'],
+      accent:[], slide:[0,2,4,7,10,13] },
+    // Part 2/2's own card image wasn't available — its SLIDE row wasn't confidently legible
+    // in the original scan (column alignment unclear), so slide is left empty rather than
+    // guessed. NOTE and DOWN (octave) are clear. BPM carried over from Part 1's confirmed 120.
+    { id:'cut-paste-forget-it-2', title:'Forget It (Part 2/2)', tag:'Cut & Paste · Fan chart transcription · slide not legible in scan', bpm:120,
+      notes:['A#1','A#1','A#2','A#2','A#1','A#1','D2','D2','D#2','D#2','E2','E2','F2','F2','F2','F2'],
+      accent:[], slide:[] },
+
+    // Full step-by-step transcription (note + down/up + accent/slide per step) supplied
+    // directly, replacing the earlier partial read of a small card photo. No tempo was given,
+    // so BPM is still a flagged guess; waveform keeps the square-wave read from that photo.
+    { id:'daft-punk-da-funk', title:'Da Funk', tag:'Daft Punk · Fan chart transcription', bpm:110, waveform:'square',
+      notes:['G1','A#3','G2','F3','D#2','C#1','C#1','C#2','D#3','D#1','F3','G3','G#1','G1','C1','G2'],
+      accent:[4,5,6,7,11], slide:[2,4,6,8,10,11,13,14,15] },
+
+    // Full step-by-step transcription (pitch, octave transpose, accent, slide per step) plus
+    // tuned filter settings supplied directly, replacing the earlier notes-only read of a
+    // small card photo. filter is {cutoff, resonance, decay, accent}, each 0-1, approximating
+    // the described knob percentages; envelope-mod depth isn't separately modeled by this
+    // simplified engine. No tempo was given, so BPM stays a flagged guess.
+    { id:'tame-impala-breathe-deeper', title:'Breathe Deeper', tag:'Tame Impala · Fan chart transcription · tuned filter', bpm:137, waveform:'sawtooth',
+      notes:['A2','E2','F#2','E1','D2','A2','G2','A2','A2','E2','F#2','E1','D2','A2','G2','A2'],
+      accent:[4,12], slide:[1,3,5,7,9,11,13,15],
+      filter:{ cutoff:0.45, resonance:0.85, decay:0.5, accent:0.7 } },
+  ];
 
   PERF_SECTIONS = [
     { title:'Intro', time:'0:00–0:30', dur:30, desc:"RD-6 Pattern 1 alone (Bass Drum and Closed Hi-Hat only). Filter fully closed on the TD-3, waiting." },
@@ -327,13 +498,24 @@ class Component extends DCLogic {
 
   constructor(props) {
     super(props);
-    this.NOTES = this.NOTE_NAMES.map(n => this.NOTE_FREQ[n]);
+    this.NOTES = this.NOTE_NAMES.map(n => this.noteToFreq(n));
     this.STEPS = this.buildSteps();
+  }
+
+  // Equal-temperament frequency for a note like 'C2', 'C#2', 'A2' (A4 = 440Hz).
+  noteToFreq(name) {
+    const m = /^([A-G])(#?)(-?\d+)$/.exec(name);
+    if (!m) return 130.81;
+    const semis = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+    const semitone = semis[m[1]] + (m[2] ? 1 : 0);
+    const midi = (parseInt(m[3], 10) + 1) * 12 + semitone;
+    return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
   componentWillUnmount() {
     this.stopRd6();
     this.stopTd3();
+    this.stopSongBank();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
   }
 
@@ -430,19 +612,104 @@ class Component extends DCLogic {
           { text:"Filter Snap Drops: Cut the Cutoff fully off on step 13 of a bar, then snap it wide open on step 1 of the drop for instant dynamic impact." },
         ],
       },
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview',
+        title:'Week 5: RD-6 Pattern Banks, Chaining & Live Routing',
+        objective:"Move beyond a single loop: build a second pattern, chain patterns into a song, dial in shuffle, and route individual voices for mixing." },
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Pattern Banks & Programming a Fill', widget:'rd6fill',
+        items:[
+          { text:"Banks: RD-6 patterns are grouped into Bank A and Bank B (8 patterns each), selected with the Bank switch and Pattern Selector." },
+          { text:"Program a second pattern as a fill in Bank A, Pattern 2 — repeat Week 1's clear-and-write steps, then vary it (the grid below is pre-loaded to match — tap any cell to edit further):", subitems:[
+            "Snare/Clap: Steps 5, 7, 13, 15",
+            "Closed Hi-Hat: every step",
+            "Open Hi-Hat: Step 8",
+            "Accent: Steps 7, 15",
+          ] },
+        ],
+        switches:[ { label:'Bank', value:'A' }, { label:'Pattern', value:'2 (Fill)' } ],
+      },
+      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Chain (Song) Mode', widget:'rd6chain',
+        items:[
+          { text:"Set the Mode switch to PATTERN CHAIN." },
+          { text:"Tap Pattern buttons 1, then 2, in the order you want them to play — the display confirms each step of the queued chain." },
+          { text:"Press START/STOP: the RD-6 advances through the chain automatically and loops back to its start when it finishes." },
+          { text:"Return Mode to PATTERN PLAY to exit chain mode and play a single pattern again." },
+        ],
+        switches:[ { label:'Mode', value:'PATTERN CHAIN' } ],
+      },
+      { id:'w5-3', kind:'content', weekTag:W(5), title:'3. Shuffle & Individual Outputs', widget:'rd6shuffle',
+        items:[
+          { text:"Shuffle: choose a swing amount below — Straight, Light, Medium or Heavy — then hit Play Pattern above to hear it delay every other 16th note." },
+          { text:"Individual outputs: BD, SD and HH each have their own 1/4\" output on the rear panel. Patch these into separate mixer or interface channels when you want per-drum EQ, compression, or recording instead of the single mixed Line Out." },
+        ],
+      },
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview',
+        title:'Week 6: TD-3 Sound Design Extras & External Clock',
+        objective:"Push the TD-3-MO's mod-only tone controls further, learn its second pattern bank, and run it from an external tempo source." },
+      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Overdrive & Soft Attack', widget:'td3fx',
+        items:[
+          { text:"Overdrive: choose OFF/LOW/MED/HIGH below for extra grit and compression — good for a lead section of your set. The higher settings become distinctly distorted." },
+          { text:"Soft Attack: check the box below to round off the VCA's attack for a softer pluck; leave it unchecked for the classic snappy 303 pop." },
+        ],
+      },
+      { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Pattern Groups & Track Write',
+        items:[
+          { text:"Patterns are stored in Groups A–D, 8 patterns each. Select a Group, then a pattern number, before entering PATTERN WRITE to build a second bassline for your Week 4 arrangement." },
+          { text:"TRACK WRITE mode records pitch and time in real time instead of step-by-step: press TRACK WRITE, then play the keyboard buttons along with the beat." },
+        ],
+        switches:[ { label:'Group', value:'A' } ],
+      },
+      { id:'w6-3', kind:'content', weekTag:W(6), title:'3. Syncing From an External Clock (MIDI/USB)',
+        items:[
+          { text:"Connect the TD-3-MO to a computer or MIDI interface via its USB port or 5-pin MIDI In." },
+          { text:"Hold FUNCTION and select MIDI Sync mode so the TD-3 follows incoming MIDI clock instead of its internal tempo or the RD-6's analog sync cable." },
+          { text:"Start playback from your DAW or MIDI source; the TD-3 locks to that tempo — useful for recording your set straight into a computer." },
+        ],
+      },
+      { id:'w7-intro', kind:'weekintro', weekTag:W(7), navLabel:'Week Overview',
+        title:'Week 7: Care, Troubleshooting & Backing Up Your Sounds',
+        objective:"Keep both units reliable on stage: troubleshoot common issues, back up your patterns, and maintain the hardware properly." },
+      { id:'w7-1', kind:'content', weekTag:W(7), title:'1. Troubleshooting Checklist',
+        items:[
+          { text:"No sound: check the Main Output level isn't at zero and the right cable run is connected — revisit Week 1's signal path." },
+          { text:"Units won't sync: confirm the sync cable is a TS (mono) 3.5mm cable, not TRS/stereo — a stereo cable can short the clock signal." },
+          { text:"Pattern sounds wrong after power-on: only use the included center-negative 9V adapters; third-party supplies can cause memory glitches." },
+        ],
+      },
+      { id:'w7-2', kind:'content', weekTag:W(7), title:'2. Backing Up & Restoring Patterns',
+        items:[
+          { text:"Both units keep patterns in non-volatile memory, but before big changes write down your BD/SD/Hat steps and TD-3 pitch/time data (or photograph the panel) as a manual backup." },
+          { text:"For a durable backup, connect via USB and use a class-compliant MIDI/SysEx librarian to dump pattern data to your computer, if one supports RD-6/TD-3 dumps." },
+        ],
+      },
+      { id:'w7-3', kind:'content', weekTag:W(7), title:'3. Physical Care',
+        items:[
+          { text:"Wipe knobs and the case with a dry or barely damp cloth only — avoid solvents on the printed panel graphics." },
+          { text:"Store both units in a padded case; the pots and jacks are the most failure-prone points if dropped or transported loose." },
+        ],
+      },
+      { id:'w8-intro', kind:'weekintro', weekTag:W(8), navLabel:'Week Overview',
+        title:'Week 8: Song Bank — Load Ready-Made Patterns',
+        objective:"Browse a bank of 16-step TD-3 patterns and load one straight into the synth engine to hear it instantly — a fast way to study new bassline shapes." },
+      { id:'w8-1', kind:'content', weekTag:W(8), title:'1. Song Cards', widget:'songbank',
+        items:[
+          { text:"Tap a card below to load its notes, accents, slides, waveform and tempo into the TD-3 engine, then hit Play Bassline to hear it." },
+          { text:"Most cards here are transcribed from real fan-made TD-3/303 pattern charts (notes, octave-up/down steps, and waveform as printed). Whatever a source card left blank or illegible — accents, slides, tempo — loads empty or as a flagged starting guess rather than an invented value; check each card's subtitle for what to double-check." },
+          { text:"Found a tutorial with its own pattern card? Add it as a new entry in SONG_CARDS in the component script and it shows up here automatically." },
+        ],
+      },
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to play." },
     ];
   }
 
   // ── navigation ──
   goToStep(i) {
-    this.stopRd6(); this.stopTd3();
+    this.stopRd6(); this.stopTd3(); this.stopSongBank();
     const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
     this.setState({ step: idx, dialogOpen: false });
   }
   goNext() { this.goToStep(this.state.step + 1); }
   goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopRd6(); this.stopTd3(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
+  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
 
   // ── checklist ──
   toggleCheck(stepId, idx) {
@@ -491,25 +758,33 @@ class Component extends DCLogic {
   }
 
   // ── RD-6 ──
-  toggleRd6Cell(rowKey, idx) {
+  toggleRd6Cell(patternKey, rowKey, idx) {
     this.setState(s => {
-      const arr = s.rd6[rowKey].slice();
+      const patt = s[patternKey];
+      const arr = patt[rowKey].slice();
       const pos = arr.indexOf(idx);
       if (pos >= 0) arr.splice(pos, 1); else arr.push(idx);
-      return { rd6: { ...s.rd6, [rowKey]: arr } };
+      return { [patternKey]: { ...patt, [rowKey]: arr } };
     });
   }
-  buildRd6Rows() {
+  currentRd6PlayingKey() {
+    if (!this.state.rd6Playing) return null;
+    if (this.state.rd6PlayKind === 'chain') return this.state.rd6PatIdx === 0 ? 'rd6' : 'rd6Fill';
+    return this.state.rd6PlayKind === 'rd6fill' ? 'rd6Fill' : 'rd6';
+  }
+  buildRd6Rows(patternKey) {
+    const pattern = this.state[patternKey];
     const defs = [ { key:'bd', label:'BD' }, { key:'sd', label:'SD/CP' }, { key:'ch', label:'CH' }, { key:'oh', label:'OH' }, { key:'ac', label:'ACCENT' } ];
     const color = { bd:'var(--color-accent)', sd:'var(--color-accent)', ch:'var(--color-accent)', oh:'var(--color-accent)', ac:'var(--color-accent-2-600)' };
+    const playingKey = this.currentRd6PlayingKey();
     return defs.map(d => ({
       key: d.key, label: d.label,
       cells: Array.from({ length: 16 }, (_, i) => {
-        const active = this.state.rd6[d.key].includes(i);
-        const isCurrent = this.state.rd6Playing && this.state.rd6Col === i;
+        const active = pattern[d.key].includes(i);
+        const isCurrent = playingKey === patternKey && this.state.rd6Col === i;
         const bg = active ? color[d.key] : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
         const border = isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent';
-        return { idx: i, toggle: () => this.toggleRd6Cell(d.key, i),
+        return { idx: i, toggle: () => this.toggleRd6Cell(patternKey, d.key, i),
           style: `width:28px;height:28px;border-radius:8px;background:${bg};border:${border};cursor:pointer;padding:0;flex:none;` };
       }),
     }));
@@ -611,40 +886,65 @@ class Component extends DCLogic {
     src.connect(filter).connect(g).connect(ctx.destination);
     src.start(t); src.stop(t + opts.duration + 0.02);
   }
-  playRd6Step(col) {
+  playRd6StepFor(pattern, col) {
     const t = this.audioCtx.currentTime;
-    const r = this.state.rd6;
-    const accent = r.ac.includes(col);
+    const accent = pattern.ac.includes(col);
     const vol = accent ? 1 : 0.7;
-    if (r.bd.includes(col)) this.playKick(t, vol);
-    if (r.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
-    if (r.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
-    if (r.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
+    if (pattern.bd.includes(col)) this.playKick(t, vol);
+    if (pattern.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
+    if (pattern.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
+    if (pattern.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
   }
-  playRd6() {
+  playRd6(kind) {
+    kind = kind || 'rd6';
     this.ensureAudio(); this.stopRd6();
-    let col = 0;
-    this.playRd6Step(col);
-    this.setState({ rd6Playing: true, rd6Col: col });
-    this.rd6Timer = setInterval(() => {
-      col = (col + 1) % 16;
-      this.playRd6Step(col);
-      this.setState({ rd6Col: col });
-    }, 125);
+    let col = 0, patIdx = 0;
+    const patternFor = () => {
+      if (kind === 'chain') return patIdx === 0 ? this.state.rd6 : this.state.rd6Fill;
+      return kind === 'rd6fill' ? this.state.rd6Fill : this.state.rd6;
+    };
+    const tick = () => {
+      this.playRd6StepFor(patternFor(), col);
+      this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: col, rd6PatIdx: patIdx });
+      const shuffle = this.state.rd6Shuffle || 0;
+      // Delay the wait INTO each odd (off-beat) step, shorten the wait back to the next
+      // even step, so odd 16ths land late — the swing feel the UI/README describe.
+      const mult = col % 2 === 0 ? 1 + shuffle : 1 - shuffle;
+      this.rd6Timer = setTimeout(() => {
+        col = (col + 1) % 16;
+        if (col === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
+        tick();
+      }, 125 * mult);
+    };
+    tick();
   }
   stopRd6() {
-    if (this.rd6Timer) { clearInterval(this.rd6Timer); this.rd6Timer = null; }
-    if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1 });
+    if (this.rd6Timer) { clearTimeout(this.rd6Timer); this.rd6Timer = null; }
+    if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1, rd6PlayKind: null });
+  }
+  makeDistortionCurve(amount) {
+    const k = amount * 50;
+    const n = 4096;
+    const curve = new Float32Array(n);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = k === 0 ? x : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
   }
   playTd3() {
     this.ensureAudio(); this.stopTd3();
     const ctx = this.audioCtx;
     const osc = ctx.createOscillator(); osc.type = 'sawtooth';
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
+    const shaper = ctx.createWaveShaper();
+    shaper.curve = this.makeDistortionCurve(this.state.td3Overdrive || 0);
+    shaper.oversample = '2x';
     const gain = ctx.createGain(); gain.gain.value = 0.0001;
-    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
     osc.start();
-    this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter;
+    this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
     let col = 0;
     const trigger = c => {
       const t = ctx.currentTime;
@@ -659,11 +959,12 @@ class Component extends DCLogic {
       filter.frequency.cancelScheduledValues(t);
       filter.frequency.setValueAtTime(cutoff, t);
       filter.frequency.exponentialRampToValueAtTime(300, t + 0.18);
+      const attackTime = this.state.td3SoftAttack ? 0.045 : 0.005;
       gain.gain.cancelScheduledValues(t);
       if (!slide) {
         gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(peak, t + 0.005);
-        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.09);
+        gain.gain.exponentialRampToValueAtTime(peak, t + attackTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + attackTime + 0.085);
       } else {
         gain.gain.setValueAtTime(peak, t);
       }
@@ -687,6 +988,91 @@ class Component extends DCLogic {
     if (this.state.td3Playing) this.setState({ td3Playing: false, td3Col: -1 });
   }
 
+  // ── song bank ──
+  loadSongCard(card) {
+    this.stopSongBank();
+    this.setState({
+      sbNotes: card.notes.slice(), sbAccent: card.accent.slice(), sbSlide: card.slide.slice(),
+      sbTempo: Math.round(60000 / card.bpm / 4), sbWaveform: card.waveform || 'sawtooth',
+      sbFilterCfg: card.filter || null, sbSelected: card.id,
+    });
+  }
+  buildSongBankCells() {
+    if (!this.state.sbNotes) return [];
+    return this.state.sbNotes.map((note, i) => {
+      const accent = this.state.sbAccent.includes(i);
+      const slide = this.state.sbSlide.includes(i);
+      const isCurrent = this.state.sbPlaying && this.state.sbCol === i;
+      return { note, accent, slide,
+        bg: isCurrent ? 'var(--color-accent-700)' : (accent ? 'var(--color-accent-200)' : 'var(--color-neutral-200)'),
+        border: isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent',
+        textColor: isCurrent ? 'var(--color-bg)' : 'var(--color-text)' };
+    });
+  }
+  playSongBank() {
+    if (!this.state.sbNotes) return;
+    this.ensureAudio(); this.stopSongBank();
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); osc.type = this.state.sbWaveform || 'sawtooth';
+    const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
+    const gain = ctx.createGain(); gain.gain.value = 0.0001;
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.start();
+    this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
+    const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
+    const fc = this.state.sbFilterCfg;
+    let col = 0;
+    const trigger = c => {
+      const t = ctx.currentTime;
+      const freq = this.noteToFreq(notes[c]);
+      const accent = accentArr.includes(c);
+      const prev = (c - 1 + notes.length) % notes.length;
+      const slide = slideArr.includes(prev);
+      if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
+      else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
+      let peak, cutoff, decayTime;
+      if (fc) {
+        const baseCutoff = 200 + fc.cutoff * 2600;
+        cutoff = accent ? baseCutoff * (1 + fc.accent * 1.5) : baseCutoff;
+        decayTime = 0.08 + fc.decay * 0.35;
+        peak = accent ? 0.32 + fc.accent * 0.35 : 0.32;
+        filter.Q.value = 1 + fc.resonance * 23;
+      } else {
+        peak = accent ? 0.5 : 0.32;
+        cutoff = accent ? 1800 : 900;
+        decayTime = 0.18;
+      }
+      filter.frequency.cancelScheduledValues(t);
+      filter.frequency.setValueAtTime(cutoff, t);
+      filter.frequency.exponentialRampToValueAtTime(300, t + decayTime);
+      gain.gain.cancelScheduledValues(t);
+      if (!slide) {
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(peak, t + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.09);
+      } else {
+        gain.gain.setValueAtTime(peak, t);
+      }
+    };
+    trigger(col);
+    this.setState({ sbPlaying: true, sbCol: col });
+    this.sbTimer = setInterval(() => {
+      col = (col + 1) % notes.length;
+      trigger(col);
+      this.setState({ sbCol: col });
+    }, this.state.sbTempo);
+  }
+  stopSongBank() {
+    if (this.sbTimer) { clearInterval(this.sbTimer); this.sbTimer = null; }
+    if (this.sbOsc) {
+      const osc = this.sbOsc; const g = this.sbGain;
+      try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
+      setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
+      this.sbOsc = null;
+    }
+    if (this.state.sbPlaying) this.setState({ sbPlaying: false, sbCol: -1 });
+  }
+
   renderVals() {
     const step = this.STEPS[this.state.step];
     const items = this.buildItems(step);
@@ -705,19 +1091,53 @@ class Component extends DCLogic {
         weekTag: step.weekTag, title: step.title, objective: step.objective,
         hasNote: !!step.note, note: step.note, items, knobs, switches,
         showKnobs: knobs.length > 0, showSwitches: switches.length > 0,
-        showCablesAudio: step.widget === 'cablesAudio', showRd6: step.widget === 'rd6',
+        showCablesAudio: step.widget === 'cablesAudio',
+        showRd6: step.widget === 'rd6' || step.widget === 'rd6fill' || step.widget === 'rd6shuffle',
+        showShuffle: step.widget === 'rd6shuffle', showRd6Chain: step.widget === 'rd6chain',
         showTd3Pitch: step.widget === 'td3pitch', showTd3Time: step.widget === 'td3time',
-        showTd3Play: step.widget === 'td3play', showSync: step.widget === 'sync',
+        showTd3Play: step.widget === 'td3play' || step.widget === 'td3fx', showTd3Fx: step.widget === 'td3fx',
+        showSync: step.widget === 'sync',
         showAccentSweep: step.widget === 'moTweaks', showPerfmap: step.widget === 'perfmap',
+        showSongBank: step.widget === 'songbank',
       },
-      rd6Rows: step.widget === 'rd6' ? this.buildRd6Rows() : [],
-      rd6PlayLabel: this.state.rd6Playing ? 'Stop' : 'Play Pattern',
-      rd6PlayToggle: this.state.rd6Playing ? () => this.stopRd6() : () => this.playRd6(),
+      rd6GridTitle: step.widget === 'rd6fill' ? 'RD-6 pattern — Bank A, Pattern 2 (Fill)' : 'RD-6 pattern — 4-on-the-floor',
+      rd6Rows: step.widget === 'rd6fill' ? this.buildRd6Rows('rd6Fill')
+        : (step.widget === 'rd6' || step.widget === 'rd6shuffle') ? this.buildRd6Rows('rd6') : [],
+      rd6PlayLabel: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6') ? 'Stop' : 'Play Pattern',
+      rd6PlayToggle: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6')
+        ? () => this.stopRd6() : () => this.playRd6(step.widget === 'rd6fill' ? 'rd6fill' : 'rd6'),
+      shuffleOptions: step.widget === 'rd6shuffle' ? [
+        { label: 'Straight', value: 0 }, { label: 'Light', value: 0.08 },
+        { label: 'Medium', value: 0.16 }, { label: 'Heavy', value: 0.25 },
+      ].map(o => ({ label: o.label, checked: this.state.rd6Shuffle === o.value, select: () => this.setState({ rd6Shuffle: o.value }) })) : [],
+      rd6ChainPlayLabel: this.state.rd6Playing && this.state.rd6PlayKind === 'chain' ? 'Stop' : 'Play Chain',
+      rd6ChainPlayToggle: this.state.rd6Playing && this.state.rd6PlayKind === 'chain'
+        ? () => this.stopRd6() : () => this.playRd6('chain'),
+      rd6ChainSlots: step.widget === 'rd6chain' ? [0, 1].map(i => {
+        const active = this.state.rd6Playing && this.state.rd6PlayKind === 'chain' && this.state.rd6PatIdx === i;
+        return { label: `Pattern ${i + 1}`,
+          style: `flex:1;text-align:center;padding:12px;border-radius:var(--radius-md);font-size:13px;font-weight:700;background:${active ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${active ? 'var(--color-bg)' : 'var(--color-text)'};` };
+      }) : [],
       td3PitchCells: step.widget === 'td3pitch' ? this.buildTd3PitchCells() : [],
       td3TimeCells: step.widget === 'td3time' ? this.buildTd3TimeCells() : [],
-      td3PlayCells: step.widget === 'td3play' ? this.buildTd3PlayCells() : [],
+      td3PlayCells: (step.widget === 'td3play' || step.widget === 'td3fx') ? this.buildTd3PlayCells() : [],
       td3PlayLabel: this.state.td3Playing ? 'Stop' : 'Play Bassline',
       td3PlayToggle: this.state.td3Playing ? () => this.stopTd3() : () => this.playTd3(),
+      overdriveOptions: step.widget === 'td3fx' ? [
+        { label: 'OFF', value: 0 }, { label: 'LOW', value: 0.3 }, { label: 'MED', value: 0.6 }, { label: 'HIGH', value: 1 },
+      ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
+      softAttackOn: this.state.td3SoftAttack,
+      toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
+      songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
+        title: c.title, tag: c.tag, load: () => this.loadSongCard(c),
+        bpmLabel: c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`,
+        cardStyle: `text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${this.state.sbSelected === c.id ? 'var(--color-accent)' : 'var(--color-divider)'};background:${this.state.sbSelected === c.id ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:140px;`,
+      })) : [],
+      sbHasCard: !!this.state.sbNotes,
+      sbTitle: this.state.sbSelected ? `${(this.SONG_CARDS.find(c => c.id === this.state.sbSelected) || {}).title || ''} — full pattern` : '',
+      sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],
+      sbPlayLabel: this.state.sbPlaying ? 'Stop' : 'Play Bassline',
+      sbPlayToggle: this.state.sbPlaying ? () => this.stopSongBank() : () => this.playSongBank(),
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
       accentSweepOptions: step.widget === 'moTweaks' ? [

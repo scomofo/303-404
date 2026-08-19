@@ -40,7 +40,7 @@
             <h4 style="margin:0 0 8px;">Course Overview</h4>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
               <li>Target Audience: Absolute Beginners</li>
-              <li>Duration: 7 Weeks (2 Hours / Week)</li>
+              <li>Duration: 8 Weeks (2 Hours / Week)</li>
               <li>Equipment Needed:
                 <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
                   <li>Behringer TD-3-MO Acid Synthesizer</li>
@@ -251,6 +251,50 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ currentStep.showSongBank }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Song cards — tap to load into the engine below</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
+                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}">
+                      <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
+                      <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpm }} BPM</div>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+              <sc-if value="{{ sbHasCard }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ sbTitle }}</div>
+                    <button type="button" class="btn btn-primary" onclick="{{ sbPlayToggle }}">{{ sbPlayLabel }}</button>
+                  </div>
+                  <div style="overflow-x:auto;">
+                    <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
+                      <sc-for list="{{ sbCells }}" as="c" hint-placeholder-count="16">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:40px;">
+                          <div style="width:40px;height:40px;border-radius:8px;background:{{ c.bg }};border:{{ c.border }};display:flex;align-items:center;justify-content:center;">
+                            <span style="font-size:11px;font-weight:700;color:{{ c.textColor }};">{{ c.note }}</span>
+                          </div>
+                          <div style="display:flex;gap:2px;height:6px;align-items:center;">
+                            <sc-if value="{{ c.accent }}" hint-placeholder-val="{{ false }}">
+                              <span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-2-600);"></span>
+                            </sc-if>
+                            <sc-if value="{{ c.slide }}" hint-placeholder-val="{{ false }}">
+                              <span style="width:12px;height:3px;border-radius:2px;background:var(--color-accent-700);"></span>
+                            </sc-if>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <p style="font-size:12px;opacity:.6;margin:0;">Cards marked "Practice pattern" are originals for drilling technique. Others are transcribed from real tutorial cards — any detail the source card left blank (tempo, accents, slides) loads as empty/default rather than guessed. Add your own by editing SONG_CARDS in the component script — see the README.</p>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ currentStep.showTd3Play }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -365,10 +409,29 @@ class Component extends DCLogic {
     cablesSync: [false],
     accentSweep: 'FAST',
     perfmapSel: 0,
+    sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbPlaying: false, sbCol: -1, sbSelected: null,
   };
 
-  NOTE_FREQ = { C2:65.41, D2:73.42, 'D#2':77.78, F2:87.31, G2:98.00, 'A#2':116.54, C3:130.81 };
+  NOTE_FREQ = { C2:65.41, D2:73.42, 'D#2':77.78, E2:82.41, F2:87.31, G2:98.00, A2:110.00, 'A#2':116.54, C3:130.81, D3:146.83, E3:164.81 };
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
+
+  SONG_CARDS = [
+    { id:'practice-1', title:'Rolling Eighths', tag:'Practice pattern', bpm:130,
+      notes:['C2','C2','C2','C2','C2','C2','D#2','C2','C2','C2','C2','C2','C2','C2','A#2','C2'],
+      accent:[0,6,14], slide:[1,7,13] },
+    { id:'practice-2', title:'Octave Jump', tag:'Practice pattern', bpm:125,
+      notes:['C2','C3','C2','C2','C2','C3','C2','C2','C2','C3','C2','C2','C2','C3','C2','G2'],
+      accent:[1,5,9,13], slide:[] },
+    { id:'practice-3', title:'Offbeat Squelch', tag:'Practice pattern', bpm:140,
+      notes:['C2','G2','C2','D2','C2','G2','C2','D#2','C2','G2','C2','D2','C2','G2','C2','F2'],
+      accent:[3,7,11,15], slide:[0,4,8,12] },
+    // Transcribed from a fan-made TD-3 tutorial card (Pattern I, Bank A). The card's "UP" row
+    // marks an octave-up shift on those steps; its Accent/Slide row and tempo were left
+    // unmarked, so those are loaded empty and the BPM below is a starting guess, not a printed fact.
+    { id:'on-the-run', title:'On the Run', tag:'Pattern I · Bank A · Square wave', bpm:130, waveform:'square',
+      notes:['E2','G2','A2','G2','D3','C3','D3','E3','E2','G2','A2','G2','D3','C3','D3','E3'],
+      accent:[], slide:[] },
+  ];
 
   PERF_SECTIONS = [
     { title:'Intro', time:'0:00–0:30', dur:30, desc:"RD-6 Pattern 1 alone (Bass Drum and Closed Hi-Hat only). Filter fully closed on the TD-3, waiting." },
@@ -389,6 +452,7 @@ class Component extends DCLogic {
   componentWillUnmount() {
     this.stopRd6();
     this.stopTd3();
+    this.stopSongBank();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
   }
 
@@ -560,19 +624,29 @@ class Component extends DCLogic {
           { text:"Store both units in a padded case; the pots and jacks are the most failure-prone points if dropped or transported loose." },
         ],
       },
+      { id:'w8-intro', kind:'weekintro', weekTag:W(8), navLabel:'Week Overview',
+        title:'Week 8: Song Bank — Load Ready-Made Patterns',
+        objective:"Browse a bank of 16-step TD-3 patterns and load one straight into the synth engine to hear it instantly — a fast way to study new bassline shapes." },
+      { id:'w8-1', kind:'content', weekTag:W(8), title:'1. Song Cards', widget:'songbank',
+        items:[
+          { text:"Tap a card below to load its notes, accents, slides, waveform and tempo into the TD-3 engine, then hit Play Bassline to hear it." },
+          { text:"\"On the Run\" is transcribed from a fan-made TD-3 tutorial card: notes and octave-up (UP) steps as printed, square waveform as circled on the card. That card's Accent/Slide row and tempo weren't marked, so those load as none/130 BPM — treat both as a starting point." },
+          { text:"Found a tutorial with its own pattern card? Add it as a new entry in SONG_CARDS in the component script and it shows up here automatically." },
+        ],
+      },
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to play." },
     ];
   }
 
   // ── navigation ──
   goToStep(i) {
-    this.stopRd6(); this.stopTd3();
+    this.stopRd6(); this.stopTd3(); this.stopSongBank();
     const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
     this.setState({ step: idx, dialogOpen: false });
   }
   goNext() { this.goToStep(this.state.step + 1); }
   goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopRd6(); this.stopTd3(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
+  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
 
   // ── checklist ──
   toggleCheck(stepId, idx) {
@@ -849,6 +923,79 @@ class Component extends DCLogic {
     if (this.state.td3Playing) this.setState({ td3Playing: false, td3Col: -1 });
   }
 
+  // ── song bank ──
+  loadSongCard(card) {
+    this.stopSongBank();
+    this.setState({
+      sbNotes: card.notes.slice(), sbAccent: card.accent.slice(), sbSlide: card.slide.slice(),
+      sbTempo: Math.round(60000 / card.bpm / 4), sbWaveform: card.waveform || 'sawtooth', sbSelected: card.id,
+    });
+  }
+  buildSongBankCells() {
+    if (!this.state.sbNotes) return [];
+    return this.state.sbNotes.map((note, i) => {
+      const accent = this.state.sbAccent.includes(i);
+      const slide = this.state.sbSlide.includes(i);
+      const isCurrent = this.state.sbPlaying && this.state.sbCol === i;
+      return { note, accent, slide,
+        bg: isCurrent ? 'var(--color-accent-700)' : (accent ? 'var(--color-accent-200)' : 'var(--color-neutral-200)'),
+        border: isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent',
+        textColor: isCurrent ? 'var(--color-bg)' : 'var(--color-text)' };
+    });
+  }
+  playSongBank() {
+    if (!this.state.sbNotes) return;
+    this.ensureAudio(); this.stopSongBank();
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); osc.type = this.state.sbWaveform || 'sawtooth';
+    const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
+    const gain = ctx.createGain(); gain.gain.value = 0.0001;
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.start();
+    this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
+    const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
+    let col = 0;
+    const trigger = c => {
+      const t = ctx.currentTime;
+      const freq = this.NOTE_FREQ[notes[c]] || this.NOTE_FREQ.C2;
+      const accent = accentArr.includes(c);
+      const prev = (c - 1 + notes.length) % notes.length;
+      const slide = slideArr.includes(prev);
+      if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
+      else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
+      const peak = accent ? 0.5 : 0.32;
+      const cutoff = accent ? 1800 : 900;
+      filter.frequency.cancelScheduledValues(t);
+      filter.frequency.setValueAtTime(cutoff, t);
+      filter.frequency.exponentialRampToValueAtTime(300, t + 0.18);
+      gain.gain.cancelScheduledValues(t);
+      if (!slide) {
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(peak, t + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.09);
+      } else {
+        gain.gain.setValueAtTime(peak, t);
+      }
+    };
+    trigger(col);
+    this.setState({ sbPlaying: true, sbCol: col });
+    this.sbTimer = setInterval(() => {
+      col = (col + 1) % notes.length;
+      trigger(col);
+      this.setState({ sbCol: col });
+    }, this.state.sbTempo);
+  }
+  stopSongBank() {
+    if (this.sbTimer) { clearInterval(this.sbTimer); this.sbTimer = null; }
+    if (this.sbOsc) {
+      const osc = this.sbOsc; const g = this.sbGain;
+      try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
+      setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
+      this.sbOsc = null;
+    }
+    if (this.state.sbPlaying) this.setState({ sbPlaying: false, sbCol: -1 });
+  }
+
   renderVals() {
     const step = this.STEPS[this.state.step];
     const items = this.buildItems(step);
@@ -874,6 +1021,7 @@ class Component extends DCLogic {
         showTd3Play: step.widget === 'td3play' || step.widget === 'td3fx', showTd3Fx: step.widget === 'td3fx',
         showSync: step.widget === 'sync',
         showAccentSweep: step.widget === 'moTweaks', showPerfmap: step.widget === 'perfmap',
+        showSongBank: step.widget === 'songbank',
       },
       rd6GridTitle: step.widget === 'rd6fill' ? 'RD-6 pattern — Bank A, Pattern 2 (Fill)' : 'RD-6 pattern — 4-on-the-floor',
       rd6Rows: step.widget === 'rd6fill' ? this.buildRd6Rows('rd6Fill')
@@ -903,6 +1051,15 @@ class Component extends DCLogic {
       ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
       softAttackOn: this.state.td3SoftAttack,
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
+      songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
+        title: c.title, tag: c.tag, bpm: c.bpm, load: () => this.loadSongCard(c),
+        cardStyle: `text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${this.state.sbSelected === c.id ? 'var(--color-accent)' : 'var(--color-divider)'};background:${this.state.sbSelected === c.id ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:140px;`,
+      })) : [],
+      sbHasCard: !!this.state.sbNotes,
+      sbTitle: this.state.sbSelected ? `${(this.SONG_CARDS.find(c => c.id === this.state.sbSelected) || {}).title || ''} — full pattern` : '',
+      sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],
+      sbPlayLabel: this.state.sbPlaying ? 'Stop' : 'Play Bassline',
+      sbPlayToggle: this.state.sbPlaying ? () => this.stopSongBank() : () => this.playSongBank(),
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
       accentSweepOptions: step.widget === 'moTweaks' ? [

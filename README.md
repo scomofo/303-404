@@ -1,6 +1,6 @@
 # TD-3 & RD-6 Guide
 
-A single-page, interactive setup and performance course for the **Behringer TD-3-MO** acid synthesizer and **Behringer RD-6-BK** drum machine. It walks an absolute beginner from unboxing to playing a five-minute live set, then on through pattern chaining, sound-design extras, and stage-ready troubleshooting, over seven weeks — with clickable hardware widgets and Web Audio previews of the patterns you're programming.
+A single-page, interactive setup and performance course for the **Behringer TD-3-MO** acid synthesizer and **Behringer RD-6-BK** drum machine. It walks an absolute beginner from unboxing to playing a five-minute live set, then on through pattern chaining, sound-design extras, stage-ready troubleshooting, and a loadable bank of TD-3 patterns, over eight weeks — with clickable hardware widgets and Web Audio previews of the patterns you're programming.
 
 Everything lives in one file — [Behringer Setup Guide.dc.html](Behringer%20Setup%20Guide.dc.html) — with a runtime script, a design-system bundle, and two photos alongside it.
 
@@ -29,8 +29,9 @@ Audio starts only after you press a Play button, since browsers require a user g
 | 5 | RD-6 Pattern Banks, Chaining & Live Routing | Banks A/B, programming a fill pattern, PATTERN CHAIN (song) mode, shuffle, individual voice outputs |
 | 6 | TD-3 Sound Design Extras & External Clock | Overdrive, Soft Attack, pattern Groups A–D, TRACK WRITE, syncing to MIDI/USB clock |
 | 7 | Care, Troubleshooting & Backing Up Your Sounds | Common fixes for no-sound/no-sync issues, backing up patterns, physical maintenance |
+| 8 | Song Bank — Load Ready-Made Patterns | A bank of loadable 16-step TD-3 patterns (notes, accents, slides, tempo) to study and play instantly |
 
-A progress bar tracks your position across the 29 steps, and the **Course map** button in the header jumps to any step.
+A progress bar tracks your position across the 31 steps, and the **Course map** button in the header jumps to any step.
 
 ### Interactive pieces
 
@@ -42,6 +43,7 @@ A progress bar tracks your position across the 29 steps, and the **Course map** 
 - **Chain playback** (Week 5) — **Play Chain** loops the Week 1 pattern for 16 steps, then automatically switches to the Week 5 fill pattern for 16 steps, and repeats — simulating the RD-6's PATTERN CHAIN mode, with the active pattern highlighted live.
 - **Shuffle control** (Week 5) — Straight/Light/Medium/Heavy options actually delay every odd-numbered 16th note during playback, so you can hear the swing amount change.
 - **Overdrive & Soft Attack** (Week 6) — OFF/LOW/MED/HIGH drives a real `WaveShaper` distortion curve on the TD-3 voice, and the Soft Attack checkbox lengthens the VCA's attack time; hit **Play Bassline** to compare settings.
+- **Song Bank** (Week 8) — a gallery of loadable 16-step patterns (notes, accents, slides, waveform, tempo). Tap a card to load it into its own independent TD-3 engine (its own oscillator/filter/gain chain, not the Week 2/6 one) and hit Play to hear it. Three cards ("Rolling Eighths", "Octave Jump", "Offbeat Squelch") are original practice patterns for drilling technique. "On the Run" is transcribed from a fan-made TD-3 tutorial card — notes and octave-up (`UP`) steps as printed, square waveform as circled on the card; its Accent/Slide row and tempo weren't marked on the source, so those load as empty/a 130 BPM starting guess rather than invented values. Add your own by editing the `SONG_CARDS` array near the top of the `Component` class — each entry is `{ id, title, tag, bpm, waveform: 'sawtooth'|'square' (optional, defaults to sawtooth), notes: [16 note names, e.g. C2/D2/D#2/E2/F2/G2/A2/A#2/C3/D3/E3], accent: [step indices], slide: [step indices] }`.
 
 Checklists, cable states, and your edits to all patterns are held in memory for the session — reloading, or the **Start Over** button, resets them.
 

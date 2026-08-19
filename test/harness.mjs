@@ -30,12 +30,15 @@ function extractLogic(html, file) {
 // Records every scheduled start time so tests can assert on the timing grid the
 // engines produce, which is the whole point of scheduling against the audio clock.
 
+// Records what was scheduled on it, so tests can assert the actual cutoff, envelope
+// and pitch values an engine computes rather than only that it ran.
 function param(value = 0) {
   return {
     value,
-    setValueAtTime() { return this; },
-    exponentialRampToValueAtTime() { return this; },
-    linearRampToValueAtTime() { return this; },
+    calls: [],
+    setValueAtTime(v, t) { this.calls.push({ op: 'set', v, t }); return this; },
+    exponentialRampToValueAtTime(v, t) { this.calls.push({ op: 'expo', v, t }); return this; },
+    linearRampToValueAtTime(v, t) { this.calls.push({ op: 'linear', v, t }); return this; },
     cancelScheduledValues() { return this; },
   };
 }
@@ -76,12 +79,18 @@ export function makeAudioContext() {
     ...extra,
   });
 
-  ctx.createOscillator = () => source({ type: 'sine', frequency: param(440), detune: param() });
-  ctx.createBufferSource = () => source({ buffer: null });
-  ctx.createGain = () => node(ctx, { gain: param(1) });
-  ctx.createBiquadFilter = () => node(ctx, { type: 'lowpass', frequency: param(350), Q: param(1), gain: param(0) });
-  ctx.createWaveShaper = () => node(ctx, { curve: null, oversample: 'none' });
-  ctx.createDelay = () => node(ctx, { delayTime: param(0) });
+  // Track what each engine actually builds, so a test can tell whether e.g. a
+  // waveshaper was inserted at all.
+  const created = [];
+  ctx.__created = created;
+  const make = (kind, n) => { created.push({ kind, node: n }); return n; };
+
+  ctx.createOscillator = () => make('oscillator', source({ type: 'sine', frequency: param(440), detune: param() }));
+  ctx.createBufferSource = () => make('bufferSource', source({ buffer: null }));
+  ctx.createGain = () => make('gain', node(ctx, { gain: param(1) }));
+  ctx.createBiquadFilter = () => make('biquad', node(ctx, { type: 'lowpass', frequency: param(350), Q: param(1), gain: param(0) }));
+  ctx.createWaveShaper = () => make('waveShaper', node(ctx, { curve: null, oversample: 'none' }));
+  ctx.createDelay = () => make('delay', node(ctx, { delayTime: param(0) }));
   ctx.createBuffer = (ch, len) => ({ getChannelData: () => new Float32Array(len) });
   return ctx;
 }

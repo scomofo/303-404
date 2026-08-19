@@ -256,32 +256,41 @@
             <div style="display:flex;flex-direction:column;gap:14px;">
               <div>
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Song cards — tap to load into the engine below</div>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;">
                   <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
-                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}" aria-pressed="{{ card.pressed }}">
-                      <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
-                      <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpmLabel }}</div>
+                    <button type="button" onclick="{{ card.load }}" style="{{ card.rowStyleA }}" aria-pressed="{{ card.pressed }}">
+                      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;">
+                        <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
+                        <div style="font-size:11px;font-weight:700;color:var(--color-accent-700);white-space:nowrap;">{{ card.bpmLabel }}</div>
+                      </div>
+                      <div style="font-size:11px;opacity:.65;">{{ card.tag }}</div>
+                      <div style="display:flex;gap:2px;height:8px;">
+                        <sc-for list="{{ card.preview }}" as="tick" hint-placeholder-count="16">
+                          <span style="flex:1;border-radius:1px;background:{{ tick }};"></span>
+                        </sc-for>
+                      </div>
                     </button>
                   </sc-for>
                 </div>
               </div>
-              <sc-if value="{{ sbHasCard }}" hint-placeholder-val="{{ false }}">
-                <div class="card elev-sm" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);">
-                  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Pattern chart</div>
 
-                  <div style="display:flex;flex-wrap:wrap;gap:var(--space-3) var(--space-6);font-size:12px;">
-                    <div><span style="opacity:.55;">Author</span><br><strong>{{ songChart.artist }}</strong></div>
-                    <div><span style="opacity:.55;">Title</span><br><strong>{{ songChart.title }}</strong></div>
-                    <div><span style="opacity:.55;">BPM</span><br><strong style="color:var(--color-accent-700);">{{ songChart.bpmLabel }}</strong></div>
-                    <div><span style="opacity:.55;">Pattern group</span><br><strong>{{ songChart.group }}</strong></div>
-                    <div><span style="opacity:.55;">Pattern</span><br><strong>{{ songChart.pattern }}</strong></div>
-                    <div><span style="opacity:.55;">Bank</span><br><strong>{{ songChart.bank }}</strong></div>
-                    <div><span style="opacity:.55;">Home octave</span><br><strong>{{ songChart.homeOctaveLabel }}</strong></div>
+              <sc-if value="{{ sbHasCard }}" hint-placeholder-val="{{ false }}">
+                <div class="card elev-sm" style="padding:0;overflow:hidden;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;">
+                    <div style="padding:10px 14px;border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);"><span style="font-size:11px;font-weight:700;opacity:.55;">Author</span><br><strong style="font-size:13.5px;">{{ songChart.artist }}</strong></div>
+                    <div style="padding:10px 14px;border-bottom:1px solid var(--color-divider);"><span style="font-size:11px;font-weight:700;opacity:.55;">Pattern Group</span><br><strong style="font-size:13.5px;">{{ songChart.group }}</strong></div>
+                    <div style="padding:10px 14px;border-right:1px solid var(--color-divider);"><span style="font-size:11px;font-weight:700;opacity:.55;">Title</span><br><strong style="font-size:13.5px;">{{ songChart.title }}</strong></div>
+                    <div style="padding:10px 14px;display:flex;gap:var(--space-6);">
+                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">BPM</span><br><strong style="font-size:13.5px;color:var(--color-accent-700);">{{ songChart.bpmLabel }}</strong></div>
+                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">Pattern</span><br><strong style="font-size:13.5px;">{{ songChart.pattern }}</strong></div>
+                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">Bank</span><br><strong style="font-size:13.5px;">{{ songChart.bank }}</strong></div>
+                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">Home octave</span><br><strong style="font-size:13.5px;">{{ songChart.homeOctaveLabel }}</strong></div>
+                    </div>
                   </div>
 
-                  <div style="overflow-x:auto;">
+                  <div style="overflow-x:auto;padding:14px;">
                     <div style="{{ songChart.gridStyle }}">
-                      <div style="padding:5px 8px;font-size:11px;font-weight:700;opacity:.55;"></div>
+                      <div style="padding:5px 8px;"></div>
                       <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
                         <div style="{{ s.numStyle }}">{{ s.num }}</div>
                       </sc-for>
@@ -300,16 +309,21 @@
                       <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
                         <div style="{{ s.markStyle }}">{{ s.marks }}</div>
                       </sc-for>
+
+                      <div style="padding:6px 8px;border-top:1px solid var(--color-divider);"></div>
+                      <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
+                        <div style="{{ s.dotStyle }}" title="Combined accent/slide mark, as on the original chart">{{ s.dotChar }}</div>
+                      </sc-for>
                     </div>
                   </div>
 
-                  <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:flex-start;">
+                  <div style="padding:14px;border-top:1px solid var(--color-divider);display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:flex-start;">
                     <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;">
                       <div style="height:56px;display:flex;align-items:center;font-size:22px;letter-spacing:-2px;color:var(--color-accent-700);">{{ songChart.waveGlyph }}</div>
                       <div style="font-size:11.5px;font-weight:600;">Waveform</div>
                       <div style="font-size:10.5px;opacity:.6;">{{ songChart.waveLabel }}</div>
                     </div>
-                    <sc-for list="{{ songChart.dials }}" as="dial" hint-placeholder-count="5">
+                    <sc-for list="{{ songChart.dials }}" as="dial" hint-placeholder-count="6">
                       <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;">
                         <div style="{{ dial.faceStyle }}">
                           <div style="{{ dial.pointerStyle }}"></div>
@@ -320,14 +334,12 @@
                     </sc-for>
                   </div>
 
-                  <div style="font-size:11.5px;border-top:1px solid var(--color-divider);padding-top:10px;">
+                  <div style="font-size:11.5px;border-top:1px solid var(--color-divider);padding:12px 14px;">
                     <span style="opacity:.55;">EFX / Notes:</span> {{ songChart.notes }}
                   </div>
-                  <p style="font-size:11px;opacity:.55;margin:0;">A dash means the source chart did not state that value. Down/Up is relative to the home octave above, and Env Mod is never shown because this engine models filter decay but not modulation depth.</p>
                 </div>
-              </sc-if>
+                <p style="font-size:11px;opacity:.55;margin:0;">A dash means the source chart did not state that value. Down/Up is relative to the home octave above; the bottom row echoes the original scan's unlabeled accent/slide marks. Env Mod is never shown because this engine models filter decay but not modulation depth.</p>
 
-              <sc-if value="{{ sbHasCard }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ sbTitle }}</div>
@@ -474,7 +486,7 @@ class Component extends DCLogic {
       cablesSync: [false],
       accentSweep: 'FAST',
       perfmapSel: 0,
-      sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
+      sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbOverdrive: 0, sbPlaying: false, sbCol: -1, sbSelected: null,
     };
   }
 
@@ -547,6 +559,49 @@ class Component extends DCLogic {
     { id:'daft-punk-da-funk', title:'Da Funk', artist:'Daft Punk', tag:'Daft Punk · Fan chart transcription', bpm:111, bpmConfirmed:true, waveform:'square',
       notes:['G1','A#3','G2','F3','D#2','C#1','C#1','C#2','D#3','D#1','F3','G3','G#1','G1','C1','G2'],
       accent:[4,5,6,7,11], slide:[2,4,6,8,10,11,13,14,15] },
+
+    // ── supplied step tables ──
+    // The four cards below came as written-out step tables rather than chart photos, and
+    // all mark their octaves relative to the TD-3's base rather than to the pattern's own
+    // centre — hence the explicit homeOctave on each. Notes are entered as played on the
+    // one-octave keyboard, so within a block B sits above E. Knob directions given as clock
+    // positions map onto the 7-to-5 o'clock sweep (9 o'clock = 0.2, 11 = 0.4, 1 = 0.6,
+    // 2 = 0.7, 3 = 0.8). Settings named but not modelled by this engine — filter tracking,
+    // the sub-oscillator, the Muffler switch, slide time, envelope-mod depth — are left out
+    // rather than approximated, and noted on each card's tag. None of the four came with a
+    // source-confirmed tempo, so every BPM stays a flagged estimate.
+
+    { id:'darude-sandstorm', title:'Sandstorm', artist:'Darude', tag:'Darude · Supplied step table · E minor trance lead · filter tracking and sub-osc not modelled',
+      bpm:136, waveform:'sawtooth', homeOctave:2, overdrive:0.7,
+      notes:['B3','B3','B3','B3','B3','B3','E3','F#3','G3','G3','G3','G3','G3','G3','D3','E3'],
+      accent:[0,4,8,12], slide:[],
+      filter:{ decay:0.15 } },
+
+    { id:'techno-industrial-pulse', title:'Industrial Driving Pulse', artist:'Peak-time techno', tag:'Supplied step table · F# minor roller · sub-osc not modelled',
+      bpm:132, waveform:'sawtooth', homeOctave:2, overdrive:0.7,
+      notes:['F#2','F#2','F#3','F#3','F#2','G2','F#2','F#1','F#2','F#2','A2','F#3','F#2','F#2','G2','F#1'],
+      accent:[0,5,8,13], slide:[2,3,10,14],
+      filter:{ cutoff:0.2, resonance:0.6 } },
+
+    // Rests are null entries: the step keeps its slot in the bar and sounds nothing.
+    { id:'techno-acid-slicer', title:'Polyrhythmic Acid Slicer', artist:'Peak-time techno', tag:'Supplied step table · D minor, 4 rests · Muffler switch not modelled',
+      bpm:130, waveform:'square', homeOctave:2,
+      notes:['D2','D3',null,'D2','F2','D2',null,'C1','D2',null,'D3','G#2','F2','D2',null,'C2'],
+      accent:[0,4,8,10,13], slide:[1,7,11],
+      filter:{ decay:0.15, accent:1 } },
+
+    // Steps 11-13 are two octave presses up, which the chart shows as U2.
+    { id:'trance-euphoric-roller', title:'Euphoric Roller', artist:'90s hard trance', tag:'Supplied step table · A minor · filter tracking not modelled',
+      bpm:145, waveform:'sawtooth', homeOctave:2, overdrive:0.4,
+      notes:['A2','A2','C3','B3','E3','A2','G2','A2','A3','A3','C4','B4','E4','G3','F#3','E3'],
+      accent:[0,4,8,12], slide:[2,6,10,13] },
+
+    // A flat and B flat are written as their enharmonic sharps, which is what noteToFreq parses.
+    { id:'trance-german-slammer', title:'German Hard Trance Slammer', artist:'90s hard trance', tag:'Supplied step table · F minor, 1 rest · slide time and env-mod depth not modelled',
+      bpm:148, waveform:'sawtooth', homeOctave:2,
+      notes:['F2','F3','G3','F2','G#3','G3','F2',null,'F2','F3','A#3','G#3','G3','F2','C3','G2'],
+      accent:[0,4,8,12], slide:[1,5,9,11,14],
+      filter:{ resonance:0.8, decay:0.15 } },
 
     // Full step-by-step transcription (pitch, octave transpose, accent, slide per step) plus
     // tuned filter settings supplied directly, replacing the earlier notes-only read of a
@@ -1155,14 +1210,16 @@ class Component extends DCLogic {
     this.setState({
       sbNotes: card.notes.slice(), sbAccent: card.accent.slice(), sbSlide: card.slide.slice(),
       sbTempo: Math.round(60000 / card.bpm / 4), sbWaveform: card.waveform || 'sawtooth',
-      sbFilterCfg: card.filter || null, sbSelected: card.id,
+      sbFilterCfg: card.filter || null, sbOverdrive: card.overdrive || 0, sbSelected: card.id,
     });
   }
   // Split a note name into its pitch class and octave. The chart shows the pitch class
   // on the NOTE row and the octave as a D/U mark, the way the source charts do.
   splitNote(name) {
+    // A null entry is a rest: the step still exists and takes its time, but sounds nothing.
+    if (name === null || name === undefined) return { pitch: '', octave: null, rest: true };
     const m = /^([A-G]#?)(-?\d+)$/.exec(name);
-    return m ? { pitch: m[1], octave: parseInt(m[2], 10) } : { pitch: name, octave: null };
+    return m ? { pitch: m[1], octave: parseInt(m[2], 10), rest: false } : { pitch: name, octave: null, rest: false };
   }
 
   // Renders the loaded card back into the pattern-chart layout its transcription came
@@ -1177,23 +1234,33 @@ class Component extends DCLogic {
     const parts = card.notes.map(n => this.splitNote(n));
     const counts = {};
     for (const p of parts) if (p.octave !== null) counts[p.octave] = (counts[p.octave] || 0) + 1;
+    // Derive the home octave from the pattern unless the card pins one. A chart that
+    // marks every step Up/Down is measuring against the TD-3's base octave rather than
+    // against the shape of the pattern, and only the card knows which it did.
     const home = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
-    const homeOct = home === undefined ? null : parseInt(home, 10);
+    const derived = home === undefined ? null : parseInt(home, 10);
+    const homeOct = card.homeOctave !== undefined ? card.homeOctave : derived;
 
     const steps = parts.map((p, i) => {
-      const accent = card.accent.includes(i);
-      const slide = card.slide.includes(i);
+      const accent = card.accent.includes(i) && !p.rest;
+      const slide = card.slide.includes(i) && !p.rest;
+      // A source that presses the octave button twice is two octaves out, so the mark
+      // carries its size rather than flattening every shift to a bare U or D.
       let shift = '';
-      if (p.octave !== null && homeOct !== null) {
-        if (p.octave < homeOct) shift = 'D';
-        else if (p.octave > homeOct) shift = 'U';
+      let shiftTitle = '';
+      if (!p.rest && p.octave !== null && homeOct !== null && p.octave !== homeOct) {
+        const away = Math.abs(p.octave - homeOct);
+        shift = (p.octave < homeOct ? 'D' : 'U') + (away > 1 ? String(away) : '');
+        shiftTitle = `${away} octave${away > 1 ? 's' : ''} ${p.octave < homeOct ? 'down' : 'up'}`;
       }
       return {
         num: i + 1,
-        pitch: p.pitch,
+        pitch: p.rest ? '—' : p.pitch,
+        rest: p.rest,
         shift,
-        shiftTitle: shift === 'D' ? 'Octave down' : shift === 'U' ? 'Octave up' : '',
-        marks: [accent ? 'A' : '', slide ? 'S' : ''].filter(Boolean).join(' '),
+        shiftTitle,
+        marks: p.rest ? '' : [accent ? 'A' : '', slide ? 'S' : ''].filter(Boolean).join(' '),
+        dotChar: p.rest ? '' : (accent ? '●' : (slide ? '○' : '—')),
         accent, slide,
         beat: i % 4 === 0,
         numStyle: `padding:5px 0;text-align:center;font-size:11px;font-weight:700;color:${i % 4 === 0 ? 'var(--color-accent-700)' : 'color-mix(in srgb, var(--color-text) 55%, transparent)'};`,
@@ -1201,12 +1268,14 @@ class Component extends DCLogic {
         noteStyle: `padding:6px 0;text-align:center;font-size:12px;font-weight:700;border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
         shiftStyle: `padding:6px 0;text-align:center;font-size:11px;font-weight:700;color:var(--color-accent-700);border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
         markStyle: `padding:6px 0;text-align:center;font-size:11px;font-weight:700;color:${slide ? 'var(--color-accent-2-700)' : 'var(--color-accent-700)'};border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
+        dotStyle: `padding:6px 0;text-align:center;font-size:13px;color:${accent ? 'var(--color-accent-2-700)' : (slide ? 'var(--color-accent-700)' : 'var(--color-neutral-400)')};border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
       };
     });
 
     // Only Breathe Deeper's source gave knob positions; the rest show an empty dial.
     // Env Mod is always blank — this engine models filter decay but not mod depth.
     const fc = card.filter;
+    const knob = k => (fc && fc[k] !== undefined && fc[k] !== null ? fc[k] : null);
     const dial = (label, value) => {
       const known = value !== null && value !== undefined;
       // 7 o'clock through 5 o'clock is the usual 300-degree sweep of a hardware pot.
@@ -1238,11 +1307,12 @@ class Component extends DCLogic {
       gridStyle: `display:grid;grid-template-columns:86px repeat(${steps.length}, minmax(34px, 1fr));min-width:${86 + steps.length * 34}px;`,
       homeOctaveLabel: homeOct === null ? '—' : `Octave ${homeOct}`,
       dials: [
-        dial('Cutoff', fc ? fc.cutoff : null),
-        dial('Resonance', fc ? fc.resonance : null),
+        dial('Cutoff', knob('cutoff')),
+        dial('Resonance', knob('resonance')),
         dial('Env Mod', null),
-        dial('Decay', fc ? fc.decay : null),
-        dial('Accent', fc ? fc.accent : null),
+        dial('Decay', knob('decay')),
+        dial('Accent', knob('accent')),
+        dial('Overdrive', card.overdrive === undefined ? null : card.overdrive),
       ],
       notes: card.tag,
     };
@@ -1250,14 +1320,32 @@ class Component extends DCLogic {
 
   buildSongBankCells() {
     if (!this.state.sbNotes) return [];
-    return this.state.sbNotes.map((note, i) => {
+    const parts = this.state.sbNotes.map(n => this.splitNote(n));
+    const counts = {};
+    for (const p of parts) if (p.octave !== null) counts[p.octave] = (counts[p.octave] || 0) + 1;
+    const home = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
+    const homeOct = home === undefined ? null : parseInt(home, 10);
+    return parts.map((p, i) => {
+      const note = this.state.sbNotes[i];
       const accent = this.state.sbAccent.includes(i);
       const slide = this.state.sbSlide.includes(i);
       const isCurrent = this.state.sbPlaying && this.state.sbCol === i;
-      return { note, accent, slide,
+      let shift = '';
+      if (p.octave !== null && homeOct !== null) {
+        if (p.octave < homeOct) shift = '↓';
+        else if (p.octave > homeOct) shift = '↑';
+      }
+      return { note: p.rest ? '—' : note, pitch: p.pitch, shift, accent: accent && !p.rest, slide: slide && !p.rest,
         bg: isCurrent ? 'var(--color-accent-700)' : (accent ? 'var(--color-accent-200)' : 'var(--color-neutral-200)'),
         border: isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent',
         textColor: isCurrent ? 'var(--color-bg)' : 'var(--color-text)' };
+    });
+  }
+  buildCardPreview(card) {
+    return card.notes.map((n, i) => {
+      if (card.accent.includes(i)) return 'var(--color-accent-2-600)';
+      if (card.slide.includes(i)) return 'var(--color-accent-700)';
+      return 'var(--color-neutral-300)';
     });
   }
   playSongBank() {
@@ -1267,30 +1355,45 @@ class Component extends DCLogic {
     const osc = ctx.createOscillator(); osc.type = this.state.sbWaveform || 'sawtooth';
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
     const gain = ctx.createGain(); gain.gain.value = 0.0001;
-    osc.connect(filter).connect(gain).connect(ctx.destination);
+    // A card can call for the MO's overdrive; it reuses the Week 6 curve so the two
+    // lessons distort identically. Cards that say nothing get no waveshaper at all.
+    const drive = this.state.sbOverdrive || 0;
+    let tail = osc.connect(filter);
+    if (drive > 0) {
+      const shaper = ctx.createWaveShaper();
+      shaper.curve = this.makeDistortionCurve(drive);
+      shaper.oversample = '2x';
+      tail = tail.connect(shaper);
+      this.sbShaper = shaper;
+    }
+    tail.connect(gain).connect(ctx.destination);
     osc.start();
     this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
     const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
     const fc = this.state.sbFilterCfg;
     const trigger = (c, t) => {
+      // A rest keeps its slot in the bar but closes the VCA, so the gap is audible
+      // rather than the previous note simply ringing on through it.
+      if (notes[c] === null || notes[c] === undefined) {
+        gain.gain.cancelScheduledValues(t);
+        gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+        return;
+      }
       const freq = this.noteToFreq(notes[c]);
       const accent = accentArr.includes(c);
       const prev = (c - 1 + notes.length) % notes.length;
-      const slide = slideArr.includes(prev);
+      // Sliding out of a rest would glide from silence, so a rest never carries one.
+      const slide = slideArr.includes(prev) && notes[prev] !== null && notes[prev] !== undefined;
       if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
       else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
-      let peak, cutoff, decayTime;
-      if (fc) {
-        const baseCutoff = 200 + fc.cutoff * 2600;
-        cutoff = accent ? baseCutoff * (1 + fc.accent * 1.5) : baseCutoff;
-        decayTime = 0.08 + fc.decay * 0.35;
-        peak = accent ? 0.32 + fc.accent * 0.35 : 0.32;
-        filter.Q.value = 1 + fc.resonance * 23;
-      } else {
-        peak = accent ? 0.5 : 0.32;
-        cutoff = accent ? 1800 : 900;
-        decayTime = 0.18;
-      }
+      const set = k => (fc && fc[k] !== undefined && fc[k] !== null ? fc[k] : null);
+      const base = set('cutoff') === null ? 900 : 200 + set('cutoff') * 2600;
+      const accentLift = set('accent') === null ? 2 : 1 + set('accent') * 1.5;
+      const cutoff = accent ? base * accentLift : base;
+      const decayTime = set('decay') === null ? 0.18 : 0.08 + set('decay') * 0.35;
+      const peak = accent ? (set('accent') === null ? 0.5 : 0.32 + set('accent') * 0.35) : 0.32;
+      filter.Q.value = set('resonance') === null ? 8 : 1 + set('resonance') * 23;
       filter.frequency.cancelScheduledValues(t);
       filter.frequency.setValueAtTime(cutoff, t);
       filter.frequency.exponentialRampToValueAtTime(300, t + decayTime);
@@ -1378,13 +1481,17 @@ class Component extends DCLogic {
       ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
       softAttackOn: this.state.td3SoftAttack,
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
-      songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
-        title: c.title, tag: c.tag, load: () => this.loadSongCard(c), pressed: this.state.sbSelected === c.id ? 'true' : 'false',
+      songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => {
+        const selected = this.state.sbSelected === c.id;
         // bpm drives playback; bpmDisplay overrides the text where the real tempo is a range
         // or differs by release. A card with neither is still a guess and says so.
-        bpmLabel: c.bpmDisplay || (c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`),
-        cardStyle: `text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${this.state.sbSelected === c.id ? 'var(--color-accent)' : 'var(--color-divider)'};background:${this.state.sbSelected === c.id ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:140px;`,
-      })) : [],
+        const bpmLabel = c.bpmDisplay || (c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`);
+        return {
+          title: c.title, tag: c.tag, bpmLabel, load: () => this.loadSongCard(c), pressed: selected ? 'true' : 'false',
+          preview: this.buildCardPreview(c),
+          rowStyleA: `display:flex;flex-direction:column;gap:6px;text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${selected ? 'var(--color-accent)' : 'var(--color-divider)'};border-left:3px solid ${selected ? 'var(--color-accent)' : 'var(--color-divider)'};background:${selected ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:210px;`,
+        };
+      }) : [],
       sbHasCard: !!this.state.sbNotes,
       sbTitle: this.state.sbSelected ? `${(this.SONG_CARDS.find(c => c.id === this.state.sbSelected) || {}).title || ''} — full pattern` : '',
       sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],

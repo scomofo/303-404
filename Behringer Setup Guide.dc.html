@@ -259,7 +259,7 @@
                   <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
                     <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}">
                       <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
-                      <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpm }} BPM</div>
+                      <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpmLabel }}</div>
                     </button>
                   </sc-for>
                 </div>
@@ -458,7 +458,7 @@ class Component extends DCLogic {
       accent:[1,2,3,4,5,6,7], slide:[0,1,4] },
     // Part 1/2 confirmed against a clearer digital card: BPM 120, and its combined
     // Accent/Slide row uses "S" (slide) only — no accents on this pattern.
-    { id:'cut-paste-forget-it-1', title:'Forget It (Part 1/2)', tag:'Cut & Paste · Fan chart transcription', bpm:120, waveform:'square',
+    { id:'cut-paste-forget-it-1', title:'Forget It (Part 1/2)', tag:'Cut & Paste · Fan chart transcription', bpm:120, bpmConfirmed:true, waveform:'square',
       notes:['A#1','A#1','A#2','A#2','F1','F1','F2','F2','G#2','G#2','F2','G#2','G#2','F2','A#2','A#2'],
       accent:[], slide:[0,2,4,7,10,13] },
     // Part 2/2's own card image wasn't available — its SLIDE row wasn't confidently legible
@@ -907,7 +907,9 @@ class Component extends DCLogic {
       this.playRd6StepFor(patternFor(), col);
       this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: col, rd6PatIdx: patIdx });
       const shuffle = this.state.rd6Shuffle || 0;
-      const mult = col % 2 === 1 ? 1 + shuffle : 1 - shuffle;
+      // Delay the wait INTO each odd (off-beat) step, shorten the wait back to the next
+      // even step, so odd 16ths land late — the swing feel the UI/README describe.
+      const mult = col % 2 === 0 ? 1 + shuffle : 1 - shuffle;
       this.rd6Timer = setTimeout(() => {
         col = (col + 1) % 16;
         if (col === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
@@ -1127,7 +1129,8 @@ class Component extends DCLogic {
       softAttackOn: this.state.td3SoftAttack,
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
       songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
-        title: c.title, tag: c.tag, bpm: c.bpm, load: () => this.loadSongCard(c),
+        title: c.title, tag: c.tag, load: () => this.loadSongCard(c),
+        bpmLabel: c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`,
         cardStyle: `text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${this.state.sbSelected === c.id ? 'var(--color-accent)' : 'var(--color-divider)'};background:${this.state.sbSelected === c.id ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:140px;`,
       })) : [],
       sbHasCard: !!this.state.sbNotes,

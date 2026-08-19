@@ -589,7 +589,7 @@ class Component extends DCLogic {
     this.masterGain.connect(ctx.destination);
 
     this.fxSend = ctx.createGain(); this.fxSend.gain.value = 1;
-    this.fxDelay = ctx.createDelay(1.0); this.fxDelay.delayTime.value = 0.28;
+    this.fxDelay = ctx.createDelay(1.0); this.fxDelay.delayTime.value = 60 / this.DECK_A_BPM / 2; // eighth-note echo synced to the reference deck's tempo
     this.fxFeedback = ctx.createGain(); this.fxFeedback.gain.value = 0.35;
     this.fxWet = ctx.createGain(); this.fxWet.gain.value = 0;
     this.fxSend.connect(this.fxDelay);
@@ -639,14 +639,18 @@ class Component extends DCLogic {
     this.setState({ colA: col });
     const loopLen = this.state.loopOn ? this.state.loopLen : 16;
     const stepMs = 60000 / this.DECK_A_BPM / 4;
-    this.tA = setTimeout(() => { this.scheduleA((col + 1) % loopLen); }, stepMs);
+    // Read colA fresh at fire time (not the closured col) so a hot-cue jump made
+    // while this timer is pending actually takes effect on the next tick.
+    this.tA = setTimeout(() => { this.scheduleA((this.state.colA + 1) % loopLen); }, stepMs);
   }
   scheduleB(col) {
     this.deckStepAudio(this.chainB, col);
     this.setState({ colB: col });
     const bpm = this.DECK_A_BPM * (1 + this.state.deckB.tempoPct / 100);
     const stepMs = 60000 / bpm / 4;
-    this.tB = setTimeout(() => { this.scheduleB((col + 1) % 16); }, stepMs);
+    // Read colB fresh at fire time (not the closured col) so Nudge/SYNC — which write
+    // colB directly — aren't silently overwritten by this already-scheduled tick.
+    this.tB = setTimeout(() => { this.scheduleB((this.state.colB + 1) % 16); }, stepMs);
   }
   startEngine() {
     this.ensureAudio(); this.stopEngine(); this.initChains();

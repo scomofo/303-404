@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TD-3 &amp; RD-6 Guide</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -20,7 +21,7 @@
       <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
         <span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span>
       </div>
-      <div style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
         <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div>
       </div>
     </div>
@@ -123,7 +124,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
               <sc-for list="{{ cablesAudio }}" as="c" hint-placeholder-count="2">
-                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
                   <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
@@ -138,7 +139,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Sync cable — tap to mark connected</div>
               <sc-for list="{{ syncCable }}" as="c" hint-placeholder-count="1">
-                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
                   <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
@@ -162,7 +163,7 @@
                       <div style="width:64px;font-size:11px;font-weight:700;flex:none;">{{ row.label }}</div>
                       <div style="display:flex;gap:4px;">
                         <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="16">
-                          <button type="button" onclick="{{ cell.toggle }}" style="{{ cell.style }}"></button>
+                          <button type="button" onclick="{{ cell.toggle }}" style="{{ cell.style }}" aria-label="{{ cell.label }}" aria-pressed="{{ cell.pressed }}"></button>
                         </sc-for>
                       </div>
                     </div>
@@ -222,8 +223,8 @@
                   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:40px;">
                     <div style="font-size:9px;opacity:.5;">{{ c.num }}</div>
                     <div style="width:40px;height:28px;border-radius:8px;background:var(--color-neutral-200);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">{{ c.note }}</div>
-                    <button type="button" onclick="{{ c.toggleAccent }}" style="{{ c.accentBtnStyle }}">ACC</button>
-                    <button type="button" onclick="{{ c.toggleSlide }}" style="{{ c.slideBtnStyle }}">SLIDE</button>
+                    <button type="button" onclick="{{ c.toggleAccent }}" style="{{ c.accentBtnStyle }}" aria-label="{{ c.accentLabel }}" aria-pressed="{{ c.accentPressed }}">ACC</button>
+                    <button type="button" onclick="{{ c.toggleSlide }}" style="{{ c.slideBtnStyle }}" aria-label="{{ c.slideLabel }}" aria-pressed="{{ c.slidePressed }}">SLIDE</button>
                   </div>
                 </sc-for>
               </div>
@@ -257,7 +258,7 @@
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Song cards — tap to load into the engine below</div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
                   <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
-                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}">
+                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}" aria-pressed="{{ card.pressed }}">
                       <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
                       <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpmLabel }}</div>
                     </button>
@@ -343,7 +344,7 @@
               <span class="tag tag-accent-2" style="align-self:flex-start;">Suggested arrangement — adjust to taste</span>
               <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
                 <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="7">
-                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}">{{ sec.title }}</button>
+                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}" aria-pressed="{{ sec.pressed }}">{{ sec.title }}</button>
                 </sc-for>
               </div>
               <div class="card" style="background:var(--color-accent-100);">
@@ -374,7 +375,7 @@
 
   <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
     <div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;">
-      <div class="dialog" onclick="{{ stopProp }}" style="max-height:80vh;overflow:auto;">
+      <div class="dialog" onclick="{{ stopProp }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;">
         <div class="dialog-title">Course map</div>
         <sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="6">
           <div>
@@ -394,23 +395,28 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = {
-    step: 0,
-    dialogOpen: false,
-    checks: {},
-    rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
-    rd6Fill: { bd:[0,4,8,12], sd:[4,6,12,14], ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], oh:[7], ac:[6,14] },
-    rd6Playing: false, rd6Col: -1, rd6PlayKind: null, rd6PatIdx: 0,
-    rd6Shuffle: 0,
-    td3Accent: [0,4,10], td3Slide: [2,4,7,13],
-    td3Playing: false, td3Col: -1,
-    td3Overdrive: 0, td3SoftAttack: false,
-    cablesAudio: [false,false],
-    cablesSync: [false],
-    accentSweep: 'FAST',
-    perfmapSel: 0,
-    sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
-  };
+  // Every resettable field lives here so the initial state and restart() can't drift apart.
+  initialState() {
+    return {
+      step: 0,
+      dialogOpen: false,
+      checks: {},
+      rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
+      rd6Fill: { bd:[0,4,8,12], sd:[4,6,12,14], ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], oh:[7], ac:[6,14] },
+      rd6Playing: false, rd6Col: -1, rd6PlayKind: null, rd6PatIdx: 0,
+      rd6Shuffle: 0,
+      td3Accent: [0,4,10], td3Slide: [2,4,7,13],
+      td3Playing: false, td3Col: -1,
+      td3Overdrive: 0, td3SoftAttack: false,
+      cablesAudio: [false,false],
+      cablesSync: [false],
+      accentSweep: 'FAST',
+      perfmapSel: 0,
+      sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
+    };
+  }
+
+  state = this.initialState();
 
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
 
@@ -506,6 +512,7 @@ class Component extends DCLogic {
     super(props);
     this.NOTES = this.NOTE_NAMES.map(n => this.noteToFreq(n));
     this.STEPS = this.buildSteps();
+    this.sequences = {};
   }
 
   // Equal-temperament frequency for a note like 'C2', 'C#2', 'A2' (A4 = 440Hz).
@@ -715,7 +722,7 @@ class Component extends DCLogic {
   }
   goNext() { this.goToStep(this.state.step + 1); }
   goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
+  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState(this.initialState()); }
 
   // ── checklist ──
   toggleCheck(stepId, idx) {
@@ -749,7 +756,7 @@ class Component extends DCLogic {
     const defs = [ { from:'RD-6 Line Out', to:'Mixer Input 1' }, { from:'TD-3 Output', to:'Mixer Input 2' } ];
     return defs.map((d, i) => {
       const connected = !!this.state.cablesAudio[i];
-      return { ...d, toggle: () => this.toggleCable(i),
+      return { ...d, toggle: () => this.toggleCable(i), pressed: connected ? 'true' : 'false',
         dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
         lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
         statusText: connected ? 'Connected' : 'Click to connect' };
@@ -757,7 +764,7 @@ class Component extends DCLogic {
   }
   buildSyncCable() {
     const connected = !!this.state.cablesSync[0];
-    return [{ from:'RD-6 Sync Out', to:'TD-3 Sync In', toggle: () => this.toggleSyncCable(),
+    return [{ from:'RD-6 Sync Out', to:'TD-3 Sync In', toggle: () => this.toggleSyncCable(), pressed: connected ? 'true' : 'false',
       dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
       lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
       statusText: connected ? 'Connected' : 'Click to connect' }];
@@ -791,6 +798,7 @@ class Component extends DCLogic {
         const bg = active ? color[d.key] : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
         const border = isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent';
         return { idx: i, toggle: () => this.toggleRd6Cell(patternKey, d.key, i),
+          label: `${d.label} step ${i + 1}`, pressed: active ? 'true' : 'false',
           style: `width:28px;height:28px;border-radius:8px;background:${bg};border:${border};cursor:pointer;padding:0;flex:none;` };
       }),
     }));
@@ -818,6 +826,8 @@ class Component extends DCLogic {
       return { num: i + 1, note,
         toggleAccent: () => this.toggleTd3Flag('td3Accent', i),
         toggleSlide: () => this.toggleTd3Flag('td3Slide', i),
+        accentLabel: `Accent on step ${i + 1} (${note})`, accentPressed: accent ? 'true' : 'false',
+        slideLabel: `Slide on step ${i + 1} (${note})`, slidePressed: slide ? 'true' : 'false',
         accentBtnStyle: this.chipStyle(accent, 'var(--color-accent)'),
         slideBtnStyle: this.chipStyle(slide, 'var(--color-accent-2-600)') };
     });
@@ -838,7 +848,7 @@ class Component extends DCLogic {
   buildPerfSections() {
     return this.PERF_SECTIONS.map((s, i) => {
       const sel = this.state.perfmapSel === i;
-      return { ...s, select: () => this.setState({ perfmapSel: i }),
+      return { ...s, select: () => this.setState({ perfmapSel: i }), pressed: sel ? 'true' : 'false',
         barStyle: `flex:${s.dur} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:4px;cursor:pointer;background:${sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};border-right:1px solid var(--color-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` };
     });
   }
@@ -856,6 +866,84 @@ class Component extends DCLogic {
       });
     });
     return groups;
+  }
+
+  // ── step scheduling ──
+  // Every engine below queues its audio ahead of time against the AudioContext clock
+  // rather than firing each note from the timer callback. setInterval/setTimeout drift
+  // by several ms a tick, and browsers clamp background-tab timers to ~1s; either is
+  // plainly audible as a wobbling groove. Here the timer only decides *when to look
+  // ahead* — each note's start time is computed exactly on the audio clock.
+  SCHED_TICK_MS = 25;
+  // Queue only a little while the tab is visible, so edits to a playing pattern are
+  // heard almost immediately...
+  LOOKAHEAD_VISIBLE = 0.12;
+  // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in the
+  // audio. Nobody is editing a pattern they can't see, so the latency costs nothing.
+  LOOKAHEAD_HIDDEN = 1.6;
+
+  lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
+
+  // spec.onStep(col, time) schedules one step's audio at the exact AudioContext time
+  // `time`, returning any source nodes it created (so a stop can silence ones that
+  // haven't sounded yet) plus optional `meta` carried through to the visual update.
+  // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col) advances it.
+  startSequence(key, spec) {
+    const ctx = this.audioCtx;
+    const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
+                  queue: [], pending: [], shown: null, timer: null };
+    this.sequences[key] = seq;
+    const tick = () => {
+      const horizon = ctx.currentTime + this.lookahead();
+      while (seq.nextTime < horizon) {
+        const at = seq.nextTime;
+        const r = spec.onStep(seq.col, at) || {};
+        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
+        seq.queue.push({ col: seq.col, time: at, meta: r.meta });
+        seq.nextTime = at + spec.stepDur(seq.col);
+        seq.col = spec.nextCol(seq.col);
+      }
+      this.drainSequence(seq);
+      seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
+    };
+    tick();
+    return seq;
+  }
+
+  // Move the on-screen playhead to the step that is actually sounding now, not the one
+  // most recently *scheduled* — those are up to a lookahead apart.
+  drainSequence(seq) {
+    const now = this.audioCtx.currentTime;
+    let cur = null;
+    while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
+    seq.pending = seq.pending.filter(p => p.time + 1 > now);
+    if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
+      seq.shown = cur;
+      seq.spec.onVisual(cur.col, cur.meta);
+    }
+  }
+
+  // Silence steps queued but not yet sounded. Without this, stopping would still let a
+  // lookahead's worth of already-scheduled notes through.
+  flushPending(seq, from) {
+    let earliest = seq.nextTime;
+    seq.pending.forEach(p => {
+      if (p.time > from) {
+        try { p.node.stop(from); } catch (e) {}
+        if (p.time < earliest) earliest = p.time;
+      }
+    });
+    seq.pending = seq.pending.filter(p => p.time <= from);
+    seq.queue = seq.queue.filter(q => q.time <= from);
+    return earliest;
+  }
+
+  stopSequence(key) {
+    const seq = this.sequences[key];
+    if (!seq) return;
+    clearTimeout(seq.timer);
+    if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
+    delete this.sequences[key];
   }
 
   // ── audio ──
@@ -880,6 +968,7 @@ class Component extends DCLogic {
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
     osc.connect(g).connect(ctx.destination);
     osc.start(t); osc.stop(t + 0.2);
+    return osc;
   }
   playNoise(t, opts) {
     const ctx = this.audioCtx;
@@ -891,41 +980,47 @@ class Component extends DCLogic {
     g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
     src.connect(filter).connect(g).connect(ctx.destination);
     src.start(t); src.stop(t + opts.duration + 0.02);
+    return src;
   }
-  playRd6StepFor(pattern, col) {
-    const t = this.audioCtx.currentTime;
+  playRd6StepFor(pattern, col, t) {
     const accent = pattern.ac.includes(col);
     const vol = accent ? 1 : 0.7;
-    if (pattern.bd.includes(col)) this.playKick(t, vol);
-    if (pattern.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
-    if (pattern.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
-    if (pattern.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
+    const nodes = [];
+    if (pattern.bd.includes(col)) nodes.push(this.playKick(t, vol));
+    if (pattern.sd.includes(col)) nodes.push(this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol }));
+    if (pattern.ch.includes(col)) nodes.push(this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol }));
+    if (pattern.oh.includes(col)) nodes.push(this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol }));
+    return nodes;
   }
   playRd6(kind) {
     kind = kind || 'rd6';
     this.ensureAudio(); this.stopRd6();
-    let col = 0, patIdx = 0;
+    let patIdx = 0;
     const patternFor = () => {
       if (kind === 'chain') return patIdx === 0 ? this.state.rd6 : this.state.rd6Fill;
       return kind === 'rd6fill' ? this.state.rd6Fill : this.state.rd6;
     };
-    const tick = () => {
-      this.playRd6StepFor(patternFor(), col);
-      this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: col, rd6PatIdx: patIdx });
-      const shuffle = this.state.rd6Shuffle || 0;
-      // Delay the wait INTO each odd (off-beat) step, shorten the wait back to the next
-      // even step, so odd 16ths land late — the swing feel the UI/README describe.
-      const mult = col % 2 === 0 ? 1 + shuffle : 1 - shuffle;
-      this.rd6Timer = setTimeout(() => {
-        col = (col + 1) % 16;
-        if (col === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
-        tick();
-      }, 125 * mult);
-    };
-    tick();
+    this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: 0, rd6PatIdx: 0 });
+    this.startSequence('rd6', {
+      // The pattern is read at schedule time, so edits land within a lookahead.
+      onStep: (col, t) => ({ nodes: this.playRd6StepFor(patternFor(), col, t), meta: patIdx }),
+      // Shuffle stretches the wait INTO each odd (off-beat) step and shortens the wait
+      // back to the next even one, so odd 16ths land late — the swing feel the UI
+      // and README describe.
+      stepDur: col => {
+        const shuffle = this.state.rd6Shuffle || 0;
+        return 0.125 * (col % 2 === 0 ? 1 + shuffle : 1 - shuffle);
+      },
+      nextCol: col => {
+        const n = (col + 1) % 16;
+        if (n === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
+        return n;
+      },
+      onVisual: (col, pat) => this.setState({ rd6Col: col, rd6PatIdx: pat }),
+    });
   }
   stopRd6() {
-    if (this.rd6Timer) { clearTimeout(this.rd6Timer); this.rd6Timer = null; }
+    this.stopSequence('rd6');
     if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1, rd6PlayKind: null });
   }
   makeDistortionCurve(amount) {
@@ -951,9 +1046,7 @@ class Component extends DCLogic {
     osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
     osc.start();
     this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
-    let col = 0;
-    const trigger = c => {
-      const t = ctx.currentTime;
+    const trigger = (c, t) => {
       const freq = this.NOTES[c];
       const accent = this.state.td3Accent.includes(c);
       const prev = (c - 1 + 16) % 16;
@@ -975,16 +1068,16 @@ class Component extends DCLogic {
         gain.gain.setValueAtTime(peak, t);
       }
     };
-    trigger(col);
-    this.setState({ td3Playing: true, td3Col: col });
-    this.td3Timer = setInterval(() => {
-      col = (col + 1) % 16;
-      trigger(col);
-      this.setState({ td3Col: col });
-    }, 125);
+    this.setState({ td3Playing: true, td3Col: 0 });
+    this.startSequence('td3', {
+      onStep: (col, t) => { trigger(col, t); },
+      stepDur: () => 0.125,
+      nextCol: col => (col + 1) % 16,
+      onVisual: col => this.setState({ td3Col: col }),
+    });
   }
   stopTd3() {
-    if (this.td3Timer) { clearInterval(this.td3Timer); this.td3Timer = null; }
+    this.stopSequence('td3');
     if (this.td3Osc) {
       const osc = this.td3Osc; const g = this.td3Gain;
       try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
@@ -1027,9 +1120,7 @@ class Component extends DCLogic {
     this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
     const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
     const fc = this.state.sbFilterCfg;
-    let col = 0;
-    const trigger = c => {
-      const t = ctx.currentTime;
+    const trigger = (c, t) => {
       const freq = this.noteToFreq(notes[c]);
       const accent = accentArr.includes(c);
       const prev = (c - 1 + notes.length) % notes.length;
@@ -1060,16 +1151,17 @@ class Component extends DCLogic {
         gain.gain.setValueAtTime(peak, t);
       }
     };
-    trigger(col);
-    this.setState({ sbPlaying: true, sbCol: col });
-    this.sbTimer = setInterval(() => {
-      col = (col + 1) % notes.length;
-      trigger(col);
-      this.setState({ sbCol: col });
-    }, this.state.sbTempo);
+    const stepSec = this.state.sbTempo / 1000;
+    this.setState({ sbPlaying: true, sbCol: 0 });
+    this.startSequence('sb', {
+      onStep: (col, t) => { trigger(col, t); },
+      stepDur: () => stepSec,
+      nextCol: col => (col + 1) % notes.length,
+      onVisual: col => this.setState({ sbCol: col }),
+    });
   }
   stopSongBank() {
-    if (this.sbTimer) { clearInterval(this.sbTimer); this.sbTimer = null; }
+    this.stopSequence('sb');
     if (this.sbOsc) {
       const osc = this.sbOsc; const g = this.sbGain;
       try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
@@ -1135,7 +1227,7 @@ class Component extends DCLogic {
       softAttackOn: this.state.td3SoftAttack,
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
       songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
-        title: c.title, tag: c.tag, load: () => this.loadSongCard(c),
+        title: c.title, tag: c.tag, load: () => this.loadSongCard(c), pressed: this.state.sbSelected === c.id ? 'true' : 'false',
         // bpm drives playback; bpmDisplay overrides the text where the real tempo is a range
         // or differs by release. A card with neither is still a guess and says so.
         bpmLabel: c.bpmDisplay || (c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`),

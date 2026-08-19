@@ -92,6 +92,26 @@ All of it — mixer, beatmatching, hot cues, loops, Beat FX — runs on **two sy
 - **Beat FX** (Week 6) — an ON/OFF toggle and Low/Med/High level presets driving a real synced `DelayNode` echo (with feedback) on the master send.
 - **Performance map** (Week 6) — the same proportional-timeline pattern as the Behringer guide's Week 4, mapped to a 6-section, 3-minute mix.
 
+## Tests
+
+```bash
+npm test
+```
+
+No install step — the suite uses only `node:test` and `node:assert`, so it needs nothing but Node 18+. It runs in about four seconds and is wired to GitHub Actions on every push and pull request.
+
+The tests load each guide's `<script type="text/x-dc">` block and run its `Component` class against a stub runtime and a stub Web Audio API (`test/harness.mjs`), so the logic is exercised without a browser. Three areas are covered:
+
+| File | Guards |
+| --- | --- |
+| `test/structure.test.mjs` | Every step renders; ids and nav labels are unique; the course map reaches every step; `restart()` restores the whole of `initialState()`; each page declares a title and a language; no hardcoded hex colors; every control has an accessible name |
+| `test/songbank.test.mjs` | Every card's notes resolve to a real frequency; accent/slide indices stay in range; tempos are plausible and applied on load; an unconfirmed tempo is visibly marked an estimate |
+| `test/timing.test.mjs` | Notes are scheduled ahead of the audio clock and land on an exact grid; Stop silences hits already queued; shuffle stretches the wait *into* off-beat 16ths without changing the bar length; a DDJ phase jump moves the column without disturbing the tempo grid |
+
+The stub clock advances with real time, so the schedulers run for real and only the audio nodes are faked. Reverting an engine to fire notes at `ctx.currentTime` fails the grid assertions immediately.
+
+Each of these guards a bug this repo has actually shipped, and each was checked by reintroducing that bug and confirming the suite goes red — worth repeating for any test added here, since an assertion that cannot fail is worse than none.
+
 ## Layout
 
 ```
@@ -100,6 +120,8 @@ DDJ-FLX4 Guide.dc.html          the DDJ-FLX4 app — markup plus its component l
 support.js                      generated dc-runtime (loads React/Babel, renders <x-dc>) — shared by both
 _ds/organic-…/                  the Organic design system: styles.css, manifest, its own readme — shared by both
 uploads/                        td3.jpg, rd-6.jpg — reference photos of the Behringer units
+test/                           the test suite — harness.mjs plus three .test.mjs files
+package.json                    test script only; the guides themselves still have no build step
 .thumbnail                      WebP cover image
 ```
 

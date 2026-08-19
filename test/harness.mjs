@@ -135,7 +135,15 @@ export function loadComponent(file, { hidden = false } = {}) {
   inst.noiseBuffer = audioCtx.createBuffer(1, 128);
 
   const setHidden = v => { globalThis.document.hidden = v; };
-  return { inst, audioCtx, html, Component, setHidden };
+
+  // Stop anything still scheduling. Without this, a failing assertion leaves the
+  // sequencer's setTimeout chain rescheduling forever and the process never exits —
+  // a hung CI job instead of a clean red. Register it with `t.after(dispose)`.
+  const dispose = () => {
+    for (const key of Object.keys(inst.sequences || {})) inst.stopSequence(key);
+  };
+
+  return { inst, audioCtx, html, Component, setHidden, dispose };
 }
 
 /** Every step index of a loaded component. */

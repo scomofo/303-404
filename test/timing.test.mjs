@@ -12,9 +12,25 @@ import { loadComponent, renderStep } from './harness.mjs';
 
 const BEHRINGER = 'Behringer Setup Guide.dc.html';
 const DDJ = 'DDJ-FLX4 Guide.dc.html';
-const RUN_MS = 700;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/**
+ * Wait until `fn()` holds, polling.
+ *
+ * Timing tests must not assert on how much a fixed wall-clock window produces: a
+ * loaded CI runner schedules fewer steps in the same 700ms than a quiet laptop, which
+ * is a property of the runner rather than of the code. Waiting for the data instead
+ * just costs a few more polls when the machine is busy.
+ */
+async function until(fn, label, timeout = 8000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeout) {
+    if (fn()) return;
+    await sleep(20);
+  }
+  throw new Error(`timed out after ${timeout}ms waiting for ${label}`);
+}
 
 /** Distinct scheduled onsets, ascending. */
 function onsets(ctx) {
@@ -31,39 +47,43 @@ function gridErrorMs(times, step) {
   }));
 }
 
-test('RD-6 schedules every hit on an exact 16th-note grid', async () => {
-  const { inst, audioCtx } = loadComponent(BEHRINGER);
+test('RD-6 schedules every hit on an exact 16th-note grid', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
   inst.playRd6('rd6');
-  await sleep(RUN_MS);
+  await until(() => onsets(audioCtx).length >= 6, 'six RD-6 onsets');
   inst.stopRd6();
 
-  const t = onsets(audioCtx);
-  assert.ok(t.length >= 4, `expected several onsets, got ${t.length}`);
-  assert.ok(gridErrorMs(t, 0.125) < 1e-6, `off the 125ms grid by ${gridErrorMs(t, 0.125)}ms`);
+  const times = onsets(audioCtx);
+  assert.ok(gridErrorMs(times, 0.125) < 1e-6, `off the 125ms grid by ${gridErrorMs(times, 0.125)}ms`);
 });
 
-test('RD-6 schedules ahead of the clock rather than at it', async () => {
+test('RD-6 schedules ahead of the clock rather than at it', async t => {
   // The defining difference from the old behaviour: a note is booked before its moment
   // arrives. Firing at ctx.currentTime would make every `when` equal its `at`, which is
   // what left the groove at the mercy of timer jitter.
-  const { inst, audioCtx } = loadComponent(BEHRINGER);
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
   // A hit on every step, so a short run still books plenty of notes.
   const dense = Array.from({ length: 16 }, (_, i) => i);
   inst.state = { ...inst.state, rd6: { bd: dense, sd: [], ch: [], oh: [], ac: [] } };
   inst.playRd6('rd6');
-  await sleep(400);
+  await until(() => audioCtx.__starts.length >= 4, 'four booked notes');
   inst.stopRd6();
 
   const booked = audioCtx.__starts;
-  assert.ok(booked.length >= 3, `expected several notes, got ${booked.length}`);
   const ahead = booked.filter(s => s.when > s.at + 1e-9);
   assert.ok(ahead.length > 0, 'every note was scheduled at the clock, not ahead of it');
 });
 
-test('stopping silences hits that were queued but had not sounded', async () => {
-  const { inst, audioCtx } = loadComponent(BEHRINGER);
+test('stopping silences hits that were queued but had not sounded', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
   inst.playRd6('rd6');
-  await sleep(200);
+  // Waiting for a queued-ahead note also keeps the assertion below non-vacuous:
+  // if nothing were ever queued, "nothing leaked" would pass for the wrong reason.
+  await until(() => audioCtx.__starts.some(x => x.when > audioCtx.currentTime),
+    'a note queued ahead of the clock');
   const at = audioCtx.currentTime;
   inst.stopRd6();
   // Anything still booked for the future must have been silenced, or a lookahead's
@@ -84,12 +104,11 @@ test('shuffle lengthens the wait into off-beat 16ths, not out of them', async ()
   const dense = Array.from({ length: 16 }, (_, i) => i);
   inst.state = { ...inst.state, rd6Shuffle: 0.25, rd6: { bd: dense, sd: [], ch: [], oh: [], ac: [] } };
   inst.playRd6('rd6');
-  await sleep(RUN_MS);
+  await until(() => onsets(audioCtx).length >= 5, 'five shuffled onsets');
   inst.stopRd6();
 
-  const t = onsets(audioCtx);
-  const gaps = t.slice(1).map((x, i) => x - t[i]);
-  assert.ok(gaps.length >= 3, `expected several gaps, got ${gaps.length}`);
+  const times = onsets(audioCtx);
+  const gaps = times.slice(1).map((x, i) => x - times[i]);
   assert.ok(gaps.some(g => g > 0.1251), `no stretched step in ${gaps.map(g => (g * 1000).toFixed(1))}`);
   assert.ok(gaps.some(g => g < 0.1249), `no shortened step in ${gaps.map(g => (g * 1000).toFixed(1))}`);
 
@@ -98,24 +117,27 @@ test('shuffle lengthens the wait into off-beat 16ths, not out of them', async ()
   assert.ok(gaps[0] > 0.125, `first gap ${(gaps[0] * 1000).toFixed(2)}ms should be stretched, not shortened`);
 });
 
-test('shuffle keeps the bar the same length as straight time', async () => {
-  const { inst, audioCtx } = loadComponent(BEHRINGER);
-  inst.state = { ...inst.state, rd6Shuffle: 0.25 };
+test('shuffle keeps the bar the same length as straight time', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
+  const dense = Array.from({ length: 16 }, (_, i) => i);
+  inst.state = { ...inst.state, rd6Shuffle: 0.25, rd6: { bd: dense, sd: [], ch: [], oh: [], ac: [] } };
   inst.playRd6('rd6');
-  await sleep(RUN_MS);
+  await until(() => onsets(audioCtx).length >= 5, 'five shuffled onsets');
   inst.stopRd6();
-  const t = onsets(audioCtx);
+  const times = onsets(audioCtx);
   // A long step and its following short step must still sum to two straight steps,
   // otherwise swing would drag the tempo.
-  const gaps = t.slice(1).map((x, i) => x - t[i]);
+  const gaps = times.slice(1).map((x, i) => x - times[i]);
   for (let i = 0; i + 1 < gaps.length; i++) {
     const pair = gaps[i] + gaps[i + 1];
     if (pair < 0.3) assert.ok(Math.abs(pair - 0.25) < 1e-9, `pair sums to ${pair}s, want 0.25s`);
   }
 });
 
-test('TD-3 and Song Bank run their own clocks without leaking timers', async () => {
-  const { inst } = loadComponent(BEHRINGER);
+test('TD-3 and Song Bank run their own clocks without leaking timers', async t => {
+  const { inst, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
   inst.playTd3();
   assert.ok(inst.sequences.td3, 'TD-3 sequence not registered');
   inst.stopTd3();
@@ -142,40 +164,42 @@ test('the lookahead widens when the tab is hidden', () => {
   assert.ok(near < 0.5, `visible lookahead ${near}s is too laggy for live edits`);
 });
 
-test('DDJ decks schedule on their own tempo grids', async () => {
-  const { inst, audioCtx } = loadComponent(DDJ);
+test('DDJ decks schedule on their own tempo grids', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(DDJ);
+  t.after(dispose);
   const step = inst.STEPS.findIndex(s => s.widget === 'sync');
   renderStep(inst, step);
   inst.startEngine();
-  await sleep(RUN_MS);
+  await until(() => onsets(audioCtx).length >= 6, 'six deck onsets');
   inst.stopEngine();
 
-  const t = onsets(audioCtx);
-  assert.ok(t.length >= 4, `expected several onsets, got ${t.length}`);
+  const times = onsets(audioCtx);
 
   // Deck B starts detuned on purpose, so onsets belong to one of two grids.
   const stepA = 60 / inst.DECK_A_BPM / 4;
   const stepB = 60 / (inst.DECK_A_BPM * (1 + inst.initialState().deckB.tempoPct / 100)) / 4;
-  const t0 = t[0];
-  for (const x of t) {
+  const t0 = times[0];
+  for (const x of times) {
     const onA = Math.abs((x - t0) / stepA - Math.round((x - t0) / stepA)) < 0.02;
     const onB = Math.abs((x - t0) / stepB - Math.round((x - t0) / stepB)) < 0.05;
     assert.ok(onA || onB, `onset ${x} sits on neither deck's grid`);
   }
 });
 
-test('a phase jump moves the column without disturbing the tempo grid', async () => {
-  const { inst, audioCtx } = loadComponent(DDJ);
+test('a phase jump moves the column without disturbing the tempo grid', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(DDJ);
+  t.after(dispose);
   renderStep(inst, inst.STEPS.findIndex(s => s.widget === 'sync'));
   inst.startEngine();
   inst.syncDecks();                       // both decks onto one tempo
-  await sleep(250);
+  await until(() => onsets(audioCtx).length >= 3, 'the decks to get going');
 
   const before = inst.state.colB;
   inst.nudge('deckB', 1);
   assert.equal(inst.state.colB, (before + 1) % 16, 'nudge did not advance the column');
 
-  await sleep(300);
+  const had = onsets(audioCtx).length;
+  await until(() => onsets(audioCtx).length >= had + 4, 'four onsets after the jump');
   inst.stopEngine();
 
   // Timing must be untouched by the jump: a nudge shifts phase, not tempo.

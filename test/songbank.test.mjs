@@ -17,6 +17,11 @@ test('every card resolves every note to a real frequency', () => {
   for (const c of list) {
     assert.ok(Array.isArray(c.notes) && c.notes.length > 0, `${c.id}: no notes`);
     for (const n of c.notes) {
+      // A rest is null. Anything else must parse: noteToFreq falls back to a default
+      // rather than throwing, so a typo would otherwise sail through as a wrong pitch.
+      if (n === null) continue;
+      assert.equal(typeof n, 'string', `${c.id}: note entry ${JSON.stringify(n)} is neither a name nor a rest`);
+      assert.match(n, /^[A-G]#?-?\d+$/, `${c.id}: note "${n}" is not a parsable name`);
       const f = inst.noteToFreq(n);
       assert.ok(Number.isFinite(f) && f > 0, `${c.id}: note "${n}" resolved to ${f}`);
     }
@@ -49,10 +54,22 @@ test('optional fields use only supported values', () => {
       assert.ok(['sawtooth', 'square'].includes(c.waveform), `${c.id}: waveform "${c.waveform}"`);
     }
     if (c.filter !== undefined) {
-      for (const k of ['cutoff', 'resonance', 'decay', 'accent']) {
+      // A card may state only the knobs its source gave; the rest fall back to the
+      // engine default rather than being guessed. Whatever is present must be 0..1.
+      const present = Object.keys(c.filter);
+      assert.ok(present.length > 0, `${c.id}: empty filter object`);
+      for (const k of present) {
+        assert.ok(['cutoff', 'resonance', 'decay', 'accent'].includes(k), `${c.id}: unknown filter knob "${k}"`);
         const v = c.filter[k];
         assert.ok(typeof v === 'number' && v >= 0 && v <= 1, `${c.id}: filter.${k} = ${v}, want 0..1`);
       }
+    }
+    if (c.overdrive !== undefined) {
+      assert.ok(typeof c.overdrive === 'number' && c.overdrive >= 0 && c.overdrive <= 1,
+        `${c.id}: overdrive = ${c.overdrive}, want 0..1`);
+    }
+    if (c.homeOctave !== undefined) {
+      assert.ok(Number.isInteger(c.homeOctave), `${c.id}: homeOctave = ${c.homeOctave}`);
     }
   }
 });
@@ -134,16 +151,26 @@ test('the chart shows pitch class on the note row and octave as a D/U mark', () 
     const chart = inst.buildSongChart();
     const home = parseInt(chart.homeOctaveLabel.replace('Octave ', ''), 10);
     chart.steps.forEach((s, i) => {
-      const { pitch, octave } = inst.splitNote(c.notes[i]);
+      const { pitch, octave, rest } = inst.splitNote(c.notes[i]);
+      if (rest) {
+        // A rest is a dash with no octave mark and no accent or slide of its own.
+        assert.equal(s.pitch, '—', `${c.id} step ${i + 1}: rest should show a dash`);
+        assert.equal(s.shift, '', `${c.id} step ${i + 1}: rest carries an octave mark`);
+        assert.equal(s.marks, '', `${c.id} step ${i + 1}: rest carries accent/slide marks`);
+        return;
+      }
       assert.equal(s.pitch, pitch, `${c.id} step ${i + 1}: pitch class`);
       assert.doesNotMatch(s.pitch, /\d/, `${c.id} step ${i + 1}: octave leaked onto the note row`);
-      const want = octave < home ? 'D' : octave > home ? 'U' : '';
+      // Two octaves out is two presses of the octave button, so the mark carries its
+      // size — "U2", not a bare "U" that loses the difference.
+      const away = Math.abs(octave - home);
+      const want = away === 0 ? '' : (octave < home ? 'D' : 'U') + (away > 1 ? String(away) : '');
       assert.equal(s.shift, want, `${c.id} step ${i + 1}: octave mark for ${c.notes[i]} against home ${home}`);
     });
   }
 });
 
-test('the home octave is the one most of the pattern sits in', () => {
+test('the home octave is derived from the pattern unless the card pins one', () => {
   const { inst } = loadComponent(FILE);
   for (const c of inst.SONG_CARDS) {
     inst.loadSongCard(c);
@@ -151,12 +178,36 @@ test('the home octave is the one most of the pattern sits in', () => {
     const home = parseInt(chart.homeOctaveLabel.replace('Octave ', ''), 10);
     const octaves = c.notes.map(n => inst.splitNote(n).octave);
     const at = o => octaves.filter(x => x === o).length;
+
+    if (c.homeOctave !== undefined) {
+      // A source that marks every step Up/Down measures against the device's base
+      // octave, so the card's own value wins over anything derived.
+      assert.equal(home, c.homeOctave, `${c.id}: pinned home octave ignored`);
+      continue;
+    }
     for (const o of new Set(octaves)) {
       assert.ok(at(home) >= at(o), `${c.id}: home octave ${home} is not the most common`);
     }
     // ...which means a chart never marks more steps shifted than it leaves at home.
     const shifted = chart.steps.filter(s => s.shift).length;
-    assert.ok(shifted <= c.notes.length - at(home) + 0, `${c.id}: more marks than notes away from home`);
+    assert.equal(shifted, c.notes.length - at(home), `${c.id}: mark count does not match notes away from home`);
+  }
+});
+
+test('a pinned home octave can mark every step shifted', () => {
+  const { inst } = loadComponent(FILE);
+  const pinned = inst.SONG_CARDS.filter(c => c.homeOctave !== undefined);
+  assert.ok(pinned.length > 0, 'expected at least one card to pin its home octave');
+  for (const c of pinned) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart();
+    chart.steps.forEach((s, i) => {
+      const { octave: oct, rest } = inst.splitNote(c.notes[i]);
+      if (rest) { assert.equal(s.shift, '', `${c.id} step ${i + 1}: rest carries an octave mark`); return; }
+      const away = Math.abs(oct - c.homeOctave);
+      assert.equal(s.shift, away === 0 ? '' : (oct < c.homeOctave ? 'D' : 'U') + (away > 1 ? String(away) : ''),
+        `${c.id} step ${i + 1}: mark for ${c.notes[i]} against pinned home ${c.homeOctave}`);
+    });
   }
 });
 
@@ -180,7 +231,13 @@ test('a knob the source never stated shows no pointer', () => {
       // An unknown position must not draw a dial pointer, or the chart would imply a
       // setting nobody recorded.
       assert.equal(/rotate\(/.test(d.pointerStyle), known, `${c.id}: ${d.label} pointer vs "${d.valueLabel}"`);
-      if (!c.filter) assert.ok(!known, `${c.id}: ${d.label} shows ${d.valueLabel} but the card has no filter data`);
+      // A dial reads as known only when this card supplies that exact value — a partial
+      // filter must not make its unstated neighbours look set.
+      const source = d.label === 'Overdrive'
+        ? c.overdrive
+        : (c.filter || {})[d.label.toLowerCase().replace(' ', '')];
+      assert.equal(known, source !== undefined && source !== null,
+        `${c.id}: ${d.label} shows ${d.valueLabel} but the card supplies ${source}`);
     }
     // Env Mod is never modelled by this engine, so it is blank on every card.
     const envMod = inst.buildSongChart().dials.find(d => d.label === 'Env Mod');
@@ -197,5 +254,106 @@ test('unknown header fields are dashed rather than filled in', () => {
     assert.equal(chart.group, c.group || '—', `${c.id}: pattern group`);
     assert.equal(chart.bank, c.bank || '—', `${c.id}: bank`);
     assert.equal(chart.pattern, c.pattern === undefined ? '—' : String(c.pattern), `${c.id}: pattern number`);
+  }
+});
+
+// The filter config became per-knob so a card can state only what its source gave.
+// These pin the audio values down, because "sounds the same" is the whole requirement.
+test('a card with no filter keeps the historical default voicing', async () => {
+  const { inst, audioCtx, dispose } = loadComponent(FILE);
+  const plain = inst.SONG_CARDS.find(c => !c.filter && !c.overdrive);
+  assert.ok(plain, 'expected a card with no filter settings');
+  inst.loadSongCard(plain);
+  inst.playSongBank();
+  await new Promise(r => setTimeout(r, 150));
+  dispose();
+
+  const biquad = audioCtx.__created.find(n => n.kind === 'biquad').node;
+  assert.equal(biquad.Q.value, 8, 'default resonance changed');
+  const cutoffs = biquad.frequency.calls.filter(c => c.op === 'set').map(c => c.v);
+  assert.ok(cutoffs.length > 0, 'no cutoff was scheduled');
+  for (const v of cutoffs) {
+    assert.ok(v === 900 || v === 1800, `default cutoff should be 900 (1800 accented), got ${v}`);
+  }
+});
+
+test('a card that states one knob keeps the default for the rest', async () => {
+  const { inst, audioCtx, dispose } = loadComponent(FILE);
+  const partial = inst.SONG_CARDS.find(c => c.filter && c.filter.resonance === undefined);
+  assert.ok(partial, 'expected a card with a partial filter');
+  inst.loadSongCard(partial);
+  inst.playSongBank();
+  await new Promise(r => setTimeout(r, 150));
+  dispose();
+
+  const biquad = audioCtx.__created.find(n => n.kind === 'biquad').node;
+  assert.equal(biquad.Q.value, 8, 'an unstated resonance should fall back to the default');
+});
+
+test('a card gets a waveshaper only when it calls for overdrive', async () => {
+  const { inst, audioCtx, dispose } = loadComponent(FILE);
+  const clean = inst.SONG_CARDS.find(c => !c.overdrive);
+  inst.loadSongCard(clean);
+  inst.playSongBank();
+  await new Promise(r => setTimeout(r, 60));
+  inst.stopSongBank();
+  assert.equal(audioCtx.__created.filter(n => n.kind === 'waveShaper').length, 0,
+    `${clean.id} has no overdrive but was given a waveshaper`);
+
+  const driven = inst.SONG_CARDS.find(c => c.overdrive);
+  assert.ok(driven, 'expected a card that calls for overdrive');
+  inst.loadSongCard(driven);
+  inst.playSongBank();
+  await new Promise(r => setTimeout(r, 60));
+  dispose();
+  const shapers = audioCtx.__created.filter(n => n.kind === 'waveShaper');
+  assert.equal(shapers.length, 1, `${driven.id} should get exactly one waveshaper`);
+  assert.ok(shapers[0].node.curve, 'the waveshaper was left without a curve');
+});
+
+test('a rest keeps its slot but sounds nothing', async () => {
+  const { inst, audioCtx, dispose } = loadComponent(FILE);
+  const withRests = inst.SONG_CARDS.filter(c => c.notes.includes(null));
+  assert.ok(withRests.length > 0, 'expected at least one card with rests');
+
+  for (const c of withRests) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart();
+    // The bar keeps its full length: a rest is a step, not a missing one.
+    assert.equal(chart.steps.length, c.notes.length, `${c.id}: rests changed the pattern length`);
+    assert.equal(inst.state.sbNotes.length, c.notes.length, `${c.id}: rests dropped from playback`);
+  }
+
+  // ...and playing one neither throws nor schedules a pitch for the silent steps.
+  const card = withRests[0];
+  inst.loadSongCard(card);
+  inst.playSongBank();
+  await new Promise(r => setTimeout(r, 250));
+  dispose();
+  const osc = audioCtx.__created.find(n => n.kind === 'oscillator').node;
+  const pitched = osc.frequency.calls.filter(x => x.op !== 'cancel').length;
+  assert.ok(pitched > 0, 'no pitches were scheduled at all');
+});
+
+test('a slide out of a rest is dropped rather than gliding from silence', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    c.slide.forEach(i => {
+      if (c.notes[i] === null) {
+        assert.fail(`${c.id}: step ${i + 1} is a rest but is marked as sliding`);
+      }
+    });
+  }
+});
+
+test('every card that pins a home octave states it as an integer near its notes', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS.filter(c => c.homeOctave !== undefined)) {
+    const octaves = c.notes.filter(n => n !== null).map(n => inst.splitNote(n).octave);
+    const lo = Math.min(...octaves), hi = Math.max(...octaves);
+    // A pinned home two octaves clear of every note would mean the source and the data
+    // disagree about what the base octave is.
+    assert.ok(c.homeOctave >= lo - 1 && c.homeOctave <= hi + 1,
+      `${c.id}: pinned home ${c.homeOctave} is nowhere near its notes (${lo}..${hi})`);
   }
 });

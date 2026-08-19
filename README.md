@@ -112,6 +112,8 @@ The tests load each guide's `<script type="text/x-dc">` block and run its `Compo
 
 The stub clock advances with real time, so the schedulers run for real and only the audio nodes are faked. Reverting an engine to fire notes at `ctx.currentTime` fails the grid assertions immediately.
 
+Two rules keep the timing tests honest on a busy machine. They wait for the data they need rather than for a fixed number of milliseconds — how many steps fit in 700ms is a property of the runner, not of the code — and every test that starts an engine registers `t.after(dispose)`, because a failed assertion would otherwise leave the sequencer's `setTimeout` chain rescheduling forever and hang the run instead of failing it.
+
 Each of these guards a bug this repo has actually shipped, and each was checked by reintroducing that bug and confirming the suite goes red — worth repeating for any test added here, since an assertion that cannot fail is worse than none.
 
 ## Layout

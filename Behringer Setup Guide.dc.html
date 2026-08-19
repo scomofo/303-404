@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TD-3 &amp; RD-6 Guide</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -20,7 +21,7 @@
       <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
         <span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span>
       </div>
-      <div style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
         <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div>
       </div>
     </div>
@@ -123,7 +124,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
               <sc-for list="{{ cablesAudio }}" as="c" hint-placeholder-count="2">
-                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
                   <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
@@ -138,7 +139,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Sync cable — tap to mark connected</div>
               <sc-for list="{{ syncCable }}" as="c" hint-placeholder-count="1">
-                <button type="button" onclick="{{ c.toggle }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
                   <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
@@ -162,7 +163,7 @@
                       <div style="width:64px;font-size:11px;font-weight:700;flex:none;">{{ row.label }}</div>
                       <div style="display:flex;gap:4px;">
                         <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="16">
-                          <button type="button" onclick="{{ cell.toggle }}" style="{{ cell.style }}"></button>
+                          <button type="button" onclick="{{ cell.toggle }}" style="{{ cell.style }}" aria-label="{{ cell.label }}" aria-pressed="{{ cell.pressed }}"></button>
                         </sc-for>
                       </div>
                     </div>
@@ -222,8 +223,8 @@
                   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:40px;">
                     <div style="font-size:9px;opacity:.5;">{{ c.num }}</div>
                     <div style="width:40px;height:28px;border-radius:8px;background:var(--color-neutral-200);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">{{ c.note }}</div>
-                    <button type="button" onclick="{{ c.toggleAccent }}" style="{{ c.accentBtnStyle }}">ACC</button>
-                    <button type="button" onclick="{{ c.toggleSlide }}" style="{{ c.slideBtnStyle }}">SLIDE</button>
+                    <button type="button" onclick="{{ c.toggleAccent }}" style="{{ c.accentBtnStyle }}" aria-label="{{ c.accentLabel }}" aria-pressed="{{ c.accentPressed }}">ACC</button>
+                    <button type="button" onclick="{{ c.toggleSlide }}" style="{{ c.slideBtnStyle }}" aria-label="{{ c.slideLabel }}" aria-pressed="{{ c.slidePressed }}">SLIDE</button>
                   </div>
                 </sc-for>
               </div>
@@ -257,7 +258,7 @@
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Song cards — tap to load into the engine below</div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
                   <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
-                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}">
+                    <button type="button" onclick="{{ card.load }}" style="{{ card.cardStyle }}" aria-pressed="{{ card.pressed }}">
                       <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
                       <div style="font-size:11px;opacity:.7;">{{ card.tag }} · {{ card.bpmLabel }}</div>
                     </button>
@@ -343,7 +344,7 @@
               <span class="tag tag-accent-2" style="align-self:flex-start;">Suggested arrangement — adjust to taste</span>
               <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
                 <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="7">
-                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}">{{ sec.title }}</button>
+                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}" aria-pressed="{{ sec.pressed }}">{{ sec.title }}</button>
                 </sc-for>
               </div>
               <div class="card" style="background:var(--color-accent-100);">
@@ -374,7 +375,7 @@
 
   <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
     <div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;">
-      <div class="dialog" onclick="{{ stopProp }}" style="max-height:80vh;overflow:auto;">
+      <div class="dialog" onclick="{{ stopProp }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;">
         <div class="dialog-title">Course map</div>
         <sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="6">
           <div>
@@ -394,23 +395,28 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = {
-    step: 0,
-    dialogOpen: false,
-    checks: {},
-    rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
-    rd6Fill: { bd:[0,4,8,12], sd:[4,6,12,14], ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], oh:[7], ac:[6,14] },
-    rd6Playing: false, rd6Col: -1, rd6PlayKind: null, rd6PatIdx: 0,
-    rd6Shuffle: 0,
-    td3Accent: [0,4,10], td3Slide: [2,4,7,13],
-    td3Playing: false, td3Col: -1,
-    td3Overdrive: 0, td3SoftAttack: false,
-    cablesAudio: [false,false],
-    cablesSync: [false],
-    accentSweep: 'FAST',
-    perfmapSel: 0,
-    sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
-  };
+  // Every resettable field lives here so the initial state and restart() can't drift apart.
+  initialState() {
+    return {
+      step: 0,
+      dialogOpen: false,
+      checks: {},
+      rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
+      rd6Fill: { bd:[0,4,8,12], sd:[4,6,12,14], ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], oh:[7], ac:[6,14] },
+      rd6Playing: false, rd6Col: -1, rd6PlayKind: null, rd6PatIdx: 0,
+      rd6Shuffle: 0,
+      td3Accent: [0,4,10], td3Slide: [2,4,7,13],
+      td3Playing: false, td3Col: -1,
+      td3Overdrive: 0, td3SoftAttack: false,
+      cablesAudio: [false,false],
+      cablesSync: [false],
+      accentSweep: 'FAST',
+      perfmapSel: 0,
+      sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
+    };
+  }
+
+  state = this.initialState();
 
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
 
@@ -709,7 +715,7 @@ class Component extends DCLogic {
   }
   goNext() { this.goToStep(this.state.step + 1); }
   goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState({ step: 0, checks: {}, dialogOpen: false }); }
+  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState(this.initialState()); }
 
   // ── checklist ──
   toggleCheck(stepId, idx) {
@@ -743,7 +749,7 @@ class Component extends DCLogic {
     const defs = [ { from:'RD-6 Line Out', to:'Mixer Input 1' }, { from:'TD-3 Output', to:'Mixer Input 2' } ];
     return defs.map((d, i) => {
       const connected = !!this.state.cablesAudio[i];
-      return { ...d, toggle: () => this.toggleCable(i),
+      return { ...d, toggle: () => this.toggleCable(i), pressed: connected ? 'true' : 'false',
         dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
         lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
         statusText: connected ? 'Connected' : 'Click to connect' };
@@ -751,7 +757,7 @@ class Component extends DCLogic {
   }
   buildSyncCable() {
     const connected = !!this.state.cablesSync[0];
-    return [{ from:'RD-6 Sync Out', to:'TD-3 Sync In', toggle: () => this.toggleSyncCable(),
+    return [{ from:'RD-6 Sync Out', to:'TD-3 Sync In', toggle: () => this.toggleSyncCable(), pressed: connected ? 'true' : 'false',
       dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
       lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
       statusText: connected ? 'Connected' : 'Click to connect' }];
@@ -785,6 +791,7 @@ class Component extends DCLogic {
         const bg = active ? color[d.key] : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
         const border = isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent';
         return { idx: i, toggle: () => this.toggleRd6Cell(patternKey, d.key, i),
+          label: `${d.label} step ${i + 1}`, pressed: active ? 'true' : 'false',
           style: `width:28px;height:28px;border-radius:8px;background:${bg};border:${border};cursor:pointer;padding:0;flex:none;` };
       }),
     }));
@@ -812,6 +819,8 @@ class Component extends DCLogic {
       return { num: i + 1, note,
         toggleAccent: () => this.toggleTd3Flag('td3Accent', i),
         toggleSlide: () => this.toggleTd3Flag('td3Slide', i),
+        accentLabel: `Accent on step ${i + 1} (${note})`, accentPressed: accent ? 'true' : 'false',
+        slideLabel: `Slide on step ${i + 1} (${note})`, slidePressed: slide ? 'true' : 'false',
         accentBtnStyle: this.chipStyle(accent, 'var(--color-accent)'),
         slideBtnStyle: this.chipStyle(slide, 'var(--color-accent-2-600)') };
     });
@@ -832,7 +841,7 @@ class Component extends DCLogic {
   buildPerfSections() {
     return this.PERF_SECTIONS.map((s, i) => {
       const sel = this.state.perfmapSel === i;
-      return { ...s, select: () => this.setState({ perfmapSel: i }),
+      return { ...s, select: () => this.setState({ perfmapSel: i }), pressed: sel ? 'true' : 'false',
         barStyle: `flex:${s.dur} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:4px;cursor:pointer;background:${sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};border-right:1px solid var(--color-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` };
     });
   }
@@ -1129,7 +1138,7 @@ class Component extends DCLogic {
       softAttackOn: this.state.td3SoftAttack,
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
       songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
-        title: c.title, tag: c.tag, load: () => this.loadSongCard(c),
+        title: c.title, tag: c.tag, load: () => this.loadSongCard(c), pressed: this.state.sbSelected === c.id ? 'true' : 'false',
         bpmLabel: c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`,
         cardStyle: `text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${this.state.sbSelected === c.id ? 'var(--color-accent)' : 'var(--color-divider)'};background:${this.state.sbSelected === c.id ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:140px;`,
       })) : [],

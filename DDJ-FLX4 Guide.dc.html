@@ -368,6 +368,7 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.STEPS = this.buildSteps();
+    this.sequences = {};
   }
 
   componentWillUnmount() {
@@ -535,6 +536,97 @@ class Component extends DCLogic {
     });
   }
 
+  // ── step scheduling ──
+  // Every engine below queues its audio ahead of time against the AudioContext clock
+  // rather than firing each note from the timer callback. setInterval/setTimeout drift
+  // by several ms a tick, and browsers clamp background-tab timers to ~1s; either is
+  // plainly audible as a wobbling groove. Here the timer only decides *when to look
+  // ahead* — each note's start time is computed exactly on the audio clock.
+  SCHED_TICK_MS = 25;
+  // Queue only a little while the tab is visible, so edits to a playing pattern are
+  // heard almost immediately...
+  LOOKAHEAD_VISIBLE = 0.12;
+  // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in the
+  // audio. Nobody is editing a pattern they can't see, so the latency costs nothing.
+  LOOKAHEAD_HIDDEN = 1.6;
+
+  lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
+
+  // spec.onStep(col, time) schedules one step's audio at the exact AudioContext time
+  // `time`, returning any source nodes it created (so a stop can silence ones that
+  // haven't sounded yet) plus optional `meta` carried through to the visual update.
+  // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col) advances it.
+  startSequence(key, spec) {
+    const ctx = this.audioCtx;
+    const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
+                  queue: [], pending: [], shown: null, timer: null };
+    this.sequences[key] = seq;
+    const tick = () => {
+      const horizon = ctx.currentTime + this.lookahead();
+      while (seq.nextTime < horizon) {
+        const at = seq.nextTime;
+        const r = spec.onStep(seq.col, at) || {};
+        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
+        seq.queue.push({ col: seq.col, time: at, meta: r.meta });
+        seq.nextTime = at + spec.stepDur(seq.col);
+        seq.col = spec.nextCol(seq.col);
+      }
+      this.drainSequence(seq);
+      seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
+    };
+    tick();
+    return seq;
+  }
+
+  // Move the on-screen playhead to the step that is actually sounding now, not the one
+  // most recently *scheduled* — those are up to a lookahead apart.
+  drainSequence(seq) {
+    const now = this.audioCtx.currentTime;
+    let cur = null;
+    while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
+    seq.pending = seq.pending.filter(p => p.time + 1 > now);
+    if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
+      seq.shown = cur;
+      seq.spec.onVisual(cur.col, cur.meta);
+    }
+  }
+
+  // Silence steps queued but not yet sounded. Without this, stopping would still let a
+  // lookahead's worth of already-scheduled notes through.
+  flushPending(seq, from) {
+    let earliest = seq.nextTime;
+    seq.pending.forEach(p => {
+      if (p.time > from) {
+        try { p.node.stop(from); } catch (e) {}
+        if (p.time < earliest) earliest = p.time;
+      }
+    });
+    seq.pending = seq.pending.filter(p => p.time <= from);
+    seq.queue = seq.queue.filter(q => q.time <= from);
+    return earliest;
+  }
+
+  stopSequence(key) {
+    const seq = this.sequences[key];
+    if (!seq) return;
+    clearTimeout(seq.timer);
+    if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
+    delete this.sequences[key];
+  }
+
+  // A phase jump (Nudge / SYNC / hot cue) has to undo work already done: up to a
+  // lookahead of steps are scheduled with the OLD column numbers. Silence those, roll
+  // the clock back to the first slot they occupied, and let the next tick refill it
+  // from the new column — the tempo grid itself is untouched, which is what a nudge
+  // on real gear does.
+  seekSequence(key, col) {
+    const seq = this.sequences[key];
+    if (!seq) return;
+    const from = this.audioCtx.currentTime;
+    seq.nextTime = this.flushPending(seq, from);
+    seq.col = col;
+  }
+
   // ── audio engine ──
   ensureAudio() {
     if (!this.audioCtx) {
@@ -557,6 +649,7 @@ class Component extends DCLogic {
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
     osc.connect(g).connect(out);
     osc.start(t); osc.stop(t + 0.2);
+    return osc;
   }
   playNoiseTo(out, t, opts) {
     const ctx = this.audioCtx;
@@ -568,6 +661,7 @@ class Component extends DCLogic {
     g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
     src.connect(filter).connect(g).connect(out);
     src.start(t); src.stop(t + opts.duration + 0.02);
+    return src;
   }
 
   buildDeckChain() {
@@ -629,38 +723,35 @@ class Component extends DCLogic {
     this.fxWet.gain.value = this.state.fxOn ? this.state.fxLevel : 0;
   }
 
-  deckStepAudio(chain, col) {
-    const t = this.audioCtx.currentTime;
-    if ([0, 4, 8, 12].includes(col)) this.playKickTo(chain.input, t, 1);
-    if ([2, 6, 10, 14].includes(col)) this.playNoiseTo(chain.input, t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.3 });
-  }
-  scheduleA(col) {
-    this.deckStepAudio(this.chainA, col);
-    this.setState({ colA: col });
-    const loopLen = this.state.loopOn ? this.state.loopLen : 16;
-    const stepMs = 60000 / this.DECK_A_BPM / 4;
-    // Read colA fresh at fire time (not the closured col) so a hot-cue jump made
-    // while this timer is pending actually takes effect on the next tick.
-    this.tA = setTimeout(() => { this.scheduleA((this.state.colA + 1) % loopLen); }, stepMs);
-  }
-  scheduleB(col) {
-    this.deckStepAudio(this.chainB, col);
-    this.setState({ colB: col });
-    const bpm = this.DECK_A_BPM * (1 + this.state.deckB.tempoPct / 100);
-    const stepMs = 60000 / bpm / 4;
-    // Read colB fresh at fire time (not the closured col) so Nudge/SYNC — which write
-    // colB directly — aren't silently overwritten by this already-scheduled tick.
-    this.tB = setTimeout(() => { this.scheduleB((this.state.colB + 1) % 16); }, stepMs);
+  deckStepAudio(chain, col, t) {
+    const nodes = [];
+    if ([0, 4, 8, 12].includes(col)) nodes.push(this.playKickTo(chain.input, t, 1));
+    if ([2, 6, 10, 14].includes(col)) nodes.push(this.playNoiseTo(chain.input, t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.3 }));
+    return nodes;
   }
   startEngine() {
     this.ensureAudio(); this.stopEngine(); this.initChains();
-    this.setState({ enginePlaying: true });
-    this.scheduleA(0);
-    this.scheduleB(0);
+    this.setState({ enginePlaying: true, colA: 0, colB: 0 });
+    // Two independent sequences: deck A holds the reference tempo, deck B runs at
+    // whatever the tempo fader says, so they drift apart until you beatmatch them.
+    this.startSequence('A', {
+      onStep: (col, t) => ({ nodes: this.deckStepAudio(this.chainA, col, t) }),
+      stepDur: () => 60 / this.DECK_A_BPM / 4,
+      // Loop length is read live, so changing the Auto Loop size takes effect at the
+      // next wrap rather than needing a restart.
+      nextCol: col => (col + 1) % (this.state.loopOn ? this.state.loopLen : 16),
+      onVisual: col => this.setState({ colA: col }),
+    });
+    this.startSequence('B', {
+      onStep: (col, t) => ({ nodes: this.deckStepAudio(this.chainB, col, t) }),
+      stepDur: () => 60 / (this.DECK_A_BPM * (1 + this.state.deckB.tempoPct / 100)) / 4,
+      nextCol: col => (col + 1) % 16,
+      onVisual: col => this.setState({ colB: col }),
+    });
   }
   stopEngine() {
-    if (this.tA) { clearTimeout(this.tA); this.tA = null; }
-    if (this.tB) { clearTimeout(this.tB); this.tB = null; }
+    this.stopSequence('A');
+    this.stopSequence('B');
     this.teardownChains();
     if (this.state.enginePlaying) this.setState({ enginePlaying: false, colA: -1, colB: -1 });
   }
@@ -671,10 +762,14 @@ class Component extends DCLogic {
   nudge(deckKey, delta) {
     if (!this.state.enginePlaying) return;
     const colKey = deckKey === 'deckB' ? 'colB' : 'colA';
-    this.setState(s => ({ [colKey]: (s[colKey] + delta + 16) % 16 }));
+    const col = (this.state[colKey] + delta + 16) % 16;
+    this.setState({ [colKey]: col });
+    this.seekSequence(deckKey === 'deckB' ? 'B' : 'A', col);
   }
   syncDecks() {
-    this.setState(s => ({ deckB: { ...s.deckB, tempoPct: 0 }, colB: s.colA }));
+    const col = this.state.colA;
+    this.setState(s => ({ deckB: { ...s.deckB, tempoPct: 0 }, colB: col }));
+    this.seekSequence('B', col);
   }
 
   setDeckParam(deckKey, ctlKey, value) {
@@ -694,14 +789,14 @@ class Component extends DCLogic {
   }
 
   toggleHotCue(padIdx) {
-    this.setState(s => {
-      const cues = s.hotCues.slice();
-      if (cues[padIdx] == null) {
-        cues[padIdx] = Math.max(0, s.colA);
-        return { hotCues: cues };
-      }
-      return { colA: cues[padIdx] };
-    });
+    const cues = this.state.hotCues.slice();
+    if (cues[padIdx] == null) {
+      cues[padIdx] = Math.max(0, this.state.colA);
+      this.setState({ hotCues: cues });
+      return;
+    }
+    this.setState({ colA: cues[padIdx] });
+    this.seekSequence('A', cues[padIdx]);
   }
   setLoop(value) {
     if (value === 16) this.setState({ loopOn: false, loopLen: 16 });

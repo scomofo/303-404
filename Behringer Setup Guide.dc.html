@@ -506,6 +506,7 @@ class Component extends DCLogic {
     super(props);
     this.NOTES = this.NOTE_NAMES.map(n => this.noteToFreq(n));
     this.STEPS = this.buildSteps();
+    this.sequences = {};
   }
 
   // Equal-temperament frequency for a note like 'C2', 'C#2', 'A2' (A4 = 440Hz).
@@ -861,6 +862,84 @@ class Component extends DCLogic {
     return groups;
   }
 
+  // ── step scheduling ──
+  // Every engine below queues its audio ahead of time against the AudioContext clock
+  // rather than firing each note from the timer callback. setInterval/setTimeout drift
+  // by several ms a tick, and browsers clamp background-tab timers to ~1s; either is
+  // plainly audible as a wobbling groove. Here the timer only decides *when to look
+  // ahead* — each note's start time is computed exactly on the audio clock.
+  SCHED_TICK_MS = 25;
+  // Queue only a little while the tab is visible, so edits to a playing pattern are
+  // heard almost immediately...
+  LOOKAHEAD_VISIBLE = 0.12;
+  // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in the
+  // audio. Nobody is editing a pattern they can't see, so the latency costs nothing.
+  LOOKAHEAD_HIDDEN = 1.6;
+
+  lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
+
+  // spec.onStep(col, time) schedules one step's audio at the exact AudioContext time
+  // `time`, returning any source nodes it created (so a stop can silence ones that
+  // haven't sounded yet) plus optional `meta` carried through to the visual update.
+  // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col) advances it.
+  startSequence(key, spec) {
+    const ctx = this.audioCtx;
+    const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
+                  queue: [], pending: [], shown: null, timer: null };
+    this.sequences[key] = seq;
+    const tick = () => {
+      const horizon = ctx.currentTime + this.lookahead();
+      while (seq.nextTime < horizon) {
+        const at = seq.nextTime;
+        const r = spec.onStep(seq.col, at) || {};
+        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
+        seq.queue.push({ col: seq.col, time: at, meta: r.meta });
+        seq.nextTime = at + spec.stepDur(seq.col);
+        seq.col = spec.nextCol(seq.col);
+      }
+      this.drainSequence(seq);
+      seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
+    };
+    tick();
+    return seq;
+  }
+
+  // Move the on-screen playhead to the step that is actually sounding now, not the one
+  // most recently *scheduled* — those are up to a lookahead apart.
+  drainSequence(seq) {
+    const now = this.audioCtx.currentTime;
+    let cur = null;
+    while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
+    seq.pending = seq.pending.filter(p => p.time + 1 > now);
+    if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
+      seq.shown = cur;
+      seq.spec.onVisual(cur.col, cur.meta);
+    }
+  }
+
+  // Silence steps queued but not yet sounded. Without this, stopping would still let a
+  // lookahead's worth of already-scheduled notes through.
+  flushPending(seq, from) {
+    let earliest = seq.nextTime;
+    seq.pending.forEach(p => {
+      if (p.time > from) {
+        try { p.node.stop(from); } catch (e) {}
+        if (p.time < earliest) earliest = p.time;
+      }
+    });
+    seq.pending = seq.pending.filter(p => p.time <= from);
+    seq.queue = seq.queue.filter(q => q.time <= from);
+    return earliest;
+  }
+
+  stopSequence(key) {
+    const seq = this.sequences[key];
+    if (!seq) return;
+    clearTimeout(seq.timer);
+    if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
+    delete this.sequences[key];
+  }
+
   // ── audio ──
   ensureAudio() {
     if (!this.audioCtx) {
@@ -883,6 +962,7 @@ class Component extends DCLogic {
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
     osc.connect(g).connect(ctx.destination);
     osc.start(t); osc.stop(t + 0.2);
+    return osc;
   }
   playNoise(t, opts) {
     const ctx = this.audioCtx;
@@ -894,41 +974,47 @@ class Component extends DCLogic {
     g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
     src.connect(filter).connect(g).connect(ctx.destination);
     src.start(t); src.stop(t + opts.duration + 0.02);
+    return src;
   }
-  playRd6StepFor(pattern, col) {
-    const t = this.audioCtx.currentTime;
+  playRd6StepFor(pattern, col, t) {
     const accent = pattern.ac.includes(col);
     const vol = accent ? 1 : 0.7;
-    if (pattern.bd.includes(col)) this.playKick(t, vol);
-    if (pattern.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
-    if (pattern.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
-    if (pattern.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
+    const nodes = [];
+    if (pattern.bd.includes(col)) nodes.push(this.playKick(t, vol));
+    if (pattern.sd.includes(col)) nodes.push(this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol }));
+    if (pattern.ch.includes(col)) nodes.push(this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol }));
+    if (pattern.oh.includes(col)) nodes.push(this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol }));
+    return nodes;
   }
   playRd6(kind) {
     kind = kind || 'rd6';
     this.ensureAudio(); this.stopRd6();
-    let col = 0, patIdx = 0;
+    let patIdx = 0;
     const patternFor = () => {
       if (kind === 'chain') return patIdx === 0 ? this.state.rd6 : this.state.rd6Fill;
       return kind === 'rd6fill' ? this.state.rd6Fill : this.state.rd6;
     };
-    const tick = () => {
-      this.playRd6StepFor(patternFor(), col);
-      this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: col, rd6PatIdx: patIdx });
-      const shuffle = this.state.rd6Shuffle || 0;
-      // Delay the wait INTO each odd (off-beat) step, shorten the wait back to the next
-      // even step, so odd 16ths land late — the swing feel the UI/README describe.
-      const mult = col % 2 === 0 ? 1 + shuffle : 1 - shuffle;
-      this.rd6Timer = setTimeout(() => {
-        col = (col + 1) % 16;
-        if (col === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
-        tick();
-      }, 125 * mult);
-    };
-    tick();
+    this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: 0, rd6PatIdx: 0 });
+    this.startSequence('rd6', {
+      // The pattern is read at schedule time, so edits land within a lookahead.
+      onStep: (col, t) => ({ nodes: this.playRd6StepFor(patternFor(), col, t), meta: patIdx }),
+      // Shuffle stretches the wait INTO each odd (off-beat) step and shortens the wait
+      // back to the next even one, so odd 16ths land late — the swing feel the UI
+      // and README describe.
+      stepDur: col => {
+        const shuffle = this.state.rd6Shuffle || 0;
+        return 0.125 * (col % 2 === 0 ? 1 + shuffle : 1 - shuffle);
+      },
+      nextCol: col => {
+        const n = (col + 1) % 16;
+        if (n === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
+        return n;
+      },
+      onVisual: (col, pat) => this.setState({ rd6Col: col, rd6PatIdx: pat }),
+    });
   }
   stopRd6() {
-    if (this.rd6Timer) { clearTimeout(this.rd6Timer); this.rd6Timer = null; }
+    this.stopSequence('rd6');
     if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1, rd6PlayKind: null });
   }
   makeDistortionCurve(amount) {
@@ -954,9 +1040,7 @@ class Component extends DCLogic {
     osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
     osc.start();
     this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
-    let col = 0;
-    const trigger = c => {
-      const t = ctx.currentTime;
+    const trigger = (c, t) => {
       const freq = this.NOTES[c];
       const accent = this.state.td3Accent.includes(c);
       const prev = (c - 1 + 16) % 16;
@@ -978,16 +1062,16 @@ class Component extends DCLogic {
         gain.gain.setValueAtTime(peak, t);
       }
     };
-    trigger(col);
-    this.setState({ td3Playing: true, td3Col: col });
-    this.td3Timer = setInterval(() => {
-      col = (col + 1) % 16;
-      trigger(col);
-      this.setState({ td3Col: col });
-    }, 125);
+    this.setState({ td3Playing: true, td3Col: 0 });
+    this.startSequence('td3', {
+      onStep: (col, t) => { trigger(col, t); },
+      stepDur: () => 0.125,
+      nextCol: col => (col + 1) % 16,
+      onVisual: col => this.setState({ td3Col: col }),
+    });
   }
   stopTd3() {
-    if (this.td3Timer) { clearInterval(this.td3Timer); this.td3Timer = null; }
+    this.stopSequence('td3');
     if (this.td3Osc) {
       const osc = this.td3Osc; const g = this.td3Gain;
       try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
@@ -1030,9 +1114,7 @@ class Component extends DCLogic {
     this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
     const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
     const fc = this.state.sbFilterCfg;
-    let col = 0;
-    const trigger = c => {
-      const t = ctx.currentTime;
+    const trigger = (c, t) => {
       const freq = this.noteToFreq(notes[c]);
       const accent = accentArr.includes(c);
       const prev = (c - 1 + notes.length) % notes.length;
@@ -1063,16 +1145,17 @@ class Component extends DCLogic {
         gain.gain.setValueAtTime(peak, t);
       }
     };
-    trigger(col);
-    this.setState({ sbPlaying: true, sbCol: col });
-    this.sbTimer = setInterval(() => {
-      col = (col + 1) % notes.length;
-      trigger(col);
-      this.setState({ sbCol: col });
-    }, this.state.sbTempo);
+    const stepSec = this.state.sbTempo / 1000;
+    this.setState({ sbPlaying: true, sbCol: 0 });
+    this.startSequence('sb', {
+      onStep: (col, t) => { trigger(col, t); },
+      stepDur: () => stepSec,
+      nextCol: col => (col + 1) % notes.length,
+      onVisual: col => this.setState({ sbCol: col }),
+    });
   }
   stopSongBank() {
-    if (this.sbTimer) { clearInterval(this.sbTimer); this.sbTimer = null; }
+    this.stopSequence('sb');
     if (this.sbOsc) {
       const osc = this.sbOsc; const g = this.sbGain;
       try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}

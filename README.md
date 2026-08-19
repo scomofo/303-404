@@ -1,10 +1,14 @@
-# TD-3 & RD-6 Guide
+# Hardware Guides
+
+Two single-page, interactive setup courses that share one runtime and design system: [**TD-3 & RD-6 Guide**](#td-3--rd-6-guide) for the Behringer TD-3-MO / RD-6-BK, and [**DDJ-FLX4 Guide**](#ddj-flx4-guide) for the Pioneer DJ DDJ-FLX4 controller.
+
+## TD-3 & RD-6 Guide
 
 A single-page, interactive setup and performance course for the **Behringer TD-3-MO** acid synthesizer and **Behringer RD-6-BK** drum machine. It walks an absolute beginner from unboxing to playing a five-minute live set, then on through pattern chaining, sound-design extras, stage-ready troubleshooting, and a loadable bank of TD-3 patterns, over eight weeks — with clickable hardware widgets and Web Audio previews of the patterns you're programming.
 
 Everything lives in one file — [Behringer Setup Guide.dc.html](Behringer%20Setup%20Guide.dc.html) — with a runtime script, a design-system bundle, and two photos alongside it.
 
-## Running it
+### Running it
 
 Open `Behringer Setup Guide.dc.html` in a browser, or serve the folder:
 
@@ -18,7 +22,7 @@ Then visit http://localhost:8000/Behringer%20Setup%20Guide.dc.html.
 
 Audio starts only after you press a Play button, since browsers require a user gesture before a `AudioContext` will produce sound.
 
-## The course
+### The course
 
 | | Week | Covers |
 | --- | --- | --- |
@@ -54,17 +58,51 @@ A progress bar tracks your position across the 31 steps, and the **Course map** 
 
 Checklists, cable states, and your edits to all patterns are held in memory for the session — reloading, or the **Start Over** button, resets them.
 
+## DDJ-FLX4 Guide
+
+A single-page, interactive setup and mixing course for the **Pioneer DJ DDJ-FLX4** controller. It walks an absolute beginner from unboxing and software setup through gain staging, EQ, faders and the crossfader, beatmatching by ear and with SYNC, hot cues, loops, Beat FX, and a mapped three-minute mix, over seven weeks.
+
+### Running it
+
+Open `DDJ-FLX4 Guide.dc.html` the same way as the Behringer guide — directly in a browser, or via `python -m http.server 8000` then http://localhost:8000/DDJ-FLX4%20Guide.dc.html. Same requirements: an internet connection (for React/Babel/fonts from their CDNs) and a click on a Start/Play button before any audio plays.
+
+### The course
+
+| | Week | Covers |
+| --- | --- | --- |
+| 1 | Unboxing, Connections & Software Setup | Bus power, Master Out wiring, installing Serato DJ Lite or rekordbox |
+| 2 | Decks — Loading, Transport & Tempo | Load/Play/Cue, jog wheel scratch vs. bend, the tempo fader |
+| 3 | Mixer Fundamentals | Trim/gain staging, 3-band EQ and the EQ swap, channel faders, the crossfader |
+| 4 | Beatmatching & Sync | Manual tempo + phase correction (nudge), then the one-touch SYNC button |
+| 5 | Hot Cues & Loops | Setting and jumping to hot cues, Auto Loop lengths |
+| 6 | Beat FX & Your First Mix | A tempo-synced echo effect, then a mapped 3-minute performance |
+| 7 | Care, Troubleshooting & Software Tips | No-sound/no-detect fixes, firmware, switching between Serato and rekordbox |
+
+### Interactive pieces
+
+All of it — mixer, beatmatching, hot cues, loops, Beat FX — runs on **two synthesized reference loops** (procedural kick + hi-hat via Web Audio oscillators/noise, exactly like the TD-3/RD-6 guide's approach), not real music, so you can practice DJ mixing mechanics without needing licensed audio.
+
+- **Practice decks** — a shared Start/Stop engine appears on every mixing-related step from Week 2 on. Deck A holds a fixed 124 BPM reference loop; Deck B starts detuned (+4%) so there's something to fix.
+- **Gain & EQ** (Week 3) — Trim and 3-band EQ per deck as segmented presets (Low/Unity/Hot, Cut/Flat/Boost), wired to real `BiquadFilterNode` shelving/peaking filters and gain nodes — changes apply live, even mid-playback.
+- **Faders & crossfader** (Week 3) — stepped channel faders and a crossfader with a simple linear taper (center = both audible, hard left/right isolates a deck), all driving real per-deck gain nodes.
+- **Beatmatching & Sync** (Week 4) — live BPM readouts for both decks, Nudge −/+ buttons that bump Deck B's phase a step at a time, and a SYNC button that snaps Deck B's tempo to 0% and its phase to match Deck A instantly.
+- **Hot cues** (Week 5) — 4 pads for Deck A; an unlit pad sets a cue at the current playhead step, a lit one jumps back to it.
+- **Loops** (Week 5) — Auto Loop length presets (Off/8/4/2 steps) that actually shorten Deck A's loop point.
+- **Beat FX** (Week 6) — an ON/OFF toggle and Low/Med/High level presets driving a real synced `DelayNode` echo (with feedback) on the master send.
+- **Performance map** (Week 6) — the same proportional-timeline pattern as the Behringer guide's Week 4, mapped to a 6-section, 3-minute mix.
+
 ## Layout
 
 ```
-Behringer Setup Guide.dc.html   the app — markup plus its component logic
-support.js                      generated dc-runtime (loads React/Babel, renders <x-dc>)
-_ds/organic-…/                  the Organic design system: styles.css, manifest, its own readme
-uploads/                        td3.jpg, rd-6.jpg — reference photos of the two units
+Behringer Setup Guide.dc.html   the TD-3/RD-6 app — markup plus its component logic
+DDJ-FLX4 Guide.dc.html          the DDJ-FLX4 app — markup plus its component logic
+support.js                      generated dc-runtime (loads React/Babel, renders <x-dc>) — shared by both
+_ds/organic-…/                  the Organic design system: styles.css, manifest, its own readme — shared by both
+uploads/                        td3.jpg, rd-6.jpg — reference photos of the Behringer units
 .thumbnail                      WebP cover image
 ```
 
-The markup is templated: `{{ … }}` bindings, `<sc-if>` and `<sc-for>` are resolved by the dc-runtime in `support.js` against the `Component` class in the inline `<script type="text/x-dc">` block at the bottom of the HTML. Edit that class to change behavior; edit the markup above it to change layout.
+Each guide's markup is templated: `{{ … }}` bindings, `<sc-if>` and `<sc-for>` are resolved by the dc-runtime in `support.js` against that file's own `Component` class in its inline `<script type="text/x-dc">` block at the bottom of the HTML. Edit that class to change behavior; edit the markup above it to change layout. The two files are independent — neither imports the other's `Component` class or state.
 
 All color, type, spacing, radius and shadow values come from CSS variables defined in the design system's `styles.css` — see [its readme](_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/readme.md) before changing any styling, and prefer the tokens over hard-coded values.
 

@@ -8,11 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node }}
       # No install step: the suite uses only node:test and node:assert, matching the
       # guides themselves, which have no build step and no dependencies.
       - run: npm test

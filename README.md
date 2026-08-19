@@ -98,7 +98,7 @@ All of it — mixer, beatmatching, hot cues, loops, Beat FX — runs on **two sy
 npm test
 ```
 
-No install step — the suite uses only `node:test` and `node:assert`, so it needs nothing but Node 18+. It runs in about four seconds and is wired to GitHub Actions on every push and pull request.
+No install step — the suite uses only `node:test` and `node:assert`, so it needs nothing but Node 20+. It runs in about four seconds and is wired to GitHub Actions on every push and pull request.
 
 The tests load each guide's `<script type="text/x-dc">` block and run its `Component` class against a stub runtime and a stub Web Audio API (`test/harness.mjs`), so the logic is exercised without a browser. Three areas are covered:
 

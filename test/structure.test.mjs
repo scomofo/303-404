@@ -2,7 +2,12 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { GUIDES, loadComponent, readGuide, renderStep, stepIndices } from './harness.mjs';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 for (const guide of GUIDES) {
   test(`${guide.name}: every step renders`, () => {
@@ -111,5 +116,15 @@ test('Behringer: RD-6 grid cells and TD-3 chips carry names and pressed state', 
   for (const c of renderStep(inst, timeStep).td3TimeCells) {
     assert.match(c.accentLabel, /Accent on step \d+/);
     assert.match(c.slideLabel, /Slide on step \d+/);
+  }
+});
+
+// `npm test` names its files explicitly rather than globbing, because Node only
+// expands --test glob patterns from v21 and cmd.exe does not glob at all. The cost
+// of being explicit is that a new test file could silently never run — so check.
+test('every test file is wired into `npm test`', () => {
+  const script = JSON.parse(readFileSync(join(HERE, '..', 'package.json'), 'utf8')).scripts.test;
+  for (const f of readdirSync(HERE).filter(f => f.endsWith('.test.mjs'))) {
+    assert.ok(script.includes(f), `test/${f} exists but \`npm test\` never runs it — add it to the script`);
   }
 });

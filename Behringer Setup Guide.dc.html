@@ -152,7 +152,7 @@
           <sc-if value="{{ currentStep.showRd6 }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">RD-6 pattern — 4-on-the-floor</div>
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ rd6GridTitle }}</div>
                 <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}">{{ rd6PlayLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
@@ -169,6 +169,36 @@
                   </sc-for>
                 </div>
               </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showShuffle }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Shuffle amount</div>
+              <div class="seg" style="align-self:flex-start;">
+                <sc-for list="{{ shuffleOptions }}" as="opt" hint-placeholder-count="4">
+                  <label class="seg-opt">
+                    <input type="radio" name="shuffle" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                    {{ opt.label }}
+                  </label>
+                </sc-for>
+              </div>
+              <p style="font-size:13px;opacity:.75;margin:8px 0 0;">Hit Play Pattern above and compare — shuffle delays every other 16th note.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showRd6Chain }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Chain playback — Pattern 1 → Pattern 2</div>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6ChainPlayToggle }}">{{ rd6ChainPlayLabel }}</button>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <sc-for list="{{ rd6ChainSlots }}" as="slot" hint-placeholder-count="2">
+                  <div style="{{ slot.style }}">{{ slot.label }}</div>
+                </sc-for>
+              </div>
+              <p style="font-size:12.5px;opacity:.7;margin:0;">Each pattern loops once (16 steps), then the chain advances — just like PATTERN CHAIN mode on the hardware.</p>
             </div>
           </sc-if>
 
@@ -197,6 +227,27 @@
                   </div>
                 </sc-for>
               </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTd3Fx }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Overdrive</div>
+                <div class="seg" style="align-self:flex-start;">
+                  <sc-for list="{{ overdriveOptions }}" as="opt" hint-placeholder-count="4">
+                    <label class="seg-opt">
+                      <input type="radio" name="overdrive" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                      {{ opt.label }}
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content;">
+                <input type="checkbox" checked="{{ softAttackOn }}" onchange="{{ toggleSoftAttack }}" style="width:18px;height:18px;accent-color:var(--color-accent);" />
+                <span style="font-size:14px;">Soft Attack (rounder pluck)</span>
+              </label>
+              <p style="font-size:12.5px;opacity:.7;margin:0;">Hit Play Bassline below and compare with these on and off.</p>
             </div>
           </sc-if>
 
@@ -304,9 +355,12 @@ class Component extends DCLogic {
     dialogOpen: false,
     checks: {},
     rd6: { bd:[0,4,8,12], sd:[4,12], ch:[2,6,10,14], oh:[15], ac:[0,4,8,12] },
-    rd6Playing: false, rd6Col: -1,
+    rd6Fill: { bd:[0,4,8,12], sd:[4,6,12,14], ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], oh:[7], ac:[6,14] },
+    rd6Playing: false, rd6Col: -1, rd6PlayKind: null, rd6PatIdx: 0,
+    rd6Shuffle: 0,
     td3Accent: [0,4,10], td3Slide: [2,4,7,13],
     td3Playing: false, td3Col: -1,
+    td3Overdrive: 0, td3SoftAttack: false,
     cablesAudio: [false,false],
     cablesSync: [false],
     accentSweep: 'FAST',
@@ -434,10 +488,10 @@ class Component extends DCLogic {
       { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview',
         title:'Week 5: RD-6 Pattern Banks, Chaining & Live Routing',
         objective:"Move beyond a single loop: build a second pattern, chain patterns into a song, dial in shuffle, and route individual voices for mixing." },
-      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Pattern Banks & Programming a Fill',
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Pattern Banks & Programming a Fill', widget:'rd6fill',
         items:[
           { text:"Banks: RD-6 patterns are grouped into Bank A and Bank B (8 patterns each), selected with the Bank switch and Pattern Selector." },
-          { text:"Program a second pattern as a fill in Bank A, Pattern 2 — repeat Week 1's clear-and-write steps, then vary it:", subitems:[
+          { text:"Program a second pattern as a fill in Bank A, Pattern 2 — repeat Week 1's clear-and-write steps, then vary it (the grid below is pre-loaded to match — tap any cell to edit further):", subitems:[
             "Snare/Clap: Steps 5, 7, 13, 15",
             "Closed Hi-Hat: every step",
             "Open Hi-Hat: Step 8",
@@ -446,7 +500,7 @@ class Component extends DCLogic {
         ],
         switches:[ { label:'Bank', value:'A' }, { label:'Pattern', value:'2 (Fill)' } ],
       },
-      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Chain (Song) Mode',
+      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Chain (Song) Mode', widget:'rd6chain',
         items:[
           { text:"Set the Mode switch to PATTERN CHAIN." },
           { text:"Tap Pattern buttons 1, then 2, in the order you want them to play — the display confirms each step of the queued chain." },
@@ -455,23 +509,20 @@ class Component extends DCLogic {
         ],
         switches:[ { label:'Mode', value:'PATTERN CHAIN' } ],
       },
-      { id:'w5-3', kind:'content', weekTag:W(5), title:'3. Shuffle & Individual Outputs',
+      { id:'w5-3', kind:'content', weekTag:W(5), title:'3. Shuffle & Individual Outputs', widget:'rd6shuffle',
         items:[
-          { text:"Shuffle: turn the Shuffle knob past 12 o'clock to delay the off-beat 16th notes, giving the pattern a swung feel. Start around 1 o'clock and compare against straight (12 o'clock)." },
+          { text:"Shuffle: choose a swing amount below — Straight, Light, Medium or Heavy — then hit Play Pattern above to hear it delay every other 16th note." },
           { text:"Individual outputs: BD, SD and HH each have their own 1/4\" output on the rear panel. Patch these into separate mixer or interface channels when you want per-drum EQ, compression, or recording instead of the single mixed Line Out." },
         ],
-        knobs:[ { label:'Shuffle', hour:1 } ],
       },
       { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview',
         title:'Week 6: TD-3 Sound Design Extras & External Clock',
         objective:"Push the TD-3-MO's mod-only tone controls further, learn its second pattern bank, and run it from an external tempo source." },
-      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Overdrive & Soft Attack',
+      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Overdrive & Soft Attack', widget:'td3fx',
         items:[
-          { text:"Overdrive: turn the Overdrive knob up from OFF for extra grit and compression — good for a lead section of your set. Past 2 o'clock the tone becomes distinctly distorted." },
-          { text:"Soft Attack: flip the Soft Attack switch ON to round off the VCA's attack for a softer pluck; leave it OFF for the classic snappy 303 pop." },
+          { text:"Overdrive: choose OFF/LOW/MED/HIGH below for extra grit and compression — good for a lead section of your set. The higher settings become distinctly distorted." },
+          { text:"Soft Attack: check the box below to round off the VCA's attack for a softer pluck; leave it unchecked for the classic snappy 303 pop." },
         ],
-        knobs:[ { label:'Overdrive', hour:2 } ],
-        switches:[ { label:'Soft Attack', value:'OFF (classic)' } ],
       },
       { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Pattern Groups & Track Write',
         items:[
@@ -570,25 +621,33 @@ class Component extends DCLogic {
   }
 
   // ── RD-6 ──
-  toggleRd6Cell(rowKey, idx) {
+  toggleRd6Cell(patternKey, rowKey, idx) {
     this.setState(s => {
-      const arr = s.rd6[rowKey].slice();
+      const patt = s[patternKey];
+      const arr = patt[rowKey].slice();
       const pos = arr.indexOf(idx);
       if (pos >= 0) arr.splice(pos, 1); else arr.push(idx);
-      return { rd6: { ...s.rd6, [rowKey]: arr } };
+      return { [patternKey]: { ...patt, [rowKey]: arr } };
     });
   }
-  buildRd6Rows() {
+  currentRd6PlayingKey() {
+    if (!this.state.rd6Playing) return null;
+    if (this.state.rd6PlayKind === 'chain') return this.state.rd6PatIdx === 0 ? 'rd6' : 'rd6Fill';
+    return this.state.rd6PlayKind === 'rd6fill' ? 'rd6Fill' : 'rd6';
+  }
+  buildRd6Rows(patternKey) {
+    const pattern = this.state[patternKey];
     const defs = [ { key:'bd', label:'BD' }, { key:'sd', label:'SD/CP' }, { key:'ch', label:'CH' }, { key:'oh', label:'OH' }, { key:'ac', label:'ACCENT' } ];
     const color = { bd:'var(--color-accent)', sd:'var(--color-accent)', ch:'var(--color-accent)', oh:'var(--color-accent)', ac:'var(--color-accent-2-600)' };
+    const playingKey = this.currentRd6PlayingKey();
     return defs.map(d => ({
       key: d.key, label: d.label,
       cells: Array.from({ length: 16 }, (_, i) => {
-        const active = this.state.rd6[d.key].includes(i);
-        const isCurrent = this.state.rd6Playing && this.state.rd6Col === i;
+        const active = pattern[d.key].includes(i);
+        const isCurrent = playingKey === patternKey && this.state.rd6Col === i;
         const bg = active ? color[d.key] : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
         const border = isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent';
-        return { idx: i, toggle: () => this.toggleRd6Cell(d.key, i),
+        return { idx: i, toggle: () => this.toggleRd6Cell(patternKey, d.key, i),
           style: `width:28px;height:28px;border-radius:8px;background:${bg};border:${border};cursor:pointer;padding:0;flex:none;` };
       }),
     }));
@@ -690,40 +749,63 @@ class Component extends DCLogic {
     src.connect(filter).connect(g).connect(ctx.destination);
     src.start(t); src.stop(t + opts.duration + 0.02);
   }
-  playRd6Step(col) {
+  playRd6StepFor(pattern, col) {
     const t = this.audioCtx.currentTime;
-    const r = this.state.rd6;
-    const accent = r.ac.includes(col);
+    const accent = pattern.ac.includes(col);
     const vol = accent ? 1 : 0.7;
-    if (r.bd.includes(col)) this.playKick(t, vol);
-    if (r.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
-    if (r.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
-    if (r.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
+    if (pattern.bd.includes(col)) this.playKick(t, vol);
+    if (pattern.sd.includes(col)) this.playNoise(t, { filterType: 'bandpass', freq: 1800, Q: 1.2, duration: 0.15, gain: 0.5 * vol });
+    if (pattern.ch.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 0.05, gain: 0.35 * vol });
+    if (pattern.oh.includes(col)) this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.22, gain: 0.3 * vol });
   }
-  playRd6() {
+  playRd6(kind) {
+    kind = kind || 'rd6';
     this.ensureAudio(); this.stopRd6();
-    let col = 0;
-    this.playRd6Step(col);
-    this.setState({ rd6Playing: true, rd6Col: col });
-    this.rd6Timer = setInterval(() => {
-      col = (col + 1) % 16;
-      this.playRd6Step(col);
-      this.setState({ rd6Col: col });
-    }, 125);
+    let col = 0, patIdx = 0;
+    const patternFor = () => {
+      if (kind === 'chain') return patIdx === 0 ? this.state.rd6 : this.state.rd6Fill;
+      return kind === 'rd6fill' ? this.state.rd6Fill : this.state.rd6;
+    };
+    const tick = () => {
+      this.playRd6StepFor(patternFor(), col);
+      this.setState({ rd6Playing: true, rd6PlayKind: kind, rd6Col: col, rd6PatIdx: patIdx });
+      const shuffle = this.state.rd6Shuffle || 0;
+      const mult = col % 2 === 1 ? 1 + shuffle : 1 - shuffle;
+      this.rd6Timer = setTimeout(() => {
+        col = (col + 1) % 16;
+        if (col === 0 && kind === 'chain') patIdx = (patIdx + 1) % 2;
+        tick();
+      }, 125 * mult);
+    };
+    tick();
   }
   stopRd6() {
-    if (this.rd6Timer) { clearInterval(this.rd6Timer); this.rd6Timer = null; }
-    if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1 });
+    if (this.rd6Timer) { clearTimeout(this.rd6Timer); this.rd6Timer = null; }
+    if (this.state.rd6Playing) this.setState({ rd6Playing: false, rd6Col: -1, rd6PlayKind: null });
+  }
+  makeDistortionCurve(amount) {
+    const k = amount * 50;
+    const n = 4096;
+    const curve = new Float32Array(n);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = k === 0 ? x : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
   }
   playTd3() {
     this.ensureAudio(); this.stopTd3();
     const ctx = this.audioCtx;
     const osc = ctx.createOscillator(); osc.type = 'sawtooth';
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
+    const shaper = ctx.createWaveShaper();
+    shaper.curve = this.makeDistortionCurve(this.state.td3Overdrive || 0);
+    shaper.oversample = '2x';
     const gain = ctx.createGain(); gain.gain.value = 0.0001;
-    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
     osc.start();
-    this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter;
+    this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
     let col = 0;
     const trigger = c => {
       const t = ctx.currentTime;
@@ -738,11 +820,12 @@ class Component extends DCLogic {
       filter.frequency.cancelScheduledValues(t);
       filter.frequency.setValueAtTime(cutoff, t);
       filter.frequency.exponentialRampToValueAtTime(300, t + 0.18);
+      const attackTime = this.state.td3SoftAttack ? 0.045 : 0.005;
       gain.gain.cancelScheduledValues(t);
       if (!slide) {
         gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(peak, t + 0.005);
-        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.09);
+        gain.gain.exponentialRampToValueAtTime(peak, t + attackTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + attackTime + 0.085);
       } else {
         gain.gain.setValueAtTime(peak, t);
       }
@@ -784,19 +867,42 @@ class Component extends DCLogic {
         weekTag: step.weekTag, title: step.title, objective: step.objective,
         hasNote: !!step.note, note: step.note, items, knobs, switches,
         showKnobs: knobs.length > 0, showSwitches: switches.length > 0,
-        showCablesAudio: step.widget === 'cablesAudio', showRd6: step.widget === 'rd6',
+        showCablesAudio: step.widget === 'cablesAudio',
+        showRd6: step.widget === 'rd6' || step.widget === 'rd6fill' || step.widget === 'rd6shuffle',
+        showShuffle: step.widget === 'rd6shuffle', showRd6Chain: step.widget === 'rd6chain',
         showTd3Pitch: step.widget === 'td3pitch', showTd3Time: step.widget === 'td3time',
-        showTd3Play: step.widget === 'td3play', showSync: step.widget === 'sync',
+        showTd3Play: step.widget === 'td3play' || step.widget === 'td3fx', showTd3Fx: step.widget === 'td3fx',
+        showSync: step.widget === 'sync',
         showAccentSweep: step.widget === 'moTweaks', showPerfmap: step.widget === 'perfmap',
       },
-      rd6Rows: step.widget === 'rd6' ? this.buildRd6Rows() : [],
-      rd6PlayLabel: this.state.rd6Playing ? 'Stop' : 'Play Pattern',
-      rd6PlayToggle: this.state.rd6Playing ? () => this.stopRd6() : () => this.playRd6(),
+      rd6GridTitle: step.widget === 'rd6fill' ? 'RD-6 pattern — Bank A, Pattern 2 (Fill)' : 'RD-6 pattern — 4-on-the-floor',
+      rd6Rows: step.widget === 'rd6fill' ? this.buildRd6Rows('rd6Fill')
+        : (step.widget === 'rd6' || step.widget === 'rd6shuffle') ? this.buildRd6Rows('rd6') : [],
+      rd6PlayLabel: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6') ? 'Stop' : 'Play Pattern',
+      rd6PlayToggle: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6')
+        ? () => this.stopRd6() : () => this.playRd6(step.widget === 'rd6fill' ? 'rd6fill' : 'rd6'),
+      shuffleOptions: step.widget === 'rd6shuffle' ? [
+        { label: 'Straight', value: 0 }, { label: 'Light', value: 0.08 },
+        { label: 'Medium', value: 0.16 }, { label: 'Heavy', value: 0.25 },
+      ].map(o => ({ label: o.label, checked: this.state.rd6Shuffle === o.value, select: () => this.setState({ rd6Shuffle: o.value }) })) : [],
+      rd6ChainPlayLabel: this.state.rd6Playing && this.state.rd6PlayKind === 'chain' ? 'Stop' : 'Play Chain',
+      rd6ChainPlayToggle: this.state.rd6Playing && this.state.rd6PlayKind === 'chain'
+        ? () => this.stopRd6() : () => this.playRd6('chain'),
+      rd6ChainSlots: step.widget === 'rd6chain' ? [0, 1].map(i => {
+        const active = this.state.rd6Playing && this.state.rd6PlayKind === 'chain' && this.state.rd6PatIdx === i;
+        return { label: `Pattern ${i + 1}`,
+          style: `flex:1;text-align:center;padding:12px;border-radius:var(--radius-md);font-size:13px;font-weight:700;background:${active ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${active ? 'var(--color-bg)' : 'var(--color-text)'};` };
+      }) : [],
       td3PitchCells: step.widget === 'td3pitch' ? this.buildTd3PitchCells() : [],
       td3TimeCells: step.widget === 'td3time' ? this.buildTd3TimeCells() : [],
-      td3PlayCells: step.widget === 'td3play' ? this.buildTd3PlayCells() : [],
+      td3PlayCells: (step.widget === 'td3play' || step.widget === 'td3fx') ? this.buildTd3PlayCells() : [],
       td3PlayLabel: this.state.td3Playing ? 'Stop' : 'Play Bassline',
       td3PlayToggle: this.state.td3Playing ? () => this.stopTd3() : () => this.playTd3(),
+      overdriveOptions: step.widget === 'td3fx' ? [
+        { label: 'OFF', value: 0 }, { label: 'LOW', value: 0.3 }, { label: 'MED', value: 0.6 }, { label: 'HIGH', value: 1 },
+      ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
+      softAttackOn: this.state.td3SoftAttack,
+      toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
       accentSweepOptions: step.widget === 'moTweaks' ? [

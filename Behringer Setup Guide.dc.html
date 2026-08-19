@@ -40,7 +40,7 @@
             <h4 style="margin:0 0 8px;">Course Overview</h4>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
               <li>Target Audience: Absolute Beginners</li>
-              <li>Duration: 4 Weeks (2 Hours / Week)</li>
+              <li>Duration: 7 Weeks (2 Hours / Week)</li>
               <li>Equipment Needed:
                 <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
                   <li>Behringer TD-3-MO Acid Synthesizer</li>
@@ -48,6 +48,7 @@
                   <li>1x 3.5mm TS patch cable (Clock Sync)</li>
                   <li>2x 1/4" TS audio cables</li>
                   <li>Audio Mixer or Audio Interface with Headphones/Speakers</li>
+                  <li>USB or 5-pin MIDI cable (optional, for Week 6 external sync)</li>
                 </ul>
               </li>
             </ul>
@@ -263,7 +264,7 @@
       <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
         <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
           <h2 style="margin:0;">You're ready to play.</h2>
-          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed a drum pattern and an acid bassline, synced them together, and mapped a five-minute set. Run through the weeks again any time to tighten up a step.</p>
+          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed drum patterns and an acid bassline, synced them together, chained patterns into a song, dialed in the MO tone mods, mapped a five-minute set, and know how to keep both units running on stage. Run through the weeks again any time to tighten up a step.</p>
           <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
         </div>
       </sc-if>
@@ -428,6 +429,84 @@ class Component extends DCLogic {
         items:[
           { text:"Pattern Queuing: You can select a new pattern on either device while one is running; the hardware seamlessly transitions on step 1 of the next bar." },
           { text:"Filter Snap Drops: Cut the Cutoff fully off on step 13 of a bar, then snap it wide open on step 1 of the drop for instant dynamic impact." },
+        ],
+      },
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview',
+        title:'Week 5: RD-6 Pattern Banks, Chaining & Live Routing',
+        objective:"Move beyond a single loop: build a second pattern, chain patterns into a song, dial in shuffle, and route individual voices for mixing." },
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Pattern Banks & Programming a Fill',
+        items:[
+          { text:"Banks: RD-6 patterns are grouped into Bank A and Bank B (8 patterns each), selected with the Bank switch and Pattern Selector." },
+          { text:"Program a second pattern as a fill in Bank A, Pattern 2 — repeat Week 1's clear-and-write steps, then vary it:", subitems:[
+            "Snare/Clap: Steps 5, 7, 13, 15",
+            "Closed Hi-Hat: every step",
+            "Open Hi-Hat: Step 8",
+            "Accent: Steps 7, 15",
+          ] },
+        ],
+        switches:[ { label:'Bank', value:'A' }, { label:'Pattern', value:'2 (Fill)' } ],
+      },
+      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Chain (Song) Mode',
+        items:[
+          { text:"Set the Mode switch to PATTERN CHAIN." },
+          { text:"Tap Pattern buttons 1, then 2, in the order you want them to play — the display confirms each step of the queued chain." },
+          { text:"Press START/STOP: the RD-6 advances through the chain automatically and loops back to its start when it finishes." },
+          { text:"Return Mode to PATTERN PLAY to exit chain mode and play a single pattern again." },
+        ],
+        switches:[ { label:'Mode', value:'PATTERN CHAIN' } ],
+      },
+      { id:'w5-3', kind:'content', weekTag:W(5), title:'3. Shuffle & Individual Outputs',
+        items:[
+          { text:"Shuffle: turn the Shuffle knob past 12 o'clock to delay the off-beat 16th notes, giving the pattern a swung feel. Start around 1 o'clock and compare against straight (12 o'clock)." },
+          { text:"Individual outputs: BD, SD and HH each have their own 1/4\" output on the rear panel. Patch these into separate mixer or interface channels when you want per-drum EQ, compression, or recording instead of the single mixed Line Out." },
+        ],
+        knobs:[ { label:'Shuffle', hour:1 } ],
+      },
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview',
+        title:'Week 6: TD-3 Sound Design Extras & External Clock',
+        objective:"Push the TD-3-MO's mod-only tone controls further, learn its second pattern bank, and run it from an external tempo source." },
+      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Overdrive & Soft Attack',
+        items:[
+          { text:"Overdrive: turn the Overdrive knob up from OFF for extra grit and compression — good for a lead section of your set. Past 2 o'clock the tone becomes distinctly distorted." },
+          { text:"Soft Attack: flip the Soft Attack switch ON to round off the VCA's attack for a softer pluck; leave it OFF for the classic snappy 303 pop." },
+        ],
+        knobs:[ { label:'Overdrive', hour:2 } ],
+        switches:[ { label:'Soft Attack', value:'OFF (classic)' } ],
+      },
+      { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Pattern Groups & Track Write',
+        items:[
+          { text:"Patterns are stored in Groups A–D, 8 patterns each. Select a Group, then a pattern number, before entering PATTERN WRITE to build a second bassline for your Week 4 arrangement." },
+          { text:"TRACK WRITE mode records pitch and time in real time instead of step-by-step: press TRACK WRITE, then play the keyboard buttons along with the beat." },
+        ],
+        switches:[ { label:'Group', value:'A' } ],
+      },
+      { id:'w6-3', kind:'content', weekTag:W(6), title:'3. Syncing From an External Clock (MIDI/USB)',
+        items:[
+          { text:"Connect the TD-3-MO to a computer or MIDI interface via its USB port or 5-pin MIDI In." },
+          { text:"Hold FUNCTION and select MIDI Sync mode so the TD-3 follows incoming MIDI clock instead of its internal tempo or the RD-6's analog sync cable." },
+          { text:"Start playback from your DAW or MIDI source; the TD-3 locks to that tempo — useful for recording your set straight into a computer." },
+        ],
+      },
+      { id:'w7-intro', kind:'weekintro', weekTag:W(7), navLabel:'Week Overview',
+        title:'Week 7: Care, Troubleshooting & Backing Up Your Sounds',
+        objective:"Keep both units reliable on stage: troubleshoot common issues, back up your patterns, and maintain the hardware properly." },
+      { id:'w7-1', kind:'content', weekTag:W(7), title:'1. Troubleshooting Checklist',
+        items:[
+          { text:"No sound: check the Main Output level isn't at zero and the right cable run is connected — revisit Week 1's signal path." },
+          { text:"Units won't sync: confirm the sync cable is a TS (mono) 3.5mm cable, not TRS/stereo — a stereo cable can short the clock signal." },
+          { text:"Pattern sounds wrong after power-on: only use the included center-negative 9V adapters; third-party supplies can cause memory glitches." },
+        ],
+      },
+      { id:'w7-2', kind:'content', weekTag:W(7), title:'2. Backing Up & Restoring Patterns',
+        items:[
+          { text:"Both units keep patterns in non-volatile memory, but before big changes write down your BD/SD/Hat steps and TD-3 pitch/time data (or photograph the panel) as a manual backup." },
+          { text:"For a durable backup, connect via USB and use a class-compliant MIDI/SysEx librarian to dump pattern data to your computer, if one supports RD-6/TD-3 dumps." },
+        ],
+      },
+      { id:'w7-3', kind:'content', weekTag:W(7), title:'3. Physical Care',
+        items:[
+          { text:"Wipe knobs and the case with a dry or barely damp cloth only — avoid solvents on the printed panel graphics." },
+          { text:"Store both units in a padded case; the pots and jacks are the most failure-prone points if dropped or transported loose." },
         ],
       },
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to play." },

@@ -415,19 +415,22 @@ class Component extends DCLogic {
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
 
   SONG_CARDS = [
-    { id:'practice-1', title:'Rolling Eighths', tag:'Practice pattern', bpm:130,
+    // The three practice patterns aren't transcriptions of anything — their tempo is a
+    // chosen setting, not a guess about a record, so it is shown plainly.
+    { id:'practice-1', title:'Rolling Eighths', tag:'Practice pattern', bpm:130, bpmConfirmed:true,
       notes:['C2','C2','C2','C2','C2','C2','D#2','C2','C2','C2','C2','C2','C2','C2','A#2','C2'],
       accent:[0,6,14], slide:[1,7,13] },
-    { id:'practice-2', title:'Octave Jump', tag:'Practice pattern', bpm:125,
+    { id:'practice-2', title:'Octave Jump', tag:'Practice pattern', bpm:125, bpmConfirmed:true,
       notes:['C2','C3','C2','C2','C2','C3','C2','C2','C2','C3','C2','C2','C2','C3','C2','G2'],
       accent:[1,5,9,13], slide:[] },
-    { id:'practice-3', title:'Offbeat Squelch', tag:'Practice pattern', bpm:140,
+    { id:'practice-3', title:'Offbeat Squelch', tag:'Practice pattern', bpm:140, bpmConfirmed:true,
       notes:['C2','G2','C2','D2','C2','G2','C2','D#2','C2','G2','C2','D2','C2','G2','C2','F2'],
       accent:[3,7,11,15], slide:[0,4,8,12] },
     // Transcribed from a fan-made TD-3 tutorial card (Pattern I, Bank A). The card's "UP" row
-    // marks an octave-up shift on those steps; its Accent/Slide row and tempo were left
-    // unmarked, so those are loaded empty and the BPM below is a starting guess, not a printed fact.
-    { id:'on-the-run', title:'On the Run', tag:'Pattern I · Bank A · Square wave', bpm:130, waveform:'square',
+    // marks an octave-up shift on those steps; its Accent/Slide row was left unmarked, so that
+    // is loaded empty. The card printed no tempo — the BPM below is the recording's, not the
+    // chart's, which is why it differs sharply from the genre-typical guess it replaced.
+    { id:'on-the-run', title:'On the Run', tag:'Pattern I · Bank A · Square wave', bpm:165, bpmConfirmed:true, bpmDisplay:'~165 BPM', waveform:'square',
       notes:['E2','G2','A2','G2','D3','C3','D3','E3','E2','G2','A2','G2','D3','C3','D3','E3'],
       accent:[], slide:[] },
 
@@ -435,25 +438,26 @@ class Component extends DCLogic {
     // That worksheet has a labeled ACC/SLIDE row pair plus a second, unlabeled ●/○/— row
     // beneath it; on several cards the labeled row is blank and the ●/○ marks appear to carry
     // the real accent/slide data instead (e.g. matching every audible step on busy patterns).
-    // Read here as ● = accent, ○ = slide, merged with the labeled row. No BPM was printed on
-    // any of these cards — the bpm below is a reasonable genre-typical guess, not a fact from
-    // the source.
-    { id:'fatboy-slim-everybody-needs-a-303', title:'Everybody Needs a 303', tag:'Fatboy Slim · Fan chart transcription', bpm:128, waveform:'square',
+    // Read here as ● = accent, ○ = slide, merged with the labeled row. No BPM is printed on
+    // any of these cards; the tempos below are the recordings' own, supplied separately, so
+    // they are a fact about the track rather than about the chart. Where a track's tempo is a
+    // range or varies by release, bpmDisplay says so and bpm carries the value used for playback.
+    { id:'fatboy-slim-everybody-needs-a-303', title:'Everybody Needs a 303', tag:'Fatboy Slim · Fan chart transcription', bpm:138, bpmConfirmed:true, bpmDisplay:'138 BPM (original release)', waveform:'square',
       notes:['D2','D2','C#2','D2','G2','D2','D3','D2','C#3','D2','F3','D2','A2','C#3','D3','C#3'],
       accent:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], slide:[0] },
-    { id:'josh-wink-higher-state', title:'Higher State of Consciousness', tag:'Josh Wink · Fan chart transcription', bpm:138,
+    { id:'josh-wink-higher-state', title:'Higher State of Consciousness', tag:'Josh Wink · Fan chart transcription', bpm:126, bpmConfirmed:true,
       notes:['G2','G1','G2','G2','G2','G2','B2','G2','B2','G2','G2','B2','G2','G2','G2','B2'],
       accent:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], slide:[0,2,3,9,12,13] },
-    { id:'josh-wink-are-you-there', title:'Are You There', tag:'Josh Wink · Fan chart transcription · 10-step pattern', bpm:130,
+    { id:'josh-wink-are-you-there', title:'Are You There', tag:'Josh Wink · Fan chart transcription · 10-step pattern', bpm:130, bpmConfirmed:true, bpmDisplay:'127–132 BPM',
       notes:['D#3','D3','C#3','D3','E3','E2','E2','D#3','C#2','D#3'],
       accent:[0,1,2,3,4,5,6,7,8,9], slide:[4,5,7,8] },
-    { id:'christopher-just-disco-dancer-1', title:"I'm a Disco Dancer (Part 1/2)", tag:'Christopher Just · Fan chart transcription', bpm:128,
+    { id:'christopher-just-disco-dancer-1', title:"I'm a Disco Dancer (Part 1/2)", tag:'Christopher Just · Fan chart transcription', bpm:131, bpmConfirmed:true, bpmDisplay:'130–132 BPM',
       notes:['C2','C#3','C2','C2','E3','E2','E2','D#2','D#3','C#3','D#2','D#2','D#2','D#2','E2','C2'],
       accent:[], slide:[1,2,4,5,8,9] },
-    { id:'christopher-just-disco-dancer-2', title:"I'm a Disco Dancer (Part 2/2)", tag:'Christopher Just · Fan chart transcription', bpm:128,
+    { id:'christopher-just-disco-dancer-2', title:"I'm a Disco Dancer (Part 2/2)", tag:'Christopher Just · Fan chart transcription', bpm:131, bpmConfirmed:true, bpmDisplay:'130–132 BPM',
       notes:['C#2','C#2','C2','C1','C#3','C2','F#3','C1','F#2','C2','C#2','C#2','C2','C2','C#2','C#2'],
       accent:[], slide:[] },
-    { id:'prodigy-claustrophobic-sting', title:'Claustrophobic Sting', tag:'The Prodigy · Fan chart transcription · 8-step pattern', bpm:140,
+    { id:'prodigy-claustrophobic-sting', title:'Claustrophobic Sting', tag:'The Prodigy · Fan chart transcription · 8-step pattern', bpm:150, bpmConfirmed:true,
       notes:['F2','F#2','F#2','F#2','F#3','C#2','F#3','F3'],
       accent:[1,2,3,4,5,6,7], slide:[0,1,4] },
     // Part 1/2 confirmed against a clearer digital card: BPM 120, and its combined
@@ -463,15 +467,16 @@ class Component extends DCLogic {
       accent:[], slide:[0,2,4,7,10,13] },
     // Part 2/2's own card image wasn't available — its SLIDE row wasn't confidently legible
     // in the original scan (column alignment unclear), so slide is left empty rather than
-    // guessed. NOTE and DOWN (octave) are clear. BPM carried over from Part 1's confirmed 120.
-    { id:'cut-paste-forget-it-2', title:'Forget It (Part 2/2)', tag:'Cut & Paste · Fan chart transcription · slide not legible in scan', bpm:120,
+    // guessed. NOTE and DOWN (octave) are clear. BPM carried over from Part 1's 120, which the
+    // recording confirms.
+    { id:'cut-paste-forget-it-2', title:'Forget It (Part 2/2)', tag:'Cut & Paste · Fan chart transcription · slide not legible in scan', bpm:120, bpmConfirmed:true,
       notes:['A#1','A#1','A#2','A#2','A#1','A#1','D2','D2','D#2','D#2','E2','E2','F2','F2','F2','F2'],
       accent:[], slide:[] },
 
     // Full step-by-step transcription (note + down/up + accent/slide per step) supplied
-    // directly, replacing the earlier partial read of a small card photo. No tempo was given,
-    // so BPM is still a flagged guess; waveform keeps the square-wave read from that photo.
-    { id:'daft-punk-da-funk', title:'Da Funk', tag:'Daft Punk · Fan chart transcription', bpm:110, waveform:'square',
+    // directly, replacing the earlier partial read of a small card photo. BPM is the
+    // recording's; waveform keeps the square-wave read from that photo.
+    { id:'daft-punk-da-funk', title:'Da Funk', tag:'Daft Punk · Fan chart transcription', bpm:111, bpmConfirmed:true, waveform:'square',
       notes:['G1','A#3','G2','F3','D#2','C#1','C#1','C#2','D#3','D#1','F3','G3','G#1','G1','C1','G2'],
       accent:[4,5,6,7,11], slide:[2,4,6,8,10,11,13,14,15] },
 
@@ -479,8 +484,9 @@ class Component extends DCLogic {
     // tuned filter settings supplied directly, replacing the earlier notes-only read of a
     // small card photo. filter is {cutoff, resonance, decay, accent}, each 0-1, approximating
     // the described knob percentages; envelope-mod depth isn't separately modeled by this
-    // simplified engine. No tempo was given, so BPM stays a flagged guess.
-    { id:'tame-impala-breathe-deeper', title:'Breathe Deeper', tag:'Tame Impala · Fan chart transcription · tuned filter', bpm:137, waveform:'sawtooth',
+    // simplified engine. BPM is the recording's — markedly slower than the genre-typical guess
+    // it replaced, so this card now plays at roughly three-quarters of its former speed.
+    { id:'tame-impala-breathe-deeper', title:'Breathe Deeper', tag:'Tame Impala · Fan chart transcription · tuned filter', bpm:105, bpmConfirmed:true, waveform:'sawtooth',
       notes:['A2','E2','F#2','E1','D2','A2','G2','A2','A2','E2','F#2','E1','D2','A2','G2','A2'],
       accent:[4,12], slide:[1,3,5,7,9,11,13,15],
       filter:{ cutoff:0.45, resonance:0.85, decay:0.5, accent:0.7 } },
@@ -1130,7 +1136,9 @@ class Component extends DCLogic {
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
       songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => ({
         title: c.title, tag: c.tag, load: () => this.loadSongCard(c),
-        bpmLabel: c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`,
+        // bpm drives playback; bpmDisplay overrides the text where the real tempo is a range
+        // or differs by release. A card with neither is still a guess and says so.
+        bpmLabel: c.bpmDisplay || (c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`),
         cardStyle: `text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${this.state.sbSelected === c.id ? 'var(--color-accent)' : 'var(--color-divider)'};background:${this.state.sbSelected === c.id ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:140px;`,
       })) : [],
       sbHasCard: !!this.state.sbNotes,

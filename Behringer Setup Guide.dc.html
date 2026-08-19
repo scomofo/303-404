@@ -409,7 +409,7 @@ class Component extends DCLogic {
     cablesSync: [false],
     accentSweep: 'FAST',
     perfmapSel: 0,
-    sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbPlaying: false, sbCol: -1, sbSelected: null,
+    sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbPlaying: false, sbCol: -1, sbSelected: null,
   };
 
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
@@ -475,13 +475,15 @@ class Component extends DCLogic {
       notes:['G1','A#3','G2','F3','D#2','C#1','C#1','C#2','D#3','D#1','F3','G3','G#1','G1','C1','G2'],
       accent:[4,5,6,7,11], slide:[2,4,6,8,10,11,13,14,15] },
 
-    // This one is transcribed from a smaller photographed card (lower resolution than the
-    // scanned worksheet above). The note row was legible; the Down/Up (octave) and
-    // Accent/Slide shorthand couldn't be confidently pinned to exact step columns, so only
-    // plain notes are loaded here rather than guessed placements.
-    { id:'tame-impala-breathe-deeper', title:'Breathe Deeper', tag:'Tame Impala · Fan card, notes only', bpm:137,
-      notes:['F#2','F#2','E2','C2','D2','A2','A2','F#2','G2','F2','G#2','F2','D2','F#2','A2','A2'],
-      accent:[], slide:[] },
+    // Full step-by-step transcription (pitch, octave transpose, accent, slide per step) plus
+    // tuned filter settings supplied directly, replacing the earlier notes-only read of a
+    // small card photo. filter is {cutoff, resonance, decay, accent}, each 0-1, approximating
+    // the described knob percentages; envelope-mod depth isn't separately modeled by this
+    // simplified engine. No tempo was given, so BPM stays a flagged guess.
+    { id:'tame-impala-breathe-deeper', title:'Breathe Deeper', tag:'Tame Impala · Fan chart transcription · tuned filter', bpm:137, waveform:'sawtooth',
+      notes:['A2','E2','F#2','E1','D2','A2','G2','A2','A2','E2','F#2','E1','D2','A2','G2','A2'],
+      accent:[4,12], slide:[1,3,5,7,9,11,13,15],
+      filter:{ cutoff:0.45, resonance:0.85, decay:0.5, accent:0.7 } },
   ];
 
   PERF_SECTIONS = [
@@ -989,7 +991,8 @@ class Component extends DCLogic {
     this.stopSongBank();
     this.setState({
       sbNotes: card.notes.slice(), sbAccent: card.accent.slice(), sbSlide: card.slide.slice(),
-      sbTempo: Math.round(60000 / card.bpm / 4), sbWaveform: card.waveform || 'sawtooth', sbSelected: card.id,
+      sbTempo: Math.round(60000 / card.bpm / 4), sbWaveform: card.waveform || 'sawtooth',
+      sbFilterCfg: card.filter || null, sbSelected: card.id,
     });
   }
   buildSongBankCells() {
@@ -1015,6 +1018,7 @@ class Component extends DCLogic {
     osc.start();
     this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
     const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
+    const fc = this.state.sbFilterCfg;
     let col = 0;
     const trigger = c => {
       const t = ctx.currentTime;
@@ -1024,11 +1028,21 @@ class Component extends DCLogic {
       const slide = slideArr.includes(prev);
       if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
       else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
-      const peak = accent ? 0.5 : 0.32;
-      const cutoff = accent ? 1800 : 900;
+      let peak, cutoff, decayTime;
+      if (fc) {
+        const baseCutoff = 200 + fc.cutoff * 2600;
+        cutoff = accent ? baseCutoff * (1 + fc.accent * 1.5) : baseCutoff;
+        decayTime = 0.08 + fc.decay * 0.35;
+        peak = accent ? 0.32 + fc.accent * 0.35 : 0.32;
+        filter.Q.value = 1 + fc.resonance * 23;
+      } else {
+        peak = accent ? 0.5 : 0.32;
+        cutoff = accent ? 1800 : 900;
+        decayTime = 0.18;
+      }
       filter.frequency.cancelScheduledValues(t);
       filter.frequency.setValueAtTime(cutoff, t);
-      filter.frequency.exponentialRampToValueAtTime(300, t + 0.18);
+      filter.frequency.exponentialRampToValueAtTime(300, t + decayTime);
       gain.gain.cancelScheduledValues(t);
       if (!slide) {
         gain.gain.setValueAtTime(0.0001, t);

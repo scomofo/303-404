@@ -111,3 +111,91 @@ test('shorter patterns loop at their own length rather than padding to 16', () =
     assert.match(c.tag, /\d+-step pattern/, `${c.id} is ${c.notes.length} steps but its tag does not say so`);
   }
 });
+
+// ── pattern chart ────────────────────────────────────────────────────────────
+// Each card renders back into the chart layout its transcription came from, so the
+// chart has to agree with the data the engine actually plays.
+
+test('every card renders a chart with one column per step', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart();
+    assert.ok(chart, `${c.id}: no chart built`);
+    assert.equal(chart.steps.length, c.notes.length, `${c.id}: column count`);
+    assert.equal(chart.title, c.title);
+  }
+});
+
+test('the chart shows pitch class on the note row and octave as a D/U mark', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart();
+    const home = parseInt(chart.homeOctaveLabel.replace('Octave ', ''), 10);
+    chart.steps.forEach((s, i) => {
+      const { pitch, octave } = inst.splitNote(c.notes[i]);
+      assert.equal(s.pitch, pitch, `${c.id} step ${i + 1}: pitch class`);
+      assert.doesNotMatch(s.pitch, /\d/, `${c.id} step ${i + 1}: octave leaked onto the note row`);
+      const want = octave < home ? 'D' : octave > home ? 'U' : '';
+      assert.equal(s.shift, want, `${c.id} step ${i + 1}: octave mark for ${c.notes[i]} against home ${home}`);
+    });
+  }
+});
+
+test('the home octave is the one most of the pattern sits in', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart();
+    const home = parseInt(chart.homeOctaveLabel.replace('Octave ', ''), 10);
+    const octaves = c.notes.map(n => inst.splitNote(n).octave);
+    const at = o => octaves.filter(x => x === o).length;
+    for (const o of new Set(octaves)) {
+      assert.ok(at(home) >= at(o), `${c.id}: home octave ${home} is not the most common`);
+    }
+    // ...which means a chart never marks more steps shifted than it leaves at home.
+    const shifted = chart.steps.filter(s => s.shift).length;
+    assert.ok(shifted <= c.notes.length - at(home) + 0, `${c.id}: more marks than notes away from home`);
+  }
+});
+
+test('accent and slide marks match the pattern the engine plays', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    for (const s of inst.buildSongChart().steps) {
+      assert.equal(s.marks.includes('A'), c.accent.includes(s.num - 1), `${c.id} step ${s.num}: accent`);
+      assert.equal(s.marks.includes('S'), c.slide.includes(s.num - 1), `${c.id} step ${s.num}: slide`);
+    }
+  }
+});
+
+test('a knob the source never stated shows no pointer', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    for (const d of inst.buildSongChart().dials) {
+      const known = d.valueLabel !== '—';
+      // An unknown position must not draw a dial pointer, or the chart would imply a
+      // setting nobody recorded.
+      assert.equal(/rotate\(/.test(d.pointerStyle), known, `${c.id}: ${d.label} pointer vs "${d.valueLabel}"`);
+      if (!c.filter) assert.ok(!known, `${c.id}: ${d.label} shows ${d.valueLabel} but the card has no filter data`);
+    }
+    // Env Mod is never modelled by this engine, so it is blank on every card.
+    const envMod = inst.buildSongChart().dials.find(d => d.label === 'Env Mod');
+    assert.equal(envMod.valueLabel, '—', `${c.id}: Env Mod should always be blank`);
+  }
+});
+
+test('unknown header fields are dashed rather than filled in', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart();
+    assert.equal(chart.artist, c.artist || '—', `${c.id}: artist`);
+    assert.equal(chart.group, c.group || '—', `${c.id}: pattern group`);
+    assert.equal(chart.bank, c.bank || '—', `${c.id}: bank`);
+    assert.equal(chart.pattern, c.pattern === undefined ? '—' : String(c.pattern), `${c.id}: pattern number`);
+  }
+});

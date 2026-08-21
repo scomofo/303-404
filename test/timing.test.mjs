@@ -94,10 +94,11 @@ test('stopping silences hits that were queued but had not sounded', async t => {
     'notes queued past the stop were left to sound');
 });
 
-test('shuffle lengthens the wait into off-beat 16ths, not out of them', async () => {
+test('shuffle lengthens the wait into off-beat 16ths, not out of them', async t => {
   // Swing means odd (off-beat) steps land late. The multiplier was once inverted,
   // which produced the opposite feel while the UI and README described this one.
-  const { inst, audioCtx } = loadComponent(BEHRINGER);
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
   // The stock pattern hits only even steps, where a long step and its short partner
   // always sum to two straight ones — so per-step swing is invisible on it. Put a hit
   // on all 16 steps to see each gap individually.
@@ -148,6 +149,48 @@ test('TD-3 and Song Bank run their own clocks without leaking timers', async t =
   assert.ok(inst.sequences.sb, 'Song Bank sequence not registered');
   inst.stopSongBank();
   assert.equal(inst.sequences.sb, undefined, 'Song Bank sequence not torn down');
+});
+
+function assertEnvelopeSurvivesNextStep(param, label, decayTime) {
+  const sets = param.calls.filter(call => call.op === 'set');
+  assert.ok(sets.length >= 2, `${label}: fewer than two cutoff steps were scheduled`);
+  const ramp = param.calls.find(call =>
+    call.op === 'expo' && call.t > sets[0].t && call.t < sets[1].t
+  );
+  assert.ok(ramp, `${label}: scheduling step 2 cancelled step 1's filter decay`);
+
+  // If a requested decay runs past the next note, the endpoint is clipped just
+  // before that boundary but retains the original exponential curve's value.
+  const elapsed = ramp.t - sets[0].t;
+  const expected = sets[0].v * Math.pow(300 / sets[0].v, Math.min(1, elapsed / decayTime));
+  assert.ok(Math.abs(ramp.v - expected) < 1e-6,
+    `${label}: clipped ramp ${ramp.v} changed the requested decay slope (want ${expected})`);
+}
+
+test('TD-3 keeps each filter decay when the next step is scheduled', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
+  inst.playTd3();
+  const filter = audioCtx.__created.find(node => node.kind === 'biquad').node;
+  await until(() => filter.frequency.calls.filter(call => call.op === 'set').length >= 2,
+    'two TD-3 filter steps');
+  inst.stopTd3();
+  assertEnvelopeSurvivesNextStep(filter.frequency, 'TD-3', 0.18);
+});
+
+test('Song Bank keeps long filter decays when later steps are queued', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
+  const card = inst.SONG_CARDS.find(item => item.id === 'tame-impala-breathe-deeper');
+  assert.ok(card, 'Breathe Deeper card missing');
+  inst.loadSongCard(card);
+  inst.playSongBank();
+  const filter = audioCtx.__created.find(node => node.kind === 'biquad').node;
+  await until(() => filter.frequency.calls.filter(call => call.op === 'set').length >= 2,
+    'two Song Bank filter steps');
+  inst.stopSongBank();
+  const decayTime = 0.08 + card.filter.decay * 0.35;
+  assertEnvelopeSurvivesNextStep(filter.frequency, 'Song Bank', decayTime);
 });
 
 test('the lookahead widens when the tab is hidden', () => {

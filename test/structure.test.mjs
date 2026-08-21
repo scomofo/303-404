@@ -48,6 +48,65 @@ for (const guide of GUIDES) {
     assert.equal(listed.length, inst.STEPS.length, 'course map does not list every step');
   });
 
+  test(`${guide.name}: course map owns focus until it closes`, t => {
+    const { inst, html } = loadComponent(guide.file);
+    const previousQuery = document.querySelector;
+    const previousActive = document.activeElement;
+    t.after(() => {
+      document.querySelector = previousQuery;
+      document.activeElement = previousActive;
+    });
+
+    const focusable = name => ({
+      name,
+      isConnected: true,
+      focus() { document.activeElement = this; },
+    });
+    const trigger = focusable('trigger');
+    const first = focusable('first');
+    const last = focusable('last');
+    const dialog = {
+      ...focusable('dialog'),
+      querySelectorAll() { return [first, last]; },
+    };
+    document.querySelector = selector => selector === '[data-course-map-dialog="true"]' ? dialog : null;
+    document.activeElement = trigger;
+
+    const view = renderStep(inst, 0);
+    view.openDialog();
+    assert.equal(inst.state.dialogOpen, true, 'opening did not set modal state');
+    assert.equal(document.activeElement, first, 'focus did not move into the dialog');
+
+    const key = (name, shiftKey = false) => ({
+      key: name,
+      shiftKey,
+      currentTarget: dialog,
+      prevented: false,
+      preventDefault() { this.prevented = true; },
+    });
+
+    last.focus();
+    const forward = key('Tab');
+    view.dialogKeydown(forward);
+    assert.equal(forward.prevented, true, 'Tab escaped past the final control');
+    assert.equal(document.activeElement, first, 'Tab did not wrap to the first control');
+
+    first.focus();
+    const backward = key('Tab', true);
+    view.dialogKeydown(backward);
+    assert.equal(backward.prevented, true, 'Shift+Tab escaped before the first control');
+    assert.equal(document.activeElement, last, 'Shift+Tab did not wrap to the final control');
+
+    const escape = key('Escape');
+    view.dialogKeydown(escape);
+    assert.equal(escape.prevented, true, 'Escape was not handled');
+    assert.equal(inst.state.dialogOpen, false, 'Escape did not close the dialog');
+    assert.equal(document.activeElement, trigger, 'focus did not return to the Course map button');
+
+    assert.match(html, /data-course-map-dialog="true"[^>]*tabIndex="-1"[^>]*onkeydown=/,
+      'dialog is not focusable or has no keyboard handler');
+  });
+
   // Regression guard for the bug where restart() reset only {step, checks, dialogOpen},
   // so pattern edits and cable states survived "Start Over" while the README said
   // otherwise. Both guides now build state from a single initialState().

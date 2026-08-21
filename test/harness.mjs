@@ -36,10 +36,18 @@ function param(value = 0) {
   return {
     value,
     calls: [],
+    cancellations: [],
     setValueAtTime(v, t) { this.calls.push({ op: 'set', v, t }); return this; },
     exponentialRampToValueAtTime(v, t) { this.calls.push({ op: 'expo', v, t }); return this; },
     linearRampToValueAtTime(v, t) { this.calls.push({ op: 'linear', v, t }); return this; },
-    cancelScheduledValues() { return this; },
+    // Real AudioParams remove every queued automation event at or after the cutoff.
+    // Modelling that rule catches envelope endpoints erased by a later scheduled step;
+    // the former no-op stub made those failures look correct.
+    cancelScheduledValues(t) {
+      this.cancellations.push(t);
+      this.calls = this.calls.filter(call => call.t < t);
+      return this;
+    },
   };
 }
 

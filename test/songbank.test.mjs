@@ -1,9 +1,10 @@
-// The Song Bank ships transcriptions of real pattern charts, so its data carries
-// claims about the world. These tests guard the claims as much as the code.
+// The Song Bank mixes original patterns, supplied step tables and chart
+// transcriptions, so its data and provenance copy carry claims about the world.
+// These tests guard those claims as much as the code.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadComponent, renderStep } from './harness.mjs';
+import { loadComponent, readGuide, renderStep } from './harness.mjs';
 
 const FILE = 'Behringer Setup Guide.dc.html';
 
@@ -47,9 +48,34 @@ test('card ids are unique and every card has a title and tag', () => {
   for (const c of list) assert.ok(c.title && c.tag, `${c.id}: missing title or tag`);
 });
 
+test('documentation matches the card schema and distinguishes all source types', () => {
+  const { inst, html } = loadComponent(FILE);
+  const readme = readGuide('README.md');
+  assert.match(readme, new RegExp(`${inst.SONG_CARDS.length} cards ship by default`),
+    'README card count drifted from SONG_CARDS');
+  for (const field of ['sourceType', 'needsAccentSlideReview', 'homeOctave', 'overdrive', '`null` for a rest']) {
+    assert.ok(readme.includes(field), `README omits ${field}`);
+  }
+  for (const source of ['original practice patterns', 'written-out step tables', 'transcribed from real fan-made']) {
+    assert.ok(readme.includes(source), `README omits ${source}`);
+  }
+  assert.match(readme, /does not claim that every pattern originated on a Roland sheet/,
+    'shared layout is still presented as universal source provenance');
+  assert.match(html, /layout does not imply that each pattern came from a printed Roland sheet/,
+    'in-app copy still presents the common template as source material');
+  assert.doesNotMatch(html, /source sheet never stated|Others are transcribed from real tutorial cards/,
+    'obsolete all-cards-came-from-sheets language returned');
+});
+
 test('optional fields use only supported values', () => {
   const { cards: list } = cards();
   for (const c of list) {
+    assert.ok(['practice', 'chart', 'table'].includes(c.sourceType),
+      `${c.id}: sourceType ${JSON.stringify(c.sourceType)}`);
+    if (c.needsAccentSlideReview !== undefined) {
+      assert.equal(c.needsAccentSlideReview, true, `${c.id}: false audit flags should be omitted`);
+      assert.equal(c.sourceType, 'chart', `${c.id}: only source charts can need source-row review`);
+    }
     if (c.waveform !== undefined) {
       assert.ok(['sawtooth', 'square'].includes(c.waveform), `${c.id}: waveform "${c.waveform}"`);
     }
@@ -130,8 +156,8 @@ test('shorter patterns loop at their own length rather than padding to 16', () =
 });
 
 // ── pattern chart ────────────────────────────────────────────────────────────
-// Each card renders back into the chart layout its transcription came from, so the
-// chart has to agree with the data the engine actually plays.
+// Every source type renders in the same programming-chart layout, so the chart has
+// to agree with the data the engine actually plays without inventing provenance.
 
 test('every card renders a chart with one column per step', () => {
   const { inst } = loadComponent(FILE);
@@ -142,6 +168,24 @@ test('every card renders a chart with one column per step', () => {
     assert.equal(chart.steps.length, c.notes.length, `${c.id}: column count`);
     assert.equal(chart.title, c.title);
   }
+});
+
+test('full sheets are cached across playhead renders and remain keyboard-scrollable', () => {
+  const { inst, html } = loadComponent(FILE);
+  const original = inst.buildSongChart.bind(inst);
+  let builds = 0;
+  inst.buildSongChart = card => { builds++; return original(card); };
+  const step = inst.STEPS.findIndex(s => s.widget === 'songbank');
+
+  renderStep(inst, step);
+  assert.equal(builds, inst.SONG_CARDS.length, 'initial render did not build one model per card');
+  inst.state.sbCol = 1;
+  renderStep(inst, step);
+  assert.equal(builds, inst.SONG_CARDS.length, 'playhead render rebuilt every full sheet');
+
+  assert.match(html,
+    /role="region" aria-label="\{\{ card\.title \}\} pattern chart" tabIndex="0" style="overflow-x:auto;"/,
+    'horizontal pattern sheets are not labelled keyboard-scroll regions');
 });
 
 test('the chart shows pitch class on the note row and octave as a D/U mark', () => {
@@ -359,9 +403,9 @@ test('every card that pins a home octave states it as an integer near its notes'
 });
 
 // ── the printed sheet ────────────────────────────────────────────────────────
-// Each card renders as one of the 16-step pattern sheets the transcriptions came
-// from, so the layout carries claims of its own: which knobs a real sheet has, what
-// its bottom row means, and that it never marks a slot nobody recorded.
+// Each card uses one printed-sheet-inspired template. The tests guard the template's
+// semantics without claiming that practice patterns and supplied tables originated
+// on a printed sheet.
 
 test('the sheet prints the five knobs it has boxes for, in panel order', () => {
   const { inst } = loadComponent(FILE);
@@ -384,11 +428,30 @@ test('the notes block carries what the sheet has no box for', () => {
   for (const c of inst.SONG_CARDS) {
     const chart = inst.buildSongChart(c);
     assert.equal(chart.efxLines[0], c.tag, `${c.id}: the card's own note leads the block`);
-    const meta = chart.efxLines[1];
+    assert.ok(chart.efxLines.includes(`Source: ${chart.sourceLabel}`), `${c.id}: source type is not visible`);
+    const meta = chart.efxLines.find(line => line.includes(chart.bpmLabel));
+    assert.ok(meta, `${c.id}: metadata line missing`);
     assert.ok(meta.includes(chart.bpmLabel), `${c.id}: tempo missing from the notes block`);
     assert.ok(meta.includes(chart.homeOctaveLabel.replace('Octave ', 'Home octave ')),
       `${c.id}: the octave the Down/Up row is measured against is not stated`);
     assert.equal(meta.includes('Pattern '), c.pattern !== undefined, `${c.id}: pattern number vs ${c.pattern}`);
+    assert.equal(chart.efxLines.some(line => line.startsWith('Source audit:')), !!c.needsAccentSlideReview,
+      `${c.id}: source-audit warning vs ${c.needsAccentSlideReview}`);
+  }
+});
+
+test('source types and pending source audits stay explicit', () => {
+  const { inst } = loadComponent(FILE);
+  const counts = { practice: 0, chart: 0, table: 0 };
+  for (const c of inst.SONG_CARDS) counts[c.sourceType]++;
+  assert.deepEqual(counts, { practice: 3, chart: 11, table: 5 });
+
+  const pending = inst.SONG_CARDS.filter(c => c.needsAccentSlideReview);
+  assert.equal(pending.length, 6, 'legacy ML-303 chart audit set changed without source review');
+  for (const c of pending) {
+    const chart = inst.buildSongChart(c);
+    assert.match(chart.efxLines.join(' '), /revalidate accent\/slide marks against the original chart/,
+      `${c.id}: pending source audit is hidden from the card`);
   }
 });
 

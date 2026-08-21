@@ -449,3 +449,22 @@ test('the waveform pair rings exactly one glyph, and it is the one the engine pl
     assert.equal(ringed(chart.squareStyle), inst.state.sbWaveform === 'square', `${c.id}: ringed the wrong waveform`);
   }
 });
+
+test("the masthead mark survives the runtime's inline-style parser", () => {
+  const { inst } = loadComponent(FILE);
+  const css = inst.CHART_MARK_STYLE;
+  const url = /url\(data:image\/svg\+xml,([^)]*)\)/.exec(css);
+  assert.ok(url, 'no mask URI in the masthead style');
+  // The runtime splits an inline style on ";" and each declaration on its first ":",
+  // and the style lives inside a double-quoted HTML attribute — so a raw semicolon,
+  // quote or bracket in the URI tears the declaration apart or ends the attribute
+  // early, and the mark silently disappears. Percent-encode them instead.
+  assert.doesNotMatch(url[1], /[;'"()]/, 'percent-encode these before they reach the style attribute');
+  const svg = decodeURIComponent(url[1]);
+  assert.match(svg, /^<svg\b/, 'the mask is not an SVG');
+  assert.match(svg, /<\/svg>$/, 'the mask SVG is truncated');
+  // Geometry only: the ink comes from the token, so the sheet stays on the palette
+  // and the "no hardcoded hex colours" rule holds for the mark too.
+  assert.match(css, /background:var\(--color-text\)/, 'the mark should ink itself from the text token');
+  assert.doesNotMatch(svg, /fill=(?!"none")|stop-color/, 'the mask should carry no fill of its own');
+});

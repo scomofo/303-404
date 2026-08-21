@@ -253,93 +253,109 @@
           </sc-if>
 
           <sc-if value="{{ currentStep.showSongBank }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <div>
-                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Song cards — tap to load into the engine below</div>
-                <div style="display:flex;flex-wrap:wrap;gap:10px;">
-                  <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
-                    <button type="button" onclick="{{ card.load }}" style="{{ card.rowStyleA }}" aria-pressed="{{ card.pressed }}">
-                      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;">
-                        <div style="font-weight:700;font-size:13.5px;">{{ card.title }}</div>
-                        <div style="font-size:11px;font-weight:700;color:var(--color-accent-700);white-space:nowrap;">{{ card.bpmLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:26px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Song bank — every card as its own pattern chart</div>
+
+              <sc-for list="{{ songCards }}" as="card" hint-placeholder-count="3">
+                <div style="{{ card.wrapStyle }}">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:13px;">
+                      <span role="img" aria-label="Roland" style="{{ chartMarkStyle }}"></span>
+                      <span style="font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;">Roland</span>
+                      <span style="font-size:34px;font-weight:700;letter-spacing:.01em;line-height:1;">TB-303</span>
+                    </div>
+                    <button type="button" class="{{ card.loadClass }}" onclick="{{ card.load }}" aria-pressed="{{ card.pressed }}" aria-label="{{ card.loadName }}">{{ card.loadLabel }}</button>
+                  </div>
+
+                  <div style="overflow-x:auto;">
+                   <div style="{{ card.boxStyle }}">
+                    <div style="display:flex;">
+                      <div style="flex:1;min-width:0;">
+                        <div style="padding:9px 12px;border-bottom:1px solid var(--color-text);font-size:14px;"><span style="opacity:.55;">Author:</span> {{ card.artist }}</div>
+                        <div style="padding:9px 12px;font-size:14px;"><span style="opacity:.55;">Title:</span> <strong>{{ card.title }}</strong></div>
                       </div>
-                      <div style="font-size:11px;opacity:.65;">{{ card.tag }}</div>
-                      <div style="display:flex;gap:2px;height:8px;">
-                        <sc-for list="{{ card.preview }}" as="tick" hint-placeholder-count="16">
-                          <span style="flex:1;border-radius:1px;background:{{ tick }};"></span>
+                      <div style="width:184px;flex:none;border-left:1px solid var(--color-text);display:flex;flex-direction:column;">
+                        <div style="display:grid;grid-template-columns:repeat(4, 1fr);padding:9px 0 5px;">
+                          <sc-for list="{{ card.groupHeads }}" as="g" hint-placeholder-count="4">
+                            <div style="text-align:center;font-size:14px;font-weight:700;">{{ g }}</div>
+                          </sc-for>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:2px;padding:0 4px 5px;">
+                          <sc-for list="{{ card.bankCells }}" as="b" hint-placeholder-count="8">
+                            <div style="{{ b.style }}">{{ b.letter }}</div>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div style="{{ card.gridStyle }}">
+                        <div style="border-top:1px solid var(--color-text);padding:5px 10px;"></div>
+                        <sc-for list="{{ card.steps }}" as="s" hint-placeholder-count="16">
+                          <div style="{{ s.numStyle }}">{{ s.num }}</div>
+                        </sc-for>
+
+                        <div style="{{ card.rowLabelStyle }}">Note</div>
+                        <sc-for list="{{ card.steps }}" as="s" hint-placeholder-count="16">
+                          <div style="{{ s.noteStyle }}">{{ s.pitch }}</div>
+                        </sc-for>
+
+                        <div style="{{ card.rowLabelStyle }}">Down / Up</div>
+                        <sc-for list="{{ card.steps }}" as="s" hint-placeholder-count="16">
+                          <div style="{{ s.shiftStyle }}" title="{{ s.shiftTitle }}">{{ s.shift }}</div>
+                        </sc-for>
+
+                        <div style="{{ card.rowLabelStyle }}">Accent / Slide</div>
+                        <sc-for list="{{ card.steps }}" as="s" hint-placeholder-count="16">
+                          <div style="{{ s.markStyle }}">{{ s.marks }}</div>
+                        </sc-for>
+
+                        <div style="{{ card.rowLabelStyle }}">● ○ —</div>
+                        <sc-for list="{{ card.steps }}" as="s" hint-placeholder-count="16">
+                          <div style="{{ s.dotStyle }}" title="{{ s.dotTitle }}">{{ s.dotChar }}</div>
                         </sc-for>
                       </div>
-                    </button>
-                  </sc-for>
+                    </div>
+
+                    <div style="border-top:1px solid var(--color-text);padding:12px 14px;min-height:92px;">
+                      <div style="font-size:14px;margin-bottom:6px;">EFX / Notes:</div>
+                      <sc-for list="{{ card.efxLines }}" as="line" hint-placeholder-count="2">
+                        <div style="font-size:13.5px;line-height:1.6;">{{ line }}</div>
+                      </sc-for>
+                    </div>
+
+                    <div style="border-top:2px solid var(--color-text);display:flex;flex-wrap:wrap;">
+                      <div style="flex:none;width:168px;padding:12px 14px;border-right:1px solid var(--color-text);display:flex;flex-direction:column;gap:10px;justify-content:center;" title="{{ card.waveLabel }}">
+                        <div style="font-size:12px;font-weight:700;letter-spacing:.04em;">WAVEFORM:</div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <span style="{{ card.sawStyle }}">⋀⋀</span>
+                          <span style="{{ card.squareStyle }}">⊓⊔</span>
+                        </div>
+                      </div>
+                      <div style="flex:1;min-width:0;padding:10px 8px 12px;">
+                        <div style="display:flex;gap:6px;min-width:340px;">
+                          <sc-for list="{{ card.knobs }}" as="knob" hint-placeholder-count="5">
+                            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                              <div style="font-size:9.5px;font-weight:700;letter-spacing:.04em;text-align:center;">{{ knob.printLabel }}</div>
+                              <div style="{{ knob.ringStyle }}">
+                                <div style="{{ knob.faceStyle }}">
+                                  <div style="{{ knob.pointerStyle }}"></div>
+                                </div>
+                              </div>
+                              <div style="font-size:10px;opacity:.55;">{{ knob.valueLabel }}</div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </div>
+                   </div>
+                  </div>
                 </div>
-              </div>
+              </sc-for>
+
+              <p style="font-size:11px;opacity:.55;margin:0;">A blank cell is a value the source sheet never stated — author, pattern group, bank and knob positions included. Down / Up is measured against the home octave printed in the notes block. The bottom row is the sheet's note/tie/rest row, so ● is a step that sounds and — is a rest; this engine has no ties, so the legend's ○ never appears. ENV MOD stays blank on every card because the engine models filter decay but not modulation depth.</p>
 
               <sc-if value="{{ sbHasCard }}" hint-placeholder-val="{{ false }}">
-                <div class="card elev-sm" style="padding:0;overflow:hidden;">
-                  <div style="display:grid;grid-template-columns:1fr 1fr;">
-                    <div style="padding:10px 14px;border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);"><span style="font-size:11px;font-weight:700;opacity:.55;">Author</span><br><strong style="font-size:13.5px;">{{ songChart.artist }}</strong></div>
-                    <div style="padding:10px 14px;border-bottom:1px solid var(--color-divider);"><span style="font-size:11px;font-weight:700;opacity:.55;">Pattern Group</span><br><strong style="font-size:13.5px;">{{ songChart.group }}</strong></div>
-                    <div style="padding:10px 14px;border-right:1px solid var(--color-divider);"><span style="font-size:11px;font-weight:700;opacity:.55;">Title</span><br><strong style="font-size:13.5px;">{{ songChart.title }}</strong></div>
-                    <div style="padding:10px 14px;display:flex;gap:var(--space-6);">
-                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">BPM</span><br><strong style="font-size:13.5px;color:var(--color-accent-700);">{{ songChart.bpmLabel }}</strong></div>
-                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">Pattern</span><br><strong style="font-size:13.5px;">{{ songChart.pattern }}</strong></div>
-                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">Bank</span><br><strong style="font-size:13.5px;">{{ songChart.bank }}</strong></div>
-                      <div><span style="font-size:11px;font-weight:700;opacity:.55;">Home octave</span><br><strong style="font-size:13.5px;">{{ songChart.homeOctaveLabel }}</strong></div>
-                    </div>
-                  </div>
-
-                  <div style="overflow-x:auto;padding:14px;">
-                    <div style="{{ songChart.gridStyle }}">
-                      <div style="padding:5px 8px;"></div>
-                      <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
-                        <div style="{{ s.numStyle }}">{{ s.num }}</div>
-                      </sc-for>
-
-                      <div style="padding:6px 8px;font-size:11px;font-weight:700;border-top:1px solid var(--color-divider);">Note</div>
-                      <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
-                        <div style="{{ s.noteStyle }}">{{ s.pitch }}</div>
-                      </sc-for>
-
-                      <div style="padding:6px 8px;font-size:11px;font-weight:700;border-top:1px solid var(--color-divider);">Down / Up</div>
-                      <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
-                        <div style="{{ s.shiftStyle }}" title="{{ s.shiftTitle }}">{{ s.shift }}</div>
-                      </sc-for>
-
-                      <div style="padding:6px 8px;font-size:11px;font-weight:700;border-top:1px solid var(--color-divider);">Accent / Slide</div>
-                      <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
-                        <div style="{{ s.markStyle }}">{{ s.marks }}</div>
-                      </sc-for>
-
-                      <div style="padding:6px 8px;border-top:1px solid var(--color-divider);"></div>
-                      <sc-for list="{{ songChart.steps }}" as="s" hint-placeholder-count="16">
-                        <div style="{{ s.dotStyle }}" title="Combined accent/slide mark, as on the original chart">{{ s.dotChar }}</div>
-                      </sc-for>
-                    </div>
-                  </div>
-
-                  <div style="padding:14px;border-top:1px solid var(--color-divider);display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:flex-start;">
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;">
-                      <div style="height:56px;display:flex;align-items:center;font-size:22px;letter-spacing:-2px;color:var(--color-accent-700);">{{ songChart.waveGlyph }}</div>
-                      <div style="font-size:11.5px;font-weight:600;">Waveform</div>
-                      <div style="font-size:10.5px;opacity:.6;">{{ songChart.waveLabel }}</div>
-                    </div>
-                    <sc-for list="{{ songChart.dials }}" as="dial" hint-placeholder-count="6">
-                      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;">
-                        <div style="{{ dial.faceStyle }}">
-                          <div style="{{ dial.pointerStyle }}"></div>
-                        </div>
-                        <div style="font-size:11.5px;font-weight:600;text-align:center;">{{ dial.label }}</div>
-                        <div style="font-size:10.5px;opacity:.6;">{{ dial.valueLabel }}</div>
-                      </div>
-                    </sc-for>
-                  </div>
-
-                  <div style="font-size:11.5px;border-top:1px solid var(--color-divider);padding:12px 14px;">
-                    <span style="opacity:.55;">EFX / Notes:</span> {{ songChart.notes }}
-                  </div>
-                </div>
-                <p style="font-size:11px;opacity:.55;margin:0;">A dash means the source chart did not state that value. Down/Up is relative to the home octave above; the bottom row echoes the original scan's unlabeled accent/slide marks. Env Mod is never shown because this engine models filter decay but not modulation depth.</p>
-
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ sbTitle }}</div>
@@ -493,6 +509,15 @@ class Component extends DCLogic {
   state = this.initialState();
 
   NOTE_NAMES = ['C2','C2','C3','C2','D#2','C2','C2','G2','C2','C2','A#2','C2','C2','D2','D#2','F2'];
+
+  // The mark printed at the head of a pattern chart, drawn as an SVG mask rather than
+  // a coloured image: the mask carries only the geometry, so the ink is whatever
+  // var(--color-text) is and the sheet stays on the design system's palette. The URI
+  // holds no semicolons or quotes, which the runtime's inline-style parser splits on.
+  CHART_MARK_STYLE = 'flex:none;width:44px;height:33px;background:var(--color-text);mask:url(data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2040%2030%22%3E%3Crect%20x=%222%22%20y=%222%22%20width=%2236%22%20height=%2226%22%20rx=%227%22%20fill=%22none%22%20stroke=%22black%22%20stroke-width=%223.4%22/%3E%3Cpath%20d=%22M12%2023%20V9%20h9.5%20a4.4%204.4%200%200%201%200%208.8%20H15%20l7.6%205.2%22%20fill=%22none%22%20stroke=%22black%22%20stroke-width=%223.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2040%2030%22%3E%3Crect%20x=%222%22%20y=%222%22%20width=%2236%22%20height=%2226%22%20rx=%227%22%20fill=%22none%22%20stroke=%22black%22%20stroke-width=%223.4%22/%3E%3Cpath%20d=%22M12%2023%20V9%20h9.5%20a4.4%204.4%200%200%201%200%208.8%20H15%20l7.6%205.2%22%20fill=%22none%22%20stroke=%22black%22%20stroke-width=%223.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E) center/contain no-repeat;';
+
+  // The four pattern-group columns printed across the top right of a pattern chart.
+  CHART_GROUPS = ['I', 'II', 'III', 'IV'];
 
   SONG_CARDS = [
     // The three practice patterns aren't transcriptions of anything — their tempo is a
@@ -1222,13 +1247,15 @@ class Component extends DCLogic {
     return m ? { pitch: m[1], octave: parseInt(m[2], 10), rest: false } : { pitch: name, octave: null, rest: false };
   }
 
-  // Renders the loaded card back into the pattern-chart layout its transcription came
-  // from. Octave marks are relative to the card's home octave — the one most of its
-  // steps sit in — because a chart records a shift away from where the pattern lives,
-  // not an absolute pitch. Anything no source stated (pattern group, bank, knob
-  // positions) is left blank rather than invented.
-  buildSongChart() {
-    const card = this.SONG_CARDS.find(c => c.id === this.state.sbSelected);
+  // Renders a card back into the printed 16-step pattern chart its transcriptions came
+  // from — Author/Title, the pattern-group x bank grid, the Note / Down-Up /
+  // Accent-Slide / dot rows, the EFX notes block, the waveform pair and the five knobs.
+  // Octave marks are relative to the card's home octave — the one most of its steps sit
+  // in — because a chart records a shift away from where the pattern lives, not an
+  // absolute pitch. Anything no source stated (pattern group, bank, knob positions) is
+  // left blank rather than invented. Called with no card, it charts the loaded one.
+  buildSongChart(card) {
+    card = card || this.SONG_CARDS.find(c => c.id === this.state.sbSelected);
     if (!card) return null;
 
     const parts = card.notes.map(n => this.splitNote(n));
@@ -1240,6 +1267,10 @@ class Component extends DCLogic {
     const home = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
     const derived = home === undefined ? null : parseInt(home, 10);
     const homeOct = card.homeOctave !== undefined ? card.homeOctave : derived;
+
+    // Every step cell is a ruled box in black ink on paper, and the four downbeat
+    // columns carry the chart's grey tint so beat 1 is findable without counting.
+    const cell = (i, extra) => `border-top:1px solid var(--color-text);border-left:1px solid var(--color-text);background:${i % 4 === 0 ? 'var(--color-neutral-300)' : 'transparent'};display:flex;align-items:center;justify-content:center;text-align:center;${extra}`;
 
     const steps = parts.map((p, i) => {
       const accent = card.accent.includes(i) && !p.rest;
@@ -1259,61 +1290,117 @@ class Component extends DCLogic {
         rest: p.rest,
         shift,
         shiftTitle,
-        marks: p.rest ? '' : [accent ? 'A' : '', slide ? 'S' : ''].filter(Boolean).join(' '),
-        dotChar: p.rest ? '' : (accent ? '●' : (slide ? '○' : '—')),
+        // "A/S" is how the printed row writes a step that is both accented and slid.
+        marks: p.rest ? '' : [accent ? 'A' : '', slide ? 'S' : ''].filter(Boolean).join('/'),
+        // The chart's bottom row is its note/tie/rest row, not a second accent row —
+        // which is why a printed card shows a filled dot on every sounding step even
+        // where the row above it is empty. This engine has no ties, so a step is either
+        // a note or a rest and the legend's hollow circle never appears on a card.
+        dotChar: p.rest ? '—' : '●',
+        dotTitle: `Step ${i + 1}: ${p.rest ? 'rest' : 'note'}`,
         accent, slide,
         beat: i % 4 === 0,
-        numStyle: `padding:5px 0;text-align:center;font-size:11px;font-weight:700;color:${i % 4 === 0 ? 'var(--color-accent-700)' : 'color-mix(in srgb, var(--color-text) 55%, transparent)'};`,
-        // Every fourth column is tinted, so the downbeats are findable at a glance.
-        noteStyle: `padding:6px 0;text-align:center;font-size:12px;font-weight:700;border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
-        shiftStyle: `padding:6px 0;text-align:center;font-size:11px;font-weight:700;color:var(--color-accent-700);border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
-        markStyle: `padding:6px 0;text-align:center;font-size:11px;font-weight:700;color:${slide ? 'var(--color-accent-2-700)' : 'var(--color-accent-700)'};border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
-        dotStyle: `padding:6px 0;text-align:center;font-size:13px;color:${accent ? 'var(--color-accent-2-700)' : (slide ? 'var(--color-accent-700)' : 'var(--color-neutral-400)')};border-top:1px solid var(--color-divider);background:${i % 4 === 0 ? 'var(--color-neutral-200)' : 'transparent'};`,
+        numStyle: cell(i, 'padding:5px 0;font-size:12px;font-weight:700;'),
+        noteStyle: cell(i, 'padding:6px 0;min-height:30px;font-size:14px;font-weight:700;'),
+        shiftStyle: cell(i, 'padding:6px 0;min-height:30px;font-size:13px;font-weight:700;'),
+        markStyle: cell(i, 'padding:6px 0;min-height:30px;font-size:12px;font-weight:700;'),
+        dotStyle: cell(i, 'padding:6px 0;min-height:26px;font-size:14px;line-height:1;'),
       };
     });
 
-    // Only Breathe Deeper's source gave knob positions; the rest show an empty dial.
+    // Only a few cards' sources gave knob positions; the rest show an empty dial.
     // Env Mod is always blank — this engine models filter decay but not mod depth.
     const fc = card.filter;
     const knob = k => (fc && fc[k] !== undefined && fc[k] !== null ? fc[k] : null);
-    const dial = (label, value) => {
+    const dial = (label, printLabel, value) => {
       const known = value !== null && value !== undefined;
       // 7 o'clock through 5 o'clock is the usual 300-degree sweep of a hardware pot.
       const rot = known ? -150 + value * 300 : 0;
       return {
         label,
+        printLabel,
         valueLabel: known ? `${Math.round(value * 100)}%` : '—',
-        faceStyle: `width:56px;height:56px;border-radius:50%;background:var(--color-neutral-300);box-shadow:var(--shadow-sm);position:relative;opacity:${known ? 1 : 0.45};`,
+        // The knurled collar of a panel pot: sixteen ticks that the opaque face crops
+        // back to short marks around its rim. The face stays opaque whether or not the
+        // source gave a position, so an unstated knob reads as a knob with no pointer
+        // rather than as a faded one with the collar showing through it.
+        ringStyle: 'width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(var(--color-text) 0deg 2.5deg, var(--color-neutral-100) 2.5deg 22.5deg);',
+        faceStyle: 'width:44px;height:44px;border-radius:50%;background:var(--color-neutral-300);border:2px solid var(--color-text);position:relative;',
         // An unknown position gets no pointer at all rather than a default one, so the
         // chart never implies a setting the source did not give.
         pointerStyle: known
-          ? `position:absolute;bottom:50%;left:50%;width:3px;height:22px;margin-left:-1.5px;background:var(--color-accent-700);border-radius:2px;transform-origin:50% 100%;transform:rotate(${rot}deg);`
+          ? `position:absolute;bottom:50%;left:50%;width:3px;height:16px;margin-left:-1.5px;background:var(--color-text);border-radius:1px;transform-origin:50% 100%;transform:rotate(${rot}deg);`
           : 'display:none;',
       };
     };
 
+    // The printed chart carries five knobs. Overdrive is a TD-3-MO addition the sheet
+    // has no box for, so it rides in the EFX / Notes block where a card's author would
+    // have written it rather than inventing a sixth pot on the panel.
+    const dials = [
+      dial('Cutoff', 'CUT OFF FREQ', knob('cutoff')),
+      dial('Resonance', 'RESONANCE', knob('resonance')),
+      dial('Env Mod', 'ENV MOD', null),
+      dial('Decay', 'DECAY', knob('decay')),
+      dial('Accent', 'ACCENT', knob('accent')),
+      dial('Overdrive', 'OVERDRIVE', card.overdrive === undefined ? null : card.overdrive),
+    ];
+
+    // The group x bank grid at the top right. A card marks the single slot its source
+    // named; a card whose source named neither leaves the grid blank, as an unfilled
+    // sheet is blank, rather than pointing at a slot nobody recorded.
+    const bankCells = [];
+    for (const b of ['A', 'B']) {
+      for (const g of this.CHART_GROUPS) {
+        const on = card.group === g && card.bank === b;
+        bankCells.push({
+          letter: on ? b : '',
+          style: on
+            ? 'display:flex;align-items:center;justify-content:center;min-height:21px;font-size:12px;font-weight:700;background:var(--color-neutral-600);color:var(--color-neutral-100);border-radius:2px;'
+            : 'display:flex;align-items:center;justify-content:center;min-height:21px;',
+        });
+      }
+    }
+
+    const bpmLabel = card.bpmDisplay || (card.bpmConfirmed ? `${card.bpm} BPM` : `~${card.bpm} BPM (estimated)`);
+    // Everything the printed sheet has no box for goes in the notes block, the way a
+    // chart's author would have written it in: tempo, pattern number, overdrive, the
+    // home octave the Down/Up row is measured against, and a short pattern's length.
+    const meta = [bpmLabel];
+    if (card.pattern !== undefined) meta.push(`Pattern ${card.pattern}`);
+    if (card.overdrive) meta.push(`Overdrive ${Math.round(card.overdrive * 100)}%`);
+    meta.push(homeOct === null ? 'Home octave —' : `Home octave ${homeOct}`);
+
+    const wave = card.waveform || 'sawtooth';
+    const glyph = 'padding:2px 10px;font-size:26px;font-weight:700;line-height:1.05;letter-spacing:-3px;';
+
     return {
+      id: card.id,
       title: card.title,
       artist: card.artist || '—',
-      bpmLabel: card.bpmDisplay || (card.bpmConfirmed ? `${card.bpm} BPM` : `~${card.bpm} BPM (estimated)`),
+      bpmLabel,
       group: card.group || '—',
       pattern: card.pattern === undefined ? '—' : String(card.pattern),
       bank: card.bank || '—',
-      waveform: card.waveform || 'sawtooth',
-      waveLabel: (card.waveform || 'sawtooth') === 'square' ? 'Square' : 'Sawtooth',
-      waveGlyph: (card.waveform || 'sawtooth') === 'square' ? '⊓⊓⊓' : '◢◢◢',
+      waveform: wave,
+      waveLabel: wave === 'square' ? 'Square wave' : 'Sawtooth wave',
+      // The selected waveform is ringed on the sheet; the other is left plain.
+      sawStyle: wave === 'square' ? `${glyph}border:2px solid transparent;opacity:.4;` : `${glyph}border:2px solid var(--color-text);border-radius:50%;`,
+      squareStyle: wave === 'square' ? `${glyph}border:2px solid var(--color-text);border-radius:50%;` : `${glyph}border:2px solid transparent;opacity:.4;`,
       steps,
       stepCount: steps.length,
-      gridStyle: `display:grid;grid-template-columns:86px repeat(${steps.length}, minmax(34px, 1fr));min-width:${86 + steps.length * 34}px;`,
+      gridStyle: `display:grid;grid-template-columns:96px repeat(${steps.length}, minmax(40px, 1fr));`,
+      // A printed sheet does not reflow, so a narrow screen scrolls the whole card
+      // sideways as one piece rather than rewrapping its rows. The floor is whichever
+      // is wider: the step grid, or the waveform-and-knobs bar beneath it.
+      boxStyle: `border:2px solid var(--color-text);border-radius:3px;background:var(--color-neutral-100);overflow:hidden;min-width:${Math.max(620, 96 + steps.length * 40)}px;`,
+      rowLabelStyle: 'border-top:1px solid var(--color-text);padding:6px 10px;font-size:12px;font-weight:700;display:flex;align-items:center;',
       homeOctaveLabel: homeOct === null ? '—' : `Octave ${homeOct}`,
-      dials: [
-        dial('Cutoff', knob('cutoff')),
-        dial('Resonance', knob('resonance')),
-        dial('Env Mod', null),
-        dial('Decay', knob('decay')),
-        dial('Accent', knob('accent')),
-        dial('Overdrive', card.overdrive === undefined ? null : card.overdrive),
-      ],
+      groupHeads: this.CHART_GROUPS,
+      bankCells,
+      dials,
+      knobs: dials.slice(0, 5),
+      efxLines: [card.tag, meta.join('  ·  ')],
       notes: card.tag,
     };
   }
@@ -1339,13 +1426,6 @@ class Component extends DCLogic {
         bg: isCurrent ? 'var(--color-accent-700)' : (accent ? 'var(--color-accent-200)' : 'var(--color-neutral-200)'),
         border: isCurrent ? '2px solid var(--color-accent-2-700)' : '2px solid transparent',
         textColor: isCurrent ? 'var(--color-bg)' : 'var(--color-text)' };
-    });
-  }
-  buildCardPreview(card) {
-    return card.notes.map((n, i) => {
-      if (card.accent.includes(i)) return 'var(--color-accent-2-600)';
-      if (card.slide.includes(i)) return 'var(--color-accent-700)';
-      return 'var(--color-neutral-300)';
     });
   }
   playSongBank() {
@@ -1481,21 +1561,26 @@ class Component extends DCLogic {
       ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
       softAttackOn: this.state.td3SoftAttack,
       toggleSoftAttack: () => this.setState(s => ({ td3SoftAttack: !s.td3SoftAttack })),
+      chartMarkStyle: this.CHART_MARK_STYLE,
+      // Every card in the bank renders as its own pattern chart, so the gallery is a
+      // stack of the sheets these patterns were transcribed from rather than a row of
+      // summaries. Tapping Load hands one to the engine below.
       songCards: step.widget === 'songbank' ? this.SONG_CARDS.map(c => {
         const selected = this.state.sbSelected === c.id;
-        // bpm drives playback; bpmDisplay overrides the text where the real tempo is a range
-        // or differs by release. A card with neither is still a guess and says so.
-        const bpmLabel = c.bpmDisplay || (c.bpmConfirmed ? `${c.bpm} BPM` : `~${c.bpm} BPM (estimated)`);
         return {
-          title: c.title, tag: c.tag, bpmLabel, load: () => this.loadSongCard(c), pressed: selected ? 'true' : 'false',
-          preview: this.buildCardPreview(c),
-          rowStyleA: `display:flex;flex-direction:column;gap:6px;text-align:left;padding:10px 14px;border-radius:var(--radius-md);border:1px solid ${selected ? 'var(--color-accent)' : 'var(--color-divider)'};border-left:3px solid ${selected ? 'var(--color-accent)' : 'var(--color-divider)'};background:${selected ? 'var(--color-accent-100)' : 'var(--color-surface)'};cursor:pointer;min-width:210px;`,
+          ...this.buildSongChart(c),
+          load: () => this.loadSongCard(c),
+          pressed: selected ? 'true' : 'false',
+          loadLabel: selected ? 'Loaded \u2713' : 'Load into engine',
+          loadClass: selected ? 'btn btn-primary' : 'btn btn-secondary',
+          loadName: selected ? `${c.title} is loaded` : `Load ${c.title} into the engine`,
+          // The loaded sheet is ringed so it stays findable in a stack this long.
+          wrapStyle: `border-radius:6px;${selected ? 'outline:3px solid var(--color-accent);outline-offset:6px;' : ''}`,
         };
       }) : [],
       sbHasCard: !!this.state.sbNotes,
       sbTitle: this.state.sbSelected ? `${(this.SONG_CARDS.find(c => c.id === this.state.sbSelected) || {}).title || ''} — full pattern` : '',
       sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],
-      songChart: step.widget === 'songbank' ? this.buildSongChart() : null,
       sbPlayLabel: this.state.sbPlaying ? 'Stop' : 'Play Bassline',
       sbPlayToggle: this.state.sbPlaying ? () => this.stopSongBank() : () => this.playSongBank(),
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],

@@ -357,3 +357,114 @@ test('every card that pins a home octave states it as an integer near its notes'
       `${c.id}: pinned home ${c.homeOctave} is nowhere near its notes (${lo}..${hi})`);
   }
 });
+
+// ── the printed sheet ────────────────────────────────────────────────────────
+// Each card renders as one of the 16-step pattern sheets the transcriptions came
+// from, so the layout carries claims of its own: which knobs a real sheet has, what
+// its bottom row means, and that it never marks a slot nobody recorded.
+
+test('the sheet prints the five knobs it has boxes for, in panel order', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    const chart = inst.buildSongChart(c);
+    assert.deepEqual(chart.knobs.map(k => k.printLabel),
+      ['CUT OFF FREQ', 'RESONANCE', 'ENV MOD', 'DECAY', 'ACCENT'], `${c.id}: printed knob row`);
+    // Overdrive is a TD-3-MO addition the sheet has no box for. It stays out of the
+    // knob row and is written into the notes block instead, so a card that calls for
+    // it still says so somewhere.
+    assert.equal(chart.knobs.some(k => k.label === 'Overdrive'), false, `${c.id}: overdrive drawn as a panel knob`);
+    assert.ok(chart.dials.some(d => d.label === 'Overdrive'), `${c.id}: overdrive dropped entirely`);
+    const notes = chart.efxLines.join(' ');
+    assert.equal(/Overdrive \d+%/.test(notes), !!c.overdrive, `${c.id}: overdrive in the notes block vs ${c.overdrive}`);
+  }
+});
+
+test('the notes block carries what the sheet has no box for', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    const chart = inst.buildSongChart(c);
+    assert.equal(chart.efxLines[0], c.tag, `${c.id}: the card's own note leads the block`);
+    const meta = chart.efxLines[1];
+    assert.ok(meta.includes(chart.bpmLabel), `${c.id}: tempo missing from the notes block`);
+    assert.ok(meta.includes(chart.homeOctaveLabel.replace('Octave ', 'Home octave ')),
+      `${c.id}: the octave the Down/Up row is measured against is not stated`);
+    assert.equal(meta.includes('Pattern '), c.pattern !== undefined, `${c.id}: pattern number vs ${c.pattern}`);
+  }
+});
+
+test('the bottom row is the note/tie/rest row, not a second accent row', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    const chart = inst.buildSongChart(c);
+    chart.steps.forEach((s, i) => {
+      const rest = inst.splitNote(c.notes[i]).rest;
+      assert.equal(s.dotChar, rest ? '—' : '●', `${c.id} step ${i + 1}: note/rest mark`);
+      // The engine has no ties, so the legend's hollow circle must never be drawn —
+      // and an accent must not turn the dot into something else either.
+      assert.notEqual(s.dotChar, '○', `${c.id} step ${i + 1}: a tie this engine cannot play`);
+    });
+  }
+});
+
+test('a step that is both accented and slid is written the way the sheet writes it', () => {
+  const { inst } = loadComponent(FILE);
+  let seen = 0;
+  for (const c of inst.SONG_CARDS) {
+    for (const s of inst.buildSongChart(c).steps) {
+      const both = s.accent && s.slide;
+      if (both) seen++;
+      assert.equal(s.marks, both ? 'A/S' : (s.accent ? 'A' : (s.slide ? 'S' : '')),
+        `${c.id} step ${s.num}: accent/slide mark`);
+    }
+  }
+  assert.ok(seen > 0, 'no card exercises the A/S notation');
+});
+
+test('the group x bank grid marks a slot only when the source gave both', () => {
+  const { inst } = loadComponent(FILE);
+  let marked = 0;
+  for (const c of inst.SONG_CARDS) {
+    const chart = inst.buildSongChart(c);
+    assert.equal(chart.bankCells.length, chart.groupHeads.length * 2, `${c.id}: grid is not groups x A/B`);
+    const on = chart.bankCells.filter(b => b.letter);
+    const known = !!(c.group && c.bank);
+    assert.equal(on.length, known ? 1 : 0, `${c.id}: ${on.length} slots marked for group ${c.group} bank ${c.bank}`);
+    if (!known) continue;
+    marked++;
+    // Row-major from bank A, so the marked cell's index names the slot it claims.
+    const at = chart.bankCells.findIndex(b => b.letter);
+    assert.equal(chart.groupHeads[at % chart.groupHeads.length], c.group, `${c.id}: marked the wrong group column`);
+    assert.equal(on[0].letter, c.bank, `${c.id}: marked the wrong bank row`);
+  }
+  assert.ok(marked > 0, 'no card states a group and bank, so the grid is never exercised');
+});
+
+test('the waveform pair rings exactly one glyph, and it is the one the engine plays', () => {
+  const { inst } = loadComponent(FILE);
+  for (const c of inst.SONG_CARDS) {
+    const chart = inst.buildSongChart(c);
+    const ringed = s => s.includes('border-radius:50%');
+    assert.notEqual(ringed(chart.sawStyle), ringed(chart.squareStyle), `${c.id}: both or neither waveform ringed`);
+    inst.loadSongCard(c);
+    assert.equal(ringed(chart.squareStyle), inst.state.sbWaveform === 'square', `${c.id}: ringed the wrong waveform`);
+  }
+});
+
+test("the masthead mark survives the runtime's inline-style parser", () => {
+  const { inst } = loadComponent(FILE);
+  const css = inst.CHART_MARK_STYLE;
+  const url = /url\(data:image\/svg\+xml,([^)]*)\)/.exec(css);
+  assert.ok(url, 'no mask URI in the masthead style');
+  // The runtime splits an inline style on ";" and each declaration on its first ":",
+  // and the style lives inside a double-quoted HTML attribute — so a raw semicolon,
+  // quote or bracket in the URI tears the declaration apart or ends the attribute
+  // early, and the mark silently disappears. Percent-encode them instead.
+  assert.doesNotMatch(url[1], /[;'"()]/, 'percent-encode these before they reach the style attribute');
+  const svg = decodeURIComponent(url[1]);
+  assert.match(svg, /^<svg\b/, 'the mask is not an SVG');
+  assert.match(svg, /<\/svg>$/, 'the mask SVG is truncated');
+  // Geometry only: the ink comes from the token, so the sheet stays on the palette
+  // and the "no hardcoded hex colours" rule holds for the mark too.
+  assert.match(css, /background:var\(--color-text\)/, 'the mark should ink itself from the text token');
+  assert.doesNotMatch(svg, /fill=(?!"none")|stop-color/, 'the mask should carry no fill of its own');
+});

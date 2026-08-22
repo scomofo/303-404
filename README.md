@@ -65,7 +65,7 @@ Checklists, cable states, and your edits to all patterns are held in memory for 
 
 ## DDJ-FLX4 Guide
 
-A single-page, interactive setup and mixing course for the **Pioneer DJ DDJ-FLX4** controller. It walks an absolute beginner from unboxing and software setup through gain staging, EQ, faders and the crossfader, beatmatching by ear and with SYNC, hot cues, loops, Beat FX, and a mapped three-minute mix, over seven weeks.
+A single-page, interactive setup and mixing course for the **Pioneer DJ DDJ-FLX4** controller. It walks an absolute beginner from unboxing and software setup through gain staging, EQ, faders and the crossfader, beatmatching by ear and with SYNC, hot cues, loops, Beat FX, and a mapped three-minute mix, over seven weeks — then hands over to a self-paced **6-week practice plan** that turns knowing the controls into being able to play.
 
 ### Running it
 
@@ -82,6 +82,24 @@ Open `DDJ-FLX4 Guide.dc.html` the same way as the Behringer guide — directly i
 | 5 | Hot Cues & Loops | Setting and jumping to hot cues, Auto Loop lengths |
 | 6 | Beat FX & Your First Mix | A tempo-synced echo effect, then a mapped 3-minute performance |
 | 7 | Care, Troubleshooting & Software Tips | No-sound/no-detect fixes, firmware, switching between Serato and rekordbox |
+| — | **Practice Plan** (6 weeks, self-paced) | See below |
+
+### The practice plan
+
+Weeks 1–7 above teach the hardware. The Practice Plan that follows is a study-and-drill curriculum built around free YouTube tutorials — a goal, a watchlist, a set of practice tasks and one milestone per week — plus a creators list, a practice-rhythm step and a where-to-go-next step. It is one nav group of eleven steps, tagged `Practice Plan`.
+
+| Week | Goal | Milestone |
+| --- | --- | --- |
+| 1 | Setup, layout & software | Load, cue and play a track on each deck without looking at the screen |
+| 2 | Beatmatching & tempo | Mix two tracks in and out with the beats aligned |
+| 3 | EQ, gain & clean transitions | A transition where nothing clips, clashes or dips in volume |
+| 4 | Phrasing, hot cues & loops | Hear where a phrase starts and mix in there off a hot cue |
+| 5 | FX, genre blending & set flow | A 15-minute mix across two genres/energy levels, no jarring jump |
+| 6 | Full sets & club-readiness | A recorded 20–30 min set you'd send to a booker |
+
+Each practice week links back into the hands-on weeks — Week 2's beatmatching drills point at the SYNC widget in Week 4, and so on. Those labels are read off the target step rather than written out again, so renaming a lesson can't leave a stale button behind.
+
+**Video and channel links are YouTube searches, not video IDs.** The plan this section was built from names videos and channels by title only. Guessing at video IDs would produce links that look authoritative while quietly pointing at the wrong upload, so every link runs a search for the title instead — exactly as specific as the source actually was. `test/curriculum.test.mjs` fails if a hardcoded `youtube.com/watch`, `youtu.be` or `@channel` link ever appears. For the same reason, anything the source stated as a fact that ages — the price of DJ Blakey's paid course, for one — is shown with a note to check it rather than as current fact.
 
 ### Interactive pieces
 
@@ -95,6 +113,8 @@ All of it — mixer, beatmatching, hot cues, loops, Beat FX — runs on **two sy
 - **Loops** (Week 5) — Auto Loop length presets (Off/8/4/2 steps) that actually shorten Deck A's loop point.
 - **Beat FX** (Week 6) — an ON/OFF toggle and Low/Med/High level presets driving a real synced `DelayNode` echo (with feedback) on the master send.
 - **Performance map** (Week 6) — the same proportional-timeline pattern as the Behringer guide's Week 4, mapped to a 6-section, 3-minute mix.
+- **Plan map** (Practice Plan) — all six practice weeks with their milestone and a live `n of 6 milestones reached` tally; each row jumps to that week. It appears on both the plan's first and last step, so it reads as a map going in and a report card coming out.
+- **Watchlists & milestones** (Practice Plan) — each week's videos tick off individually, marked core or optional extra, and each week ends in one milestone checkbox that feeds the tally. Ticks share the same in-memory `checks` map as the course's own checklists — namespaced per step with `:watch` and `:milestone` suffixes so a ticked video can't strike through a practice task — and so **Start Over** clears the whole plan along with everything else.
 
 ## Tests
 
@@ -111,6 +131,7 @@ The tests load each guide's `<script type="text/x-dc">` block and run its `Compo
 | `test/structure.test.mjs` | Every step renders; ids and nav labels are unique; the course map reaches every step and traps/restores focus; `restart()` restores the whole of `initialState()`; each page declares a title and a language; no hardcoded hex colors; every control has an accessible name |
 | `test/songbank.test.mjs` | Every card's notes resolve to a real frequency; accent/slide indices stay in range; tempos are plausible and applied on load; documentation matches the 19-card schema and distinguishes the three source types; each card's chart agrees with the engine data |
 | `test/timing.test.mjs` | Notes are scheduled ahead of the audio clock and land on an exact grid; Stop silences queued hits; shuffle swings without changing bar length or leaking cleanup timers; TD-3/Song Bank filter envelopes survive lookahead scheduling; DDJ phase jumps stay on-grid |
+| `test/curriculum.test.mjs` | Every practice week has a goal, tasks, a watchlist, a milestone and a cross-link; those cross-links resolve and their labels match the target step; no link claims a video ID; task/watch/milestone ticks stay namespaced and reset on Start Over; the plan map tallies milestones; the creators list and this README stay in step with the data |
 
 The stub clock advances with real time, so the schedulers run for real and only the audio nodes are faked. Reverting an engine to fire notes at `ctx.currentTime` fails the grid assertions immediately.
 
@@ -126,7 +147,7 @@ DDJ-FLX4 Guide.dc.html          the DDJ-FLX4 app — markup plus its component l
 support.js                      generated dc-runtime (loads React/Babel, renders <x-dc>) — shared by both
 _ds/organic-…/                  the Organic design system: styles.css, manifest, its own readme — shared by both
 uploads/                        td3.jpg, rd-6.jpg — retained reference photos (not currently displayed)
-test/                           the test suite — harness.mjs plus three .test.mjs files
+test/                           the test suite — harness.mjs plus four .test.mjs files
 package.json                    test script only; the guides themselves still have no build step
 .thumbnail                      WebP cover image
 ```

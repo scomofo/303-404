@@ -1369,7 +1369,7 @@ class Component extends DCLogic {
   ensureAudio() {
     if (!this.audioCtx) {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const size = this.audioCtx.sampleRate * 0.3;
+      const size = this.audioCtx.sampleRate * 1.1;
       const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;

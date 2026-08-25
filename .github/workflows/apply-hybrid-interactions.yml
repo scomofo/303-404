@@ -1,0 +1,30 @@
+name: apply-hybrid-interactions
+on:
+  push:
+    branches: [feature/hybrid-live-set-interactions-run]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/hybrid-live-set-interactions-run
+      - run: python3 tools/apply_hybrid_interactions.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Commit verified interaction upgrade
+        run: |
+          rm .github/workflows/apply-hybrid-interactions.yml tools/apply_hybrid_interactions.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'Hybrid Live Set.dc.html' test/hybrid.test.mjs .github/workflows/apply-hybrid-interactions.yml tools/apply_hybrid_interactions.py
+          git commit -m "Add Hybrid performance-map interactions and layer mutes"
+          git push origin HEAD:feature/hybrid-live-set-interactions-run

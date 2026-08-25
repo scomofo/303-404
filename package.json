@@ -2,10 +2,10 @@
   "name": "hardware-guides",
   "version": "1.0.0",
   "private": true,
-  "description": "Interactive setup courses for the Behringer TD-3-MO / RD-6-BK and the Pioneer DJ DDJ-FLX4",
+  "description": "Interactive setup courses for the Behringer TD-3-MO / RD-6-BK, Pioneer DJ DDJ-FLX4, and a combined hybrid live set",
   "type": "module",
   "scripts": {
-    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs"
+    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs test/hybrid.test.mjs"
   },
   "engines": {
     "node": ">=20"

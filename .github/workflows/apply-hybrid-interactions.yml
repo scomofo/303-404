@@ -19,8 +19,10 @@ jobs:
           s = p.read_text()
           start = s.index("old_w4 = re.search")
           end = s.index("new_w4 =", start)
-          replacement = "old_w4 = re.search(r'''      \\{ id:'w4-1',[\\s\\S]*?\\n      \\{ id:'w5-intro' ''', s)\nif not old_w4:\n    raise SystemExit('w4 performance map step not found')\n"
-          replacement = replacement.replace("id:'w5-intro' ", "id:'w5-intro'")
+          replacement = '''old_w4 = re.search(r"      \\{ id:'w4-1',[\\s\\S]*?\\n      \\{ id:'w5-intro'", s)
+if not old_w4:
+    raise SystemExit('w4 performance map step not found')
+'''
           p.write_text(s[:start] + replacement + s[end:])
           PY
       - run: python3 tools/apply_hybrid_interactions.py

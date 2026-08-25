@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hybrid Live Set — TD-3/RD-6 + DDJ-FLX4</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent);} a:hover{color:var(--color-accent-700);}</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+  <header style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+    <div style="font-family:var(--font-heading);font-size:17px;white-space:nowrap;">Hybrid Live Set</div>
+    <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);"><span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span></div>
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;"><div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div></div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
+          <div><h1 style="margin:0;">Hybrid Live Set</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">TD-3-MO + RD-6-BK + DDJ-FLX4</h3></div>
+          <div><h4 style="margin:0 0 8px;">Course Overview</h4><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;"><li>Target Audience: Graduates of the TD-3/RD-6 and DDJ-FLX4 guides</li><li>Duration: 5 Weeks (2–3 Hours / Week)</li><li>Equipment Needed:<ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;"><li>Behringer TD-3-MO + RD-6-BK (synced)</li><li>Pioneer DJ DDJ-FLX4 + Serato Lite or rekordbox</li><li>Mixer or interface with at least 4 channels</li><li>Headphones + monitors</li><li>3.5 mm TS sync cable + audio cables</li></ul></li></ul></div>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWeekIntro }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);"><span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span><h2 style="margin:0;">{{ currentStep.title }}</h2><p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p><button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button></div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);">
+          <div><span class="tag tag-neutral">{{ currentStep.weekTag }}</span><h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2></div>
+          <div style="display:flex;flex-direction:column;gap:12px;"><sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:4px;"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;"><input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" /><span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span></label><sc-if value="{{ item.hasSub }}" hint-placeholder-val="{{ false }}"><ul style="margin:0 0 0 30px;padding-left:18px;font-size:13.5px;opacity:.8;display:flex;flex-direction:column;gap:3px;"><sc-for list="{{ item.subitems }}" as="sub" hint-placeholder-count="3"><li>{{ sub }}</li></sc-for></ul></sc-if></div></sc-for></div>
+
+          <sc-if value="{{ currentStep.showPerfmap }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <span class="tag tag-accent-2" style="align-self:flex-start;">Hybrid performance map</span>
+              <div style="overflow-x:auto;" role="region" aria-label="Hybrid performance timeline" tabindex="0">
+                <div style="min-width:680px;display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:var(--color-divider);border:1px solid var(--color-divider);border-radius:var(--radius-sm);overflow:hidden;">
+                  <div style="padding:10px;background:var(--color-neutral-100);font-weight:600;">Layer</div>
+                  <sc-for list="{{ currentStep.perfSections }}" as="section" hint-placeholder-count="5"><div style="padding:10px;background:var(--color-neutral-100);"><strong>{{ section.label }}</strong><div style="font-size:12px;opacity:.7;">{{ section.time }}</div></div></sc-for>
+                  <div style="padding:10px;background:var(--color-neutral-100);font-weight:600;">TD-3 / RD-6</div>
+                  <sc-for list="{{ currentStep.perfSections }}" as="section" hint-placeholder-count="5"><div style="padding:10px;background:var(--color-bg);font-size:13px;line-height:1.4;">{{ section.hardware }}</div></sc-for>
+                  <div style="padding:10px;background:var(--color-neutral-100);font-weight:600;">DDJ-FLX4</div>
+                  <sc-for list="{{ currentStep.perfSections }}" as="section" hint-placeholder-count="5"><div style="padding:10px;background:var(--color-bg);font-size:13px;line-height:1.4;">{{ section.controller }}</div></sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}"><div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);"><h2 style="margin:0;">You’re ready for a hybrid set.</h2><p style="margin:0;max-width:48ch;opacity:.85;">You can now run the TD-3/RD-6 as a live hardware layer alongside the DDJ-FLX4, manage signal flow and clocking, and perform a structured hybrid arrangement.</p><button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button></div></sc-if>
+    </div>
+  </main>
+
+  <footer style="display:flex;justify-content:space-between;padding:var(--space-4);border-top:1px solid var(--color-divider);"><button type="button" class="btn btn-secondary" onclick="{{ goBack }}" disabled="{{ isFirst }}">← Back</button><button type="button" class="btn btn-primary" onclick="{{ goNext }}" disabled="{{ isLast }}">Next →</button></footer>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}"><div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;"><div class="dialog" data-course-map-dialog="true" tabIndex="-1" onclick="{{ stopProp }}" onkeydown="{{ dialogKeydown }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;"><div class="dialog-title">Course map</div><sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="5"><div><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin:12px 0 6px;">{{ grp.label }}</div><sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="2"><button type="button" onclick="{{ it.go }}" style="{{ it.rowStyle }}">{{ it.title }}</button></sc-for></div></sc-for><div class="dialog-actions"><button type="button" class="btn btn-secondary" onclick="{{ closeDialog }}">Close</button></div></div></div></sc-if>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  initialState() { return { step:0, dialogOpen:false, checks:{} }; }
+  state = this.initialState();
+  constructor(props) { super(props); this.STEPS = this.buildSteps(); }
+
+  PERF_SECTIONS = [
+    { label:'Intro', time:'0:00–1:30', hardware:'Sparse RD-6; TD-3 muted or filtered down', controller:'Atmosphere or soft opening track' },
+    { label:'Hardware Groove', time:'1:30–4:00', hardware:'Full RD-6 + TD-3 bassline; gradual filter opening', controller:'Track reduced or removed to leave room' },
+    { label:'Breakdown', time:'4:00–5:30', hardware:'Drums drop; acid line thins or holds', controller:'Bring in pad, vocal, loop or transition texture' },
+    { label:'Drop', time:'5:30–8:30', hardware:'Full groove with active TD-3 modulation', controller:'Complementary track or loop joins on phrase boundary' },
+    { label:'Outro', time:'8:30–end', hardware:'Strip layers and close filters', controller:'Take over or fade to final track/atmosphere' },
+  ];
+
+  buildSteps() {
+    const W = n => `Week ${n}`;
+    return [
+      { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview', title:'Week 1: Signal Flow & Clocking', objective:'Get both systems into the same mixer cleanly and decide how they share tempo.' },
+      { id:'w1-1', kind:'content', weekTag:W(1), title:'1. Audio Routing', items:[{ text:'Patch RD-6 Line Out and TD-3 Output into two mixer channels.' },{ text:'Patch DDJ-FLX4 Master Out into two more mixer channels (or the main stereo return).' },{ text:'Set all channel gains so no channel clips when playing at performance level.' }] },
+      { id:'w1-2', kind:'content', weekTag:W(1), title:'2. Clock Options', items:[{ text:'Option A – Analog sync: RD-6 Sync Out → TD-3 Sync In (as in the Behringer guide). FLX4 runs independently or is manually matched.' },{ text:'Option B – MIDI clock: Send MIDI clock from the computer / FLX4 setup to the TD-3 (USB or 5-pin) so the acid line locks to the deck tempo.' },{ text:'Decide which option you will use for the rest of this course and write it down.' }] },
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview', title:'Week 2: Layer Roles', objective:'Define clear jobs for drums, acid line, and controller tracks so the mix stays readable.' },
+      { id:'w2-1', kind:'content', weekTag:W(2), title:'1. Role Assignment', items:[{ text:'RD-6 = foundation (kick, hats, percussion). Keep it relatively steady.' },{ text:'TD-3 = evolving bass / lead layer. Use filter and accent moves for interest.' },{ text:'FLX4 = tracks, atmospheres, vocals, and transitional FX.' }] },
+      { id:'w2-2', kind:'content', weekTag:W(2), title:'2. Phrase Practice', items:[{ text:'Practice 8-bar phrases where each layer enters or exits cleanly on the downbeat.' },{ text:'Mute the TD-3 for 8 bars, then bring it back with a filter sweep.' },{ text:'Use the FLX4 crossfader or channel faders to introduce a track under the hardware groove.' }] },
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview', title:'Week 3: Transitions & Drops', objective:'Time hardware filter moves with controller actions for impactful transitions.' },
+      { id:'w3-1', kind:'content', weekTag:W(3), title:'1. Coordinated Moves', items:[{ text:'On a hardware downbeat, snap the TD-3 Cutoff open while simultaneously opening the FLX4 crossfader or triggering a Beat FX.' },{ text:'Practice the reverse: close the filter and cut the controller track together.' }] },
+      { id:'w3-2', kind:'content', weekTag:W(3), title:'2. Hot-cue & Loop Alignment', items:[{ text:'Set hot cues on the FLX4 that land on the first step of an RD-6 or TD-3 pattern.' },{ text:'Use Auto Loop lengths that match 4 or 8 bars of the hardware pattern.' }] },
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview', title:'Week 4: Full Hybrid Arrangement', objective:'Build and perform a 10–12 minute structured set that uses both systems.' },
+      { id:'w4-1', kind:'content', weekTag:W(4), title:'1. Performance Map', widget:'perfmap', items:[{ text:'Intro (0:00–1:30): FLX4 atmosphere or soft track + sparse RD-6.' },{ text:'Hardware Groove (1:30–4:00): Full RD-6 + TD-3 bassline, filter gradually opening.' },{ text:'Breakdown (4:00–5:30): Drop drums, keep or thin the acid line, bring in a FLX4 pad/vocal.' },{ text:'Drop (5:30–8:30): Full hardware + complementary track on FLX4.' },{ text:'Outro (8:30–end): Strip back layers and close filters.' }] },
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview', title:'Week 5: Stage Readiness', objective:'Make the hybrid setup reliable and quick to recover from mistakes.' },
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Go-Live Checklist', items:[{ text:'All cables labelled and tested.' },{ text:'Backup patterns loaded on both RD-6 and TD-3.' },{ text:'FLX4 USB stick organised with the tracks you actually need.' },{ text:'Headphones cue mix checked against master.' },{ text:'One-page “panic” sheet: how to re-sync, mute a layer, or restart a pattern.' }] },
+      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Recovery Drills', items:[{ text:'Practice muting the TD-3 instantly if it goes out of time.' },{ text:'Practice restarting the RD-6 pattern on the next downbeat without stopping the FLX4.' },{ text:'Time how long it takes you to go from “everything off” to “first bar playing”.' }] },
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready for a hybrid set." },
+    ];
+  }
+
+  getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
+  restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }
+  openCourseMap() { this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement; this.setState({ dialogOpen:true }, () => { if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return; const dialog = document.querySelector('[data-course-map-dialog="true"]'); const target = this.getDialogFocusables(dialog)[0] || dialog; if (target && typeof target.focus === 'function') target.focus(); }); }
+  closeCourseMap() { const target = this.dialogReturnFocus; this.dialogReturnFocus = null; this.setState({ dialogOpen:false }, () => this.restoreDialogFocus(target)); }
+  onCourseMapKeydown(e) { if (e.key === 'Escape') { e.preventDefault(); this.closeCourseMap(); return; } if (e.key !== 'Tab') return; const focusables = this.getDialogFocusables(e.currentTarget); if (!focusables.length) { e.preventDefault(); if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus(); return; } const first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+  goToStep(i) { const idx = Math.max(0, Math.min(this.STEPS.length - 1, i)); const target = this.state.dialogOpen ? this.dialogReturnFocus : null; if (target) this.dialogReturnFocus = null; this.setState({ step:idx, dialogOpen:false }, () => this.restoreDialogFocus(target)); }
+  goNext() { this.goToStep(this.state.step + 1); }
+  goBack() { this.goToStep(this.state.step - 1); }
+  restart() { this.setState(this.initialState()); }
+  toggleCheck(stepId, idx) { this.setState(s => { const arr = (s.checks[stepId] || []).slice(); arr[idx] = !arr[idx]; return { checks:{ ...s.checks, [stepId]:arr } }; }); }
+  buildItems(step) { if (!step.items) return []; const checks = this.state.checks[step.id] || []; return step.items.map((it, i) => ({ text:it.text, checked:!!checks[i], toggle:() => this.toggleCheck(step.id, i), textStyle:checks[i] ? 'text-decoration:line-through;opacity:.5;' : '', hasSub:!!(it.subitems && it.subitems.length), subitems:it.subitems || [] })); }
+  buildNavGroups() { const groups = []; this.STEPS.forEach((s, i) => { let g = groups.find(g => g.label === s.weekTag); if (!g) { g = { label:s.weekTag, items:[] }; groups.push(g); } g.items.push({ title:s.navLabel || s.title, go:() => this.goToStep(i), rowStyle:`display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);` }); }); return groups; }
+  renderVals() { const step = this.STEPS[this.state.step]; const items = this.buildItems(step); return { weekLabel:step.weekTag, stepNumber:this.state.step + 1, totalSteps:this.STEPS.length, progressPct:Math.round(this.state.step / (this.STEPS.length - 1) * 100), isOverview:step.kind === 'overview', isWeekIntro:step.kind === 'weekintro', isContent:step.kind === 'content', isComplete:step.kind === 'complete', currentStep:{ weekTag:step.weekTag, title:step.title, objective:step.objective, items, showPerfmap:step.widget === 'perfmap', perfSections:step.widget === 'perfmap' ? this.PERF_SECTIONS : [] }, navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen, openDialog:() => this.openCourseMap(), closeDialog:() => this.closeCourseMap(), dialogKeydown:e => this.onCourseMapKeydown(e), stopProp:e => e.stopPropagation(), goNext:() => this.goNext(), goBack:() => this.goBack(), isFirst:this.state.step === 0, isLast:this.state.step === this.STEPS.length - 1, restart:() => this.restart() }; }
+}
+</script>
+</body>
+</html>

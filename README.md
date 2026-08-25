@@ -1,6 +1,6 @@
 # Hardware Guides
 
-Two single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide** for the Behringer TD-3-MO / RD-6-BK and the **DDJ-FLX4 Guide** for the Pioneer DJ DDJ-FLX4.
+Three single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide** for the Behringer TD-3-MO / RD-6-BK, the **DDJ-FLX4 Guide** for the Pioneer DJ DDJ-FLX4, and the **Hybrid Live Set Guide** that combines both systems into one performance workflow.
 
 ## TD-3 & RD-6 Guide
 
@@ -47,9 +47,23 @@ Video and creator links are deliberately YouTube **search** links rather than gu
 
 Progress ticks for tasks, watch items and milestones share the in-memory checks map but are namespaced so they cannot overwrite one another. Start Over clears the whole course and Practice Plan.
 
+## Hybrid Live Set Guide
+
+`Hybrid Live Set.dc.html` is a five-week follow-on course for learners who have completed both hardware guides. It combines the TD-3-MO / RD-6-BK and DDJ-FLX4 into one staged performance workflow.
+
+| Week | Covers |
+| --- | --- |
+| 1 | Shared signal flow, gain staging and clocking choices |
+| 2 | Layer roles and 8-bar phrase practice |
+| 3 | Coordinated transitions, drops, hot cues and loops |
+| 4 | A 10–12 minute full hybrid arrangement |
+| 5 | Stage-readiness checklist and recovery drills |
+
+Week 4 includes a dual performance timeline that shows the **TD-3/RD-6 role and DDJ-FLX4 role side by side** across Intro, Hardware Groove, Breakdown, Drop and Outro. The timeline is horizontally scrollable and keyboard-focusable on narrow screens. Checklist state is kept in memory and Start Over restores the guide to its initial state.
+
 ## Running the guides
 
-Open either `.dc.html` file directly in a browser or serve the repository, for example:
+Open any `.dc.html` file directly in a browser or serve the repository, for example:
 
 ```bash
 python -m http.server 8000
@@ -69,11 +83,12 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 
 | File | Guards |
 | --- | --- |
-| `test/structure.test.mjs` | Step rendering, unique ids/nav labels, Course Map behavior, restart state, accessibility and design-system rules |
+| `test/structure.test.mjs` | Step rendering, unique ids/nav labels, Course Map behavior, restart state, accessibility and design-system rules across all three guides |
 | `test/songbank.test.mjs` | Song-card notes, rests, tempo provenance, schema, chart/engine agreement, source types and audio behavior |
 | `test/drumbank.test.mjs` | Drum-card row sets and lengths, provenance, source omissions, switch pairs, accent behavior, per-card tempo/length, navigation cleanup and sheet/engine agreement |
 | `test/timing.test.mjs` | Lookahead scheduling, exact grids, stop cleanup, shuffle, filter envelopes, a Drum Bank card's own tempo grid, and DDJ phase behavior |
 | `test/curriculum.test.mjs` | Six complete Practice Plan weeks, valid lesson cross-links, search-only video links, namespaced progress, milestone tallying, creators and README consistency |
+| `test/hybrid.test.mjs` | Five-week hybrid structure, dual performance timeline, independent checklists, reset behavior and Course Map grouping |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
 
@@ -82,11 +97,12 @@ The test harness loads each guide's inline component logic against a stub runtim
 ```text
 Behringer Setup Guide.dc.html   TD-3/RD-6 course and audio engines
 DDJ-FLX4 Guide.dc.html          DDJ-FLX4 course and Practice Plan
+Hybrid Live Set.dc.html         Combined hardware/controller performance course
 support.js                      shared generated runtime
 _ds/                            shared Organic design system
 uploads/                        retained hardware reference images
-test/                           harness plus five .test.mjs files
+test/                           harness plus six .test.mjs files
 package.json                    test script and Node engine requirement
 ```
 
-The two guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values.
+The three guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values.

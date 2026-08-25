@@ -14,6 +14,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const GUIDES = [
   { name: 'Behringer', file: 'Behringer Setup Guide.dc.html' },
   { name: 'DDJ-FLX4', file: 'DDJ-FLX4 Guide.dc.html' },
+  { name: 'Hybrid Live Set', file: 'Hybrid Live Set.dc.html' },
 ];
 
 export function readGuide(file) {

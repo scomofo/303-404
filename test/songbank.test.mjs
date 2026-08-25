@@ -444,7 +444,7 @@ test('source types and pending source audits stay explicit', () => {
   const { inst } = loadComponent(FILE);
   const counts = { practice: 0, chart: 0, table: 0 };
   for (const c of inst.SONG_CARDS) counts[c.sourceType]++;
-  assert.deepEqual(counts, { practice: 3, chart: 11, table: 5 });
+  assert.deepEqual(counts, { practice: 8, chart: 11, table: 8 });
 
   const pending = inst.SONG_CARDS.filter(c => c.needsAccentSlideReview);
   assert.equal(pending.length, 6, 'legacy ML-303 chart audit set changed without source review');

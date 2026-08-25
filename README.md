@@ -4,7 +4,7 @@ Two single-page interactive courses share one runtime and design system: the **T
 
 ## TD-3 & RD-6 Guide
 
-The Behringer guide takes an absolute beginner from wiring and basic drum sequencing through acid-bass programming, sync, pattern chaining, performance, troubleshooting, a TD-3 Song Bank, and a Drum Bank over **nine weeks**. A progress bar covers **33 steps** and the Course map can jump to any step.
+The Behringer guide takes an absolute beginner from wiring and basic drum sequencing through acid-bass programming, sync, pattern chaining, performance, troubleshooting, a TD-3 Song Bank, and a Drum Bank over **ten weeks**. A progress bar covers **37 steps** and the Course map can jump to any step.
 
 | Week | Covers |
 | --- | --- |
@@ -17,10 +17,11 @@ The Behringer guide takes an absolute beginner from wiring and basic drum sequen
 | 7 | Care, troubleshooting and backups |
 | 8 | Song Bank — load ready-made TD-3 patterns |
 | 9 | Drum Bank — rhythm pattern sheets |
+| 10 | Advanced tone shaping and live modulation |
 
 ### Song Bank
 
-The Song Bank contains **19 cards ship by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
+The Song Bank contains **27 cards ship by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
 
 Each `SONG_CARDS` entry can include `sourceType`, `needsAccentSlideReview`, `homeOctave`, `overdrive`, tempo/provenance fields, filter settings, note names, accents and slides. Notes use names such as `C2` and `F#3`, with **`null` for a rest**. Unknown source details remain blank or explicitly estimated rather than being invented. Six legacy chart entries remain marked with `needsAccentSlideReview: true` until their original source rows can be revalidated.
 

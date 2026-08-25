@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Temporary integration helper; removed by its workflow after verification.
 path = Path('Behringer Setup Guide.dc.html')
 s = path.read_text()
 s = s.replace('Duration: 9 Weeks (2 Hours / Week)', 'Duration: 10 Weeks (2 Hours / Week)')

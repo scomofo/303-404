@@ -41,7 +41,7 @@
             <h4 style="margin:0 0 8px;">Course Overview</h4>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
               <li>Target Audience: Absolute Beginners</li>
-              <li>Duration: 8 Weeks (2 Hours / Week)</li>
+              <li>Duration: 9 Weeks (2 Hours / Week)</li>
               <li>Equipment Needed:
                 <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
                   <li>Behringer TD-3-MO Acid Synthesizer</li>
@@ -386,6 +386,83 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ currentStep.showDrumBank }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:26px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Drum bank — every card as its own rhythm pattern sheet</div>
+
+              <sc-for list="{{ drumCards }}" as="card" hint-placeholder-count="3">
+                <div style="{{ card.wrapStyle }}">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:13px;">
+                      <span role="img" aria-label="Roland" style="{{ chartMarkStyle }}"></span>
+                      <span style="font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;">Roland</span>
+                      <span style="font-size:34px;font-weight:700;letter-spacing:.01em;line-height:1;">TR-808</span>
+                    </div>
+                    <button type="button" class="{{ card.loadClass }}" onclick="{{ card.load }}" aria-pressed="{{ card.pressed }}" aria-label="{{ card.loadName }}">{{ card.loadLabel }}</button>
+                  </div>
+
+                  <div role="region" aria-label="{{ card.title }} pattern sheet" tabIndex="0" style="overflow-x:auto;">
+                    <div style="{{ card.boxStyle }}">
+                      <div style="display:flex;">
+                        <div style="flex:1;min-width:0;">
+                          <div style="padding:9px 12px;border-bottom:1px solid var(--color-text);font-size:14px;"><span style="opacity:.55;">Author:</span> {{ card.artist }}</div>
+                          <div style="padding:9px 12px;font-size:14px;"><span style="opacity:.55;">Title:</span> <strong>{{ card.title }}</strong></div>
+                        </div>
+                        <div style="width:228px;flex:none;border-left:1px solid var(--color-text);display:flex;">
+                          <sc-for list="{{ card.fields }}" as="f" hint-placeholder-count="3">
+                            <div style="flex:1;padding:9px 4px;text-align:center;">
+                              <div style="font-size:9px;font-weight:700;letter-spacing:.04em;opacity:.55;">{{ f.label }}</div>
+                              <div style="font-size:15px;font-weight:700;">{{ f.value }}</div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </div>
+
+                      <div style="{{ card.gridStyle }}">
+                        <sc-for list="{{ card.cells }}" as="c" hint-placeholder-count="16">
+                          <div style="{{ c.style }}" title="{{ c.title }}">{{ c.text }}</div>
+                        </sc-for>
+                      </div>
+
+                      <div style="border-top:2px solid var(--color-text);padding:12px 14px;">
+                        <div style="font-size:14px;margin-bottom:6px;">Notes:</div>
+                        <sc-for list="{{ card.efxLines }}" as="line" hint-placeholder-count="4">
+                          <div style="font-size:13.5px;line-height:1.6;">{{ line }}</div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+
+              <p style="font-size:11px;opacity:.55;margin:0;">A greyed row is a voice the pattern never plays; a dashed box is something its source never recorded. The sheet is a consistent way to read all three source types and does not imply that a pattern was printed on a Roland sheet.</p>
+
+              <sc-if value="{{ dbHasCard }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
+                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}">{{ dbPlayLabel }}</button>
+                  </div>
+                  <div style="overflow-x:auto;">
+                    <div style="{{ dbGridStyle }}">
+                      <sc-for list="{{ dbRowsView }}" as="row" hint-placeholder-count="5">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <div style="width:30px;flex:none;font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.6;">{{ row.label }}</div>
+                          <div style="display:flex;gap:3px;">
+                            <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="16">
+                              <div style="{{ c.style }}"></div>
+                            </sc-for>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <p style="font-size:12px;opacity:.6;margin:0;">The bank mixes patterns transcribed from recordings, genre templates from production literature, and one pattern this course wrote itself. Every card names its source. Add your own by editing DRUM_CARDS in the component script — see the README.</p>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ currentStep.showTd3Play }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -450,7 +527,7 @@
       <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
         <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
           <h2 style="margin:0;">You're ready to play.</h2>
-          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed drum patterns and an acid bassline, synced them together, chained patterns into a song, dialed in the MO tone mods, mapped a five-minute set, and know how to keep both units running on stage. Run through the weeks again any time to tighten up a step.</p>
+          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired both units, programmed drum patterns and an acid bassline, synced them together, chained patterns into a song, dialed in the MO tone mods, mapped a five-minute set, read found patterns off a rhythm sheet, and know how to keep both units running on stage. Run through the weeks again any time to tighten up a step.</p>
           <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
         </div>
       </sc-if>
@@ -503,6 +580,7 @@ class Component extends DCLogic {
       accentSweep: 'FAST',
       perfmapSel: 0,
       sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbOverdrive: 0, sbPlaying: false, sbCol: -1, sbSelected: null,
+      dbRows: null, dbSteps: 16, dbBpm: 120, dbPair: null, dbPlaying: false, dbCol: -1, dbSelected: null,
     };
   }
 
@@ -645,6 +723,140 @@ class Component extends DCLogic {
       filter:{ cutoff:0.45, resonance:0.85, decay:0.5, accent:0.7 } },
   ];
 
+
+  // ── drum bank ──
+  // A TR-808 pattern sheet has one row per voice, and those rows are what every
+  // drum-machine chart in the wild is drawn on — so the bank charts each pattern on
+  // the 808's own row set rather than on the RD-6's four. AC leads, as it does on the
+  // panel. Two rows are switch pairs on the hardware: RS shares its slot with CL
+  // (claves) and CP shares its with MA (maracas), so a card names which side of each
+  // pair it means and the row prints and sounds that one.
+  DRUM_VOICES = [
+    { key:'ac', label:'AC', name:'Accent' },
+    { key:'bd', label:'BD', name:'Bass drum' },
+    { key:'sd', label:'SD', name:'Snare drum' },
+    { key:'lt', label:'LT', name:'Low tom' },
+    { key:'mt', label:'MT', name:'Mid tom' },
+    { key:'ht', label:'HT', name:'Hi tom' },
+    { key:'rs', label:'RS', name:'Rim shot', alt:'CL', altName:'Claves' },
+    { key:'cp', label:'CP', name:'Hand clap', alt:'MA', altName:'Maracas' },
+    { key:'cb', label:'CB', name:'Cow bell' },
+    { key:'cy', label:'CY', name:'Cymbal' },
+    { key:'oh', label:'OH', name:'Open hi-hat' },
+    { key:'ch', label:'CH', name:'Closed hi-hat' },
+  ];
+
+  DRUM_SOURCE_LABELS = {
+    record: 'Transcription of a recording',
+    literature: 'Genre template from production literature',
+    practice: 'Original practice pattern',
+  };
+
+  // Every row array below was generated from its cited source rather than typed out by
+  // hand, and nothing a source left unrecorded is filled in: no source here writes an
+  // accent row, so AC is empty on all but the pattern this course wrote itself, and no
+  // source names a pattern number, variation or pre-scale, so those boxes print blank.
+  DRUM_CARDS = [
+    // The Week 1 lesson pattern. Its tempo and slot are chosen settings of this course,
+    // not a claim about a record, so they are shown plainly.
+    { id:'four-on-the-floor', title:'Four on the Floor', artist:'This course', sourceType:'practice',
+      steps:16, bpm:120, bpmConfirmed:true, patternNo:'1', variation:'A',
+      voicing:'Written on the RD-6 voices, charted here on the 808 rows.',
+      tag:'The Week 1 pattern — kick on every beat, snare on 2 and 4, hats on the offbeats, accents on the downbeats.',
+      source:'Written for this guide (Week 1).',
+      rows:{ ac:[0,4,8,12], bd:[0,4,8,12], sd:[4,12], oh:[15], ch:[2,6,10,14] } },
+
+    // Three transcriptions of 808 records, read out of the tr808r package (MIT) rather
+    // than re-typed: its demo songs hold each song as a chain of 16-step patterns on the
+    // 808's eleven voices. Each card carries the first two patterns of that chain — one
+    // 32-step sheet, which is the longer of the two sheet sizes the 808 was printed for.
+    { id:'sexual-healing', title:'Sexual Healing', artist:'Marvin Gaye', sourceType:'record',
+      steps:32, bpm:94, bpmConfirmed:true,
+      voicing:'Transcribed on the TR-808 itself.',
+      tag:'Patterns 1-2 of a 2-pattern chain — the whole loop. Syncopated kick, rimshot on the up-beats, one clap a bar.',
+      source:'tr808r (MIT) demo song "Marvin Gaye - Sexual Healing"; tempo as stated there.',
+      rows:{ bd:[0,7,8,10,12,15,16,24,31], sd:[10,11,22,23,25,27,29], lt:[28,30], mt:[22], ht:[2,18],
+        rs:[0,3,6,16,19,22,26,29], cp:[4,20], oh:[6,18,22,26,29],
+        ch:[0,2,3,4,6,8,10,12,14,15,16,18,20,22,24,25,26,28,30,31] } },
+    { id:'beat-it-intro', title:'Beat It (intro)', artist:'Michael Jackson', sourceType:'record',
+      steps:32, bpm:139, bpmConfirmed:true,
+      voicing:'Transcribed on the TR-808 itself.',
+      tag:'Patterns 1-2 of a 4-pattern chain; the source chains two more kick variations after these.',
+      source:'tr808r (MIT) demo song "Michael Jackson - Beat It Intro"; tempo as stated there.',
+      rows:{ bd:[0,8,16,24], sd:[4,12,20,28], cp:[18,22,24,30],
+        ch:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30] } },
+    { id:'confusion', title:'Confusion', artist:'New Order', sourceType:'record',
+      steps:32, bpm:119, bpmConfirmed:true,
+      voicing:'Transcribed on the TR-808 itself.',
+      tag:'Patterns 1-2 of a 6-pattern chain; the source chains four sparser variations after these. Cowbell and clap carry the groove.',
+      source:'tr808r (MIT) demo song "New Order - Confusion"; tempo as stated there.',
+      rows:{ bd:[0,1,6,7,10,16,17,22,23,26], sd:[4,12,20,28,30,31], mt:[0,1,16,17,25],
+        ht:[6,7,10,13,22,23,26,27,29], cp:[0,1,3,4,6,7,15,16,17,19,20,22,23,24,26,28],
+        cb:[0,1,4,6,7,9,11,13,14,16,17,20,22,23,25,26,27,28],
+        ch:[0,2,3,4,6,7,8,10,11,12,14,15,16,18,19,20,22,23,24,26,27,28,30,31] } },
+
+    // Breaks and genre templates from the GiantSteps drum-pattern-datasets collection,
+    // whose entries are written in General MIDI drum notes rather than for any one
+    // machine; the mapping onto 808 rows is this guide's. None of these entries carries
+    // a tempo, so every one of them plays at an openly estimated one.
+    { id:'funky-drummer', title:'Funky Drummer', artist:'James Brown', sourceType:'record',
+      steps:32, bpm:93,
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'The break, ghost notes and all. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry breakfunkydrummer_EH.',
+      rows:{ bd:[0,2,6,10,13,16,18,22,26,29], sd:[4,7,9,11,12,15,20,23,25,27,28,31],
+        oh:[7,13,23,29],
+        ch:[0,1,2,3,4,5,6,8,9,10,11,12,14,15,16,17,18,19,20,21,22,24,25,26,27,28,30,31] } },
+    { id:'impeach-the-president', title:'Impeach the President', artist:'The Honey Drippers', sourceType:'record',
+      steps:32, bpm:89,
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'The other most-sampled break. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry breakimpeach_EH.',
+      rows:{ bd:[0,7,8,14,16,23,24,30], sd:[4,12,20,28], oh:[10,26],
+        ch:[0,2,4,6,7,8,12,14,16,18,20,22,23,24,28,30] } },
+    { id:'when-the-levee-breaks', title:'When the Levee Breaks', artist:'Led Zeppelin', sourceType:'record',
+      steps:32, bpm:71,
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'Slow, heavy, two kicks into the bar. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry breakwhenthelevee_EH.',
+      rows:{ bd:[0,1,7,10,11,16,17,23,26,27], sd:[4,12,20,28],
+        ch:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30] } },
+    { id:'electro-standard', title:'Electro (standard)', sourceType:'literature',
+      steps:32, bpm:120,
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'The textbook electro beat — the genre the 808 built. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry breakelectro(standard)_DMR.',
+      rows:{ bd:[0,6,16,22,26,29], sd:[4,12,20,28],
+        ch:[0,2,4,6,7,8,9,10,12,14,16,18,20,22,23,24,25,26,28,30] } },
+    { id:'house', title:'House', sourceType:'literature',
+      steps:16, bpm:125,
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'Four on the floor, sixteenths on the closed hat, open hat pushed off the beat. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry house_SA.',
+      rows:{ bd:[0,4,8,12], sd:[4,12], lt:[2,10], oh:[2,5,10,13],
+        ch:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15] } },
+    { id:'classic-house', title:'Classic House', sourceType:'literature',
+      steps:16, bpm:124,
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'Clap on 2 and 4 instead of a snare, open hat on every off-beat. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry classichouse_CCM.',
+      rows:{ bd:[0,4,8,12], lt:[7,10,14], cp:[4,12], oh:[2,6,10,14],
+        ch:[0,1,2,5,6,7,8,9,10,13,14,15] } },
+    // The source entry's shaker line is General MIDI maracas, which on an 808 is the
+    // other half of the clap switch — so it prints and sounds as MA on the CP row.
+    { id:'minimal-techno', title:'Minimal Techno', sourceType:'literature',
+      steps:32, bpm:128, pair:{ cp:'MA' },
+      voicing:'General MIDI drum map, voiced on the 808 rows.',
+      tag:'Open hat locked to the kick, toms answering, maracas on every step. Tempo is an estimate — the source entry carries none.',
+      source:'GiantSteps drum-pattern-datasets, entry technominimal_CCM.',
+      rows:{ bd:[0,4,8,12,16,20,24,28], lt:[3,11,19,27], mt:[6,14,22,30],
+        cp:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],
+        cy:[0,3,5,7,10,14,16,19,21,23,26,30], oh:[0,4,8,12,16,20,24,28],
+        ch:[1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23,25,26,27,29,30,31] } },
+  ];
+
+  drumChartCache = new Map();
+
   PERF_SECTIONS = [
     { title:'Intro', time:'0:00–0:30', dur:30, desc:"RD-6 Pattern 1 alone (Bass Drum and Closed Hi-Hat only). Filter fully closed on the TD-3, waiting." },
     { title:'Bassline In', time:'0:30–1:30', dur:60, desc:"Queue the TD-3 bassline on step 1 of the next bar. Slowly open the Cutoff knob from 9 o'clock toward 12 as the groove builds." },
@@ -676,6 +888,7 @@ class Component extends DCLogic {
     this.stopRd6();
     this.stopTd3();
     this.stopSongBank();
+    this.stopDrumBank();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
   }
 
@@ -857,6 +1070,18 @@ class Component extends DCLogic {
           { text:"Found a tutorial with its own pattern card? Add it as a new entry in SONG_CARDS in the component script and it shows up here automatically." },
         ],
       },
+      { id:'w9-intro', kind:'weekintro', weekTag:W(9), navLabel:'Week Overview',
+        title:'Week 9: Drum Bank — Rhythm Pattern Sheets',
+        objective:"Read found drum patterns off the sheet every drum machine chart is drawn on, hear them, and program them onto the RD-6 or into an 808 or SP-404 emulator." },
+      { id:'w9-1', kind:'content', weekTag:W(9), title:'1. Pattern Sheets', widget:'drumbank',
+        items:[
+          { text:"Each card is a TR-808 rhythm pattern sheet: AC on top, then BD, SD, LT, MT, HT, RS, CP, CB, CY, OH and CH across 16 or 32 steps — the row set every drum-machine chart is drawn on, whatever machine you then program it into." },
+          { text:"Tap Load into engine to hand a card to the drum engine below, then Play Pattern. Each card plays at its own tempo, so the breaks stay slow and the techno stays fast." },
+          { text:"On the RD-6, four of those rows exist as-is (BD, SD, CH, OH) and Accent is the AC row; play toms and cowbell parts on whatever voice you can spare, or leave them out. In an 808 emulator the rows map one-for-one. On an SP-404, assign one pad per row and enter the same steps in TR-REC." },
+          { text:"Where a source recorded nothing — no accents, no pattern number, no variation or pre-scale — the sheet prints that box blank instead of guessing, and a tempo the source never stated is labelled as an estimate." },
+          { text:"Add your own by appending to DRUM_CARDS in the component script — see the README." },
+        ],
+      },
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to play." },
     ];
   }
@@ -908,7 +1133,7 @@ class Component extends DCLogic {
     }
   }
   goToStep(i) {
-    this.stopRd6(); this.stopTd3(); this.stopSongBank();
+    this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.stopDrumBank();
     const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
     const target = this.state.dialogOpen ? this.dialogReturnFocus : null;
     if (target) this.dialogReturnFocus = null;
@@ -916,7 +1141,7 @@ class Component extends DCLogic {
   }
   goNext() { this.goToStep(this.state.step + 1); }
   goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.setState(this.initialState()); }
+  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.stopDrumBank(); this.setState(this.initialState()); }
 
   // ── checklist ──
   toggleCheck(stepId, idx) {
@@ -1144,7 +1369,7 @@ class Component extends DCLogic {
   ensureAudio() {
     if (!this.audioCtx) {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const size = this.audioCtx.sampleRate * 0.3;
+      const size = this.audioCtx.sampleRate * 1.1;
       const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
@@ -1175,6 +1400,28 @@ class Component extends DCLogic {
     src.connect(filter).connect(g).connect(ctx.destination);
     src.start(t); src.stop(t + opts.duration + 0.02);
     return src;
+  }
+  // A pitched hit: one oscillator, an optional fast drop in pitch, and an optional
+  // band-pass on the way out. Kick, toms, claves and cowbell are all this shape.
+  playTone(t, opts) {
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator();
+    osc.type = opts.type || 'sine';
+    osc.frequency.setValueAtTime(opts.freq, t);
+    if (opts.drop) osc.frequency.exponentialRampToValueAtTime(opts.drop, t + (opts.dropTime || opts.duration));
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(opts.gain, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
+    if (opts.filter) {
+      const f = ctx.createBiquadFilter();
+      f.type = opts.filter.type; f.frequency.value = opts.filter.freq;
+      if (opts.filter.Q) f.Q.value = opts.filter.Q;
+      osc.connect(f).connect(g).connect(ctx.destination);
+    } else {
+      osc.connect(g).connect(ctx.destination);
+    }
+    osc.start(t); osc.stop(t + opts.duration + 0.02);
+    return osc;
   }
   playRd6StepFor(pattern, col, t) {
     const accent = pattern.ac.includes(col);
@@ -1585,6 +1832,206 @@ class Component extends DCLogic {
     if (this.state.sbPlaying) this.setState({ sbPlaying: false, sbCol: -1 });
   }
 
+
+  // ── drum bank ──
+  loadDrumCard(card) {
+    this.stopDrumBank();
+    // Copy the rows out of the definition, the way the Song Bank does: the engine's
+    // state is the loaded pattern, never the card the bank keeps handing out.
+    const rows = {};
+    for (const [key, hits] of Object.entries(card.rows)) rows[key] = hits.slice();
+    this.setState({
+      dbRows: rows, dbSteps: card.steps, dbBpm: card.bpm,
+      dbPair: card.pair || null, dbSelected: card.id,
+    });
+  }
+
+  // A 16th note at the card's own tempo, so a 71 BPM break and a 128 BPM techno
+  // pattern each play at the speed their source was written for.
+  drumStepSec(bpm) { return 15 / (bpm || 120); }
+
+  // One 808-ish voice. These are synthesized rather than sampled, like every other
+  // sound in this guide: a pitched sine with a fast drop for the drums, filtered noise
+  // for everything with a hiss in it. Accent raises the level of the whole step, which
+  // is what the AC row does on the machine.
+  playDrumVoice(key, t, vol) {
+    const n = [];
+    switch (key) {
+      case 'bd': n.push(this.playTone(t, { freq: 120, drop: 46, dropTime: 0.09, duration: 0.5, gain: 0.9 * vol })); break;
+      case 'sd':
+        n.push(this.playTone(t, { freq: 190, duration: 0.12, gain: 0.24 * vol }));
+        n.push(this.playNoise(t, { filterType: 'bandpass', freq: 1900, Q: 1.4, duration: 0.14, gain: 0.45 * vol }));
+        break;
+      case 'lt': n.push(this.playTone(t, { freq: 110, drop: 72, dropTime: 0.25, duration: 0.35, gain: 0.6 * vol })); break;
+      case 'mt': n.push(this.playTone(t, { freq: 165, drop: 108, dropTime: 0.22, duration: 0.3, gain: 0.55 * vol })); break;
+      case 'ht': n.push(this.playTone(t, { freq: 240, drop: 155, dropTime: 0.2, duration: 0.28, gain: 0.5 * vol })); break;
+      case 'rs': n.push(this.playNoise(t, { filterType: 'bandpass', freq: 1700, Q: 6, duration: 0.035, gain: 0.5 * vol })); break;
+      case 'cl': n.push(this.playTone(t, { freq: 2500, duration: 0.06, gain: 0.3 * vol })); break;
+      case 'cp':
+        // Four bursts a hair apart: three flams and a longer body, which is what makes
+        // a clap read as a clap rather than as a short snare.
+        for (const [off, dur, g] of [[0, 0.02, 0.4], [0.009, 0.02, 0.4], [0.018, 0.02, 0.4], [0.026, 0.12, 0.3]]) {
+          n.push(this.playNoise(t + off, { filterType: 'bandpass', freq: 1150, Q: 1.2, duration: dur, gain: g * vol }));
+        }
+        break;
+      case 'ma': n.push(this.playNoise(t, { filterType: 'highpass', freq: 8000, duration: 0.03, gain: 0.28 * vol })); break;
+      case 'cb':
+        // Two detuned squares through a band-pass, the 808 cowbell's whole trick.
+        n.push(this.playTone(t, { freq: 540, type: 'square', duration: 0.32, gain: 0.16 * vol, filter: { type: 'bandpass', freq: 2640, Q: 1.2 } }));
+        n.push(this.playTone(t, { freq: 800, type: 'square', duration: 0.32, gain: 0.16 * vol, filter: { type: 'bandpass', freq: 2640, Q: 1.2 } }));
+        break;
+      case 'cy': n.push(this.playNoise(t, { filterType: 'highpass', freq: 7000, duration: 1, gain: 0.22 * vol })); break;
+      case 'oh': n.push(this.playNoise(t, { filterType: 'highpass', freq: 6000, duration: 0.28, gain: 0.28 * vol })); break;
+      case 'ch': n.push(this.playNoise(t, { filterType: 'highpass', freq: 7500, duration: 0.045, gain: 0.3 * vol })); break;
+      default: break;
+    }
+    return n;
+  }
+
+  // RS and CP are switch pairs on the panel: a card that says it means CL or MA gets
+  // that voice from the same row.
+  drumVoiceKey(rowKey, pair) {
+    const def = this.DRUM_VOICES.find(v => v.key === rowKey);
+    return def && def.alt && pair && pair[rowKey] === def.alt ? def.alt.toLowerCase() : rowKey;
+  }
+
+  playDrumStepFor(rows, col, t, pair) {
+    const accent = (rows.ac || []).includes(col);
+    const vol = accent ? 1 : 0.72;
+    const nodes = [];
+    for (const v of this.DRUM_VOICES) {
+      if (v.key === 'ac') continue;
+      if ((rows[v.key] || []).includes(col)) {
+        nodes.push(...this.playDrumVoice(this.drumVoiceKey(v.key, pair), t, vol));
+      }
+    }
+    return nodes;
+  }
+
+  playDrumBank() {
+    if (!this.state.dbRows) return;
+    this.ensureAudio(); this.stopDrumBank();
+    const stepSec = this.drumStepSec(this.state.dbBpm);
+    const len = this.state.dbSteps;
+    this.setState({ dbPlaying: true, dbCol: 0 });
+    this.startSequence('db', {
+      onStep: (col, t) => ({ nodes: this.playDrumStepFor(this.state.dbRows, col, t, this.state.dbPair) }),
+      stepDur: () => stepSec,
+      nextCol: col => (col + 1) % len,
+      onVisual: col => this.setState({ dbCol: col }),
+    });
+  }
+  stopDrumBank() {
+    this.stopSequence('db');
+    if (this.state.dbPlaying) this.setState({ dbPlaying: false, dbCol: -1 });
+  }
+
+  // The loaded pattern, live: only the rows this card actually uses, with the sounding
+  // step lit. The printed sheet above is cached and never re-renders, so the playhead
+  // lives here rather than on it.
+  buildDrumBankRows() {
+    if (!this.state.dbRows) return [];
+    const n = this.state.dbSteps;
+    const out = [];
+    for (const v of this.DRUM_VOICES) {
+      const hits = this.state.dbRows[v.key] || [];
+      if (!hits.length) continue;
+      const label = v.alt && this.state.dbPair && this.state.dbPair[v.key] === v.alt ? v.alt : v.label;
+      out.push({
+        key: v.key, label,
+        cells: Array.from({ length: n }, (_, i) => {
+          const on = hits.includes(i);
+          const here = this.state.dbPlaying && this.state.dbCol === i;
+          const bg = on ? (v.key === 'ac' ? 'var(--color-accent-2-600)' : 'var(--color-accent)')
+            : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
+          return {
+            style: `width:22px;height:22px;border-radius:6px;background:${bg};border:${here ? '2px solid var(--color-accent-2-700)' : '2px solid transparent'};flex:none;`,
+          };
+        }),
+      });
+    }
+    return out;
+  }
+
+  // Renders a card as the pattern sheet a drum machine's rows are always drawn on:
+  // the 808 masthead, an Author / Title header with the sheet's pattern boxes beside
+  // it, then one ruled row per voice across the numbered steps, with the four
+  // downbeats of every bar tinted. The grid is emitted as one flat cell list so a
+  // 12-row by 32-step sheet is a single CSS grid rather than nested loops. Anything a
+  // source did not record — accents, pattern number, variation, pre-scale — prints
+  // blank rather than being filled in with a plausible value.
+  buildDrumChart(card) {
+    const n = card.steps;
+    const cell = (i, extra) => `border-top:1px solid var(--color-text);border-left:1px solid var(--color-text);background:${i % 4 === 0 ? 'var(--color-neutral-300)' : 'transparent'};display:flex;align-items:center;justify-content:center;text-align:center;${extra}`;
+    const labelCell = 'border-top:1px solid var(--color-text);padding:4px 8px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;';
+
+    const cells = [{ text: '', title: '', style: 'border-top:1px solid var(--color-text);padding:4px 8px;' }];
+    for (let i = 0; i < n; i++) {
+      cells.push({ text: String(i + 1), title: '', style: cell(i, 'padding:3px 0;font-size:10px;font-weight:700;') });
+    }
+    let voicesUsed = 0;
+    for (const v of this.DRUM_VOICES) {
+      const hits = card.rows[v.key] || [];
+      if (hits.length) voicesUsed++;
+      const paired = v.alt && card.pair && card.pair[v.key] === v.alt;
+      const label = paired ? v.alt : v.label;
+      const name = paired ? v.altName : v.name;
+      cells.push({ text: label, title: name, style: `${labelCell}${hits.length ? '' : 'opacity:.45;'}` });
+      for (let i = 0; i < n; i++) {
+        const on = hits.includes(i);
+        cells.push({
+          text: on ? '●' : '',
+          title: on ? `${name}, step ${i + 1}` : '',
+          style: cell(i, 'padding:3px 0;min-height:22px;font-size:12px;line-height:1;'),
+        });
+      }
+    }
+
+    const bpmLabel = card.bpmConfirmed ? `${card.bpm} BPM` : `~${card.bpm} BPM (estimated)`;
+    const sourceLabel = this.DRUM_SOURCE_LABELS[card.sourceType] || 'Unclassified source';
+    const meta = [bpmLabel, `${n} steps`];
+    if (card.pair) {
+      for (const [k, side] of Object.entries(card.pair)) {
+        const def = this.DRUM_VOICES.find(v => v.key === k);
+        if (def) meta.push(`${def.label} switch set to ${side}`);
+      }
+    }
+    const efxLines = [card.tag, `Source: ${sourceLabel} — ${card.source}`, card.voicing, meta.join('  ·  ')];
+
+    // The three boxes the sheet prints beside the title. None of this bank's sources
+    // records where its pattern was written on the machine, so they stay dashed.
+    const fields = [
+      { label: 'PATTERN', value: card.patternNo || '—' },
+      { label: 'VARIATION', value: card.variation || '—' },
+      { label: 'PRE-SCALE', value: card.preScale || '—' },
+    ];
+
+    return {
+      id: card.id,
+      title: card.title,
+      artist: card.artist || '—',
+      sourceType: card.sourceType,
+      sourceLabel,
+      bpmLabel,
+      steps: n,
+      voicesUsed,
+      cells,
+      fields,
+      efxLines,
+      gridStyle: `display:grid;grid-template-columns:76px repeat(${n}, minmax(22px, 1fr));`,
+      // A printed sheet does not reflow: a narrow screen scrolls the whole card
+      // sideways as one piece rather than rewrapping its rows.
+      boxStyle: `border:2px solid var(--color-text);border-radius:3px;background:var(--color-neutral-100);overflow:hidden;min-width:${76 + n * 22 + 40}px;`,
+    };
+  }
+
+  getDrumChart(card) {
+    // Card definitions never change during a session, so a sheet is built once. With
+    // twelve rows across thirty-two steps these are the largest grids in the guide.
+    if (!this.drumChartCache.has(card.id)) this.drumChartCache.set(card.id, this.buildDrumChart(card));
+    return this.drumChartCache.get(card.id);
+  }
+
   renderVals() {
     const step = this.STEPS[this.state.step];
     const items = this.buildItems(step);
@@ -1611,6 +2058,7 @@ class Component extends DCLogic {
         showSync: step.widget === 'sync',
         showAccentSweep: step.widget === 'moTweaks', showPerfmap: step.widget === 'perfmap',
         showSongBank: step.widget === 'songbank',
+        showDrumBank: step.widget === 'drumbank',
       },
       rd6GridTitle: step.widget === 'rd6fill' ? 'RD-6 pattern — Bank A, Pattern 2 (Fill)' : 'RD-6 pattern — 4-on-the-floor',
       rd6Rows: step.widget === 'rd6fill' ? this.buildRd6Rows('rd6Fill')
@@ -1661,6 +2109,28 @@ class Component extends DCLogic {
       sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],
       sbPlayLabel: this.state.sbPlaying ? 'Stop' : 'Play Bassline',
       sbPlayToggle: this.state.sbPlaying ? () => this.stopSongBank() : () => this.playSongBank(),
+      // Each drum card renders as its own pattern sheet; Load hands it to the drum
+      // engine below, which is independent of the RD-6 grids in the earlier weeks.
+      drumCards: step.widget === 'drumbank' ? this.DRUM_CARDS.map(c => {
+        const selected = this.state.dbSelected === c.id;
+        return {
+          ...this.getDrumChart(c),
+          load: () => this.loadDrumCard(c),
+          pressed: selected ? 'true' : 'false',
+          loadLabel: selected ? 'Loaded \u2713' : 'Load into engine',
+          loadClass: selected ? 'btn btn-primary' : 'btn btn-secondary',
+          loadName: selected ? `${c.title} is loaded` : `Load ${c.title} into the engine`,
+          wrapStyle: `border-radius:6px;${selected ? 'outline:3px solid var(--color-accent);outline-offset:6px;' : ''}`,
+        };
+      }) : [],
+      dbHasCard: !!this.state.dbRows,
+      dbTitle: this.state.dbSelected ? `${(this.DRUM_CARDS.find(c => c.id === this.state.dbSelected) || {}).title || ''} — loaded pattern` : '',
+      dbRowsView: step.widget === 'drumbank' ? this.buildDrumBankRows() : [],
+      // A row of fixed-width cells overflows its flex column unless the column itself
+      // is at least as wide, in which case the wrapper scrolls instead of clipping.
+      dbGridStyle: `display:flex;flex-direction:column;gap:4px;padding:2px;min-width:${38 + this.state.dbSteps * 25}px;`,
+      dbPlayLabel: this.state.dbPlaying ? 'Stop' : 'Play Pattern',
+      dbPlayToggle: this.state.dbPlaying ? () => this.stopDrumBank() : () => this.playDrumBank(),
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
       accentSweepOptions: step.widget === 'moTweaks' ? [

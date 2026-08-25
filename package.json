@@ -5,7 +5,7 @@
   "description": "Interactive setup courses for the Behringer TD-3-MO / RD-6-BK and the Pioneer DJ DDJ-FLX4",
   "type": "module",
   "scripts": {
-    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs"
+    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs"
   },
   "engines": {
     "node": ">=20"

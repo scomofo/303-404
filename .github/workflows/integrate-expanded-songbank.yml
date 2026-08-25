@@ -1,24 +1,25 @@
 name: integrate-expanded-songbank
-on: push
+on:
+  push:
+    branches: [feature/expanded-learning-paths-2]
 permissions:
   contents: write
 jobs:
   integrate:
-    if: github.ref == 'refs/heads/feature/expanded-learning-paths-2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: feature/expanded-learning-paths-2
       - name: Apply curriculum additions
-        shell: python
         run: |
+          python3 - <<'PY'
           from pathlib import Path
           path = Path('Behringer Setup Guide.dc.html')
           s = path.read_text()
           s = s.replace('Duration: 9 Weeks (2 Hours / Week)', 'Duration: 10 Weeks (2 Hours / Week)')
 
-          cards = r'''
+          cards = '''
     // ── additional practice patterns ──
     { id:'practice-4', title:'Long Slide Cascade', sourceType:'practice', tag:'Practice pattern · continuous glide focus', bpm:128, bpmConfirmed:true,
       notes:['C2','D#2','G2','C3','D#3','G2','C2','D#2','G2','C3','A#2','G2','F2','D#2','C2','G1'],
@@ -62,16 +63,14 @@ jobs:
       accent:[0,3,6,10,13], slide:[1,4,7,8,11,14],
       filter:{ cutoff:0.35, resonance:0.8, decay:0.55, accent:0.6 } },
 '''
-          end_cards = "  ];\n\n\n  // ── drum bank ──"
+          marker = "  ];\n\n\n  // ── drum bank ──"
           if "id:'practice-8'" not in s:
-              if end_cards not in s:
-                  raise SystemExit('SONG_CARDS insertion marker not found')
-              s = s.replace(end_cards, cards + "  ];\n\n\n  // ── drum bank ──", 1)
+              assert marker in s, 'SONG_CARDS insertion marker not found'
+              s = s.replace(marker, cards + "  ];\n\n\n  // ── drum bank ──", 1)
 
-          week10 = r'''      { id:'w10-intro', kind:'weekintro', weekTag:W(10), navLabel:'Week Overview',
+          week10 = '''      { id:'w10-intro', kind:'weekintro', weekTag:W(10), navLabel:'Week Overview',
         title:'Week 10: Advanced Tone Shaping & Live Modulation',
         objective:"Move beyond static settings. Learn how Filter FM, Overdrive, Accent density, Soft Attack and real-time knob moves interact, and practice morphing a bassline live." },
-
       { id:'w10-1', kind:'content', weekTag:W(10), title:'1. Interaction Recipes',
         items:[
           { text:"Filter FM + Overdrive: Start with FM Depth at 12 o'clock and Overdrive at MED. The metallic edge of FM becomes aggressive when overdriven — use this for lead sections." },
@@ -79,33 +78,26 @@ jobs:
           { text:"Soft Attack + Slide: Soft Attack rounds the initial pluck; combined with slides it creates a more vocal, less aggressive character." },
         ],
         knobs:[ { label:'Filter FM Depth', hour:12 }, { label:'Overdrive', hour:2 } ],
-        switches:[ { label:'Soft Attack', value:'ON' } ]
-      },
-
+        switches:[ { label:'Soft Attack', value:'ON' } ] },
       { id:'w10-2', kind:'content', weekTag:W(10), title:'2. Live Morph Practice', widget:'td3fx',
         items:[
           { text:"Load any Song Bank card (or the Week 2 bassline) and hit Play Bassline." },
           { text:"While it plays, slowly open Cutoff from 9 o'clock toward 1 o'clock over 8 bars, then snap it closed on a downbeat." },
           { text:"Raise Resonance only on accented steps (use the Accent knob or your ears)." },
           { text:"Toggle Soft Attack mid-phrase and notice how the attack changes the perceived tempo feel." },
-        ]
-      },
-
+        ] },
       { id:'w10-3', kind:'content', weekTag:W(10), title:'3. Recipe Cards — A/B Comparison',
         items:[
           { text:"Classic Squelch: Cutoff 10 o'clock, Resonance 2–3, Env Mod 2, Decay 11, Accent 2–3, Overdrive OFF, Soft Attack OFF." },
           { text:"Distorted Lead: Cutoff 12–1, Resonance 1–2, Env Mod 1, Decay 10, Accent 3, Overdrive MED–HIGH, Soft Attack OFF." },
           { text:"Liquid Sub: Cutoff 8–9, Resonance 3+, Env Mod 1–2, Decay 1–2 o'clock, Accent 1–2, Overdrive LOW, Soft Attack ON, Sub-Osc LOW." },
-        ]
-      },
+        ] },
 
 '''
           complete = "      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:\"You're ready to play.\" },"
           if "id:'w10-intro'" not in s:
-              if complete not in s:
-                  raise SystemExit('complete step marker not found')
+              assert complete in s, 'complete step marker not found'
               s = s.replace(complete, week10 + complete, 1)
-
           path.write_text(s)
 
           r = Path('README.md')
@@ -114,6 +106,7 @@ jobs:
           readme = readme.replace('| 9 | Drum Bank — rhythm pattern sheets |', '| 9 | Drum Bank — rhythm pattern sheets |\n| 10 | Advanced tone shaping and live modulation |')
           readme = readme.replace('contains **19 cards ship by default**', 'contains **27 cards ship by default**')
           r.write_text(readme)
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -122,11 +115,11 @@ jobs:
         with:
           node-version: 22
       - run: npm test
-      - name: Commit verified integration and remove one-shot workflow
+      - name: Commit verified integration and remove helper
         run: |
           rm .github/workflows/integrate-expanded-songbank.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add 'Behringer Setup Guide.dc.html' README.md .github/workflows/integrate-expanded-songbank.yml
+          git add -A
           git commit -m "Expand Song Bank and add advanced tone shaping week"
           git push origin HEAD:feature/expanded-learning-paths-2

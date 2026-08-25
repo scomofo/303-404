@@ -27,6 +27,12 @@ function extractLogic(html, file) {
   return m[1];
 }
 
+// ── stub Web Audio ───────────────────────────────────────────────────────────
+// Records every scheduled start time so tests can assert on the timing grid the
+// engines produce, which is the whole point of scheduling against the audio clock.
+
+// Records what was scheduled on it, so tests can assert the actual cutoff, envelope
+// and pitch values an engine computes rather than only that it ran.
 function param(value = 0) {
   return {
     value,
@@ -35,6 +41,9 @@ function param(value = 0) {
     setValueAtTime(v, t) { this.calls.push({ op: 'set', v, t }); return this; },
     exponentialRampToValueAtTime(v, t) { this.calls.push({ op: 'expo', v, t }); return this; },
     linearRampToValueAtTime(v, t) { this.calls.push({ op: 'linear', v, t }); return this; },
+    // Real AudioParams remove every queued automation event at or after the cutoff.
+    // Modelling that rule catches envelope endpoints erased by a later scheduled step;
+    // the former no-op stub made those failures look correct.
     cancelScheduledValues(t) {
       this.cancellations.push(t);
       this.calls = this.calls.filter(call => call.t < t);
@@ -53,7 +62,7 @@ function node(ctx, extra = {}) {
 
 export function makeAudioContext() {
   const t0 = performance.now();
-  const starts = [];
+  const starts = [];          // every `when` passed to a source's start()
   const ctx = {
     sampleRate: 48000,
     state: 'running',
@@ -65,6 +74,12 @@ export function makeAudioContext() {
   ctx.destination = node(ctx);
 
   const source = extra => node(ctx, {
+    // `at` is the clock reading when start() was called; `when` is the time it was
+    // scheduled for. Scheduling ahead of the clock means when > at.
+    //
+    // `stopAt` follows Web Audio's rule that a source stopped at or before its start
+    // time never sounds. Every voice here calls stop(when + duration) as it is built,
+    // so only a stop moved back to or before `when` actually silences one.
     start(when) { starts.push({ when: when ?? ctx.currentTime, at: ctx.currentTime, stopAt: Infinity, node: this }); },
     stop(when) {
       const e = starts.find(s => s.node === this);
@@ -73,6 +88,8 @@ export function makeAudioContext() {
     ...extra,
   });
 
+  // Track what each engine actually builds, so a test can tell whether e.g. a
+  // waveshaper was inserted at all.
   const created = [];
   ctx.__created = created;
   const make = (kind, n) => { created.push({ kind, node: n }); return n; };
@@ -86,6 +103,10 @@ export function makeAudioContext() {
   ctx.createBuffer = (ch, len) => ({ getChannelData: () => new Float32Array(len) });
   return ctx;
 }
+
+// ── stub runtime base class ──────────────────────────────────────────────────
+// The real DCLogic defers setState to its React host. Here it merges straight into
+// `state`, supporting both the object and updater-function forms React accepts.
 
 class StubLogic {
   constructor(props) {
@@ -104,25 +125,38 @@ class StubLogic {
   renderVals() { return {}; }
 }
 
+/**
+ * Instantiate a guide's Component. Returns the instance, plus the stub audio
+ * context so tests can inspect what was scheduled.
+ */
 export function loadComponent(file, { hidden = false } = {}) {
   const html = readGuide(file);
   const src = extractLogic(html, file);
   const audioCtx = makeAudioContext();
 
+  // The logic reads `document.hidden` every time it schedules, not just at
+  // construction, so these globals stay installed rather than being restored
+  // immediately. Use the returned setHidden() to change visibility mid-test.
   globalThis.document = globalThis.document || {};
   globalThis.document.hidden = hidden;
   globalThis.window = { AudioContext: function () { return audioCtx; } };
 
+  // Same shape as the runtime's own evaluation of this block.
   const factory = new Function('DCLogic', 'StreamableLogic', 'React',
     src + '\n;return typeof Component !== "undefined" ? Component : undefined;');
   const Component = factory(StubLogic, StubLogic, {});
   if (!Component) throw new Error(`${file}: script block defined no Component`);
   const inst = new Component({});
+  // ensureAudio() constructs via `new window.AudioContext()`; hand it ours directly
+  // so tests can read what got scheduled.
   inst.audioCtx = audioCtx;
   inst.noiseBuffer = audioCtx.createBuffer(1, 128);
 
   const setHidden = v => { globalThis.document.hidden = v; };
 
+  // Stop anything still scheduling. Without this, a failing assertion leaves the
+  // sequencer's setTimeout chain rescheduling forever and the process never exits —
+  // a hung CI job instead of a clean red. Register it with `t.after(dispose)`.
   const dispose = () => {
     for (const key of Object.keys(inst.sequences || {})) inst.stopSequence(key);
   };
@@ -130,10 +164,12 @@ export function loadComponent(file, { hidden = false } = {}) {
   return { inst, audioCtx, html, Component, setHidden, dispose };
 }
 
+/** Every step index of a loaded component. */
 export function stepIndices(inst) {
   return inst.STEPS.map((_, i) => i);
 }
 
+/** Render one step's view-model, as the template would. */
 export function renderStep(inst, i) {
   inst.state = { ...inst.state, step: i };
   return inst.renderVals();

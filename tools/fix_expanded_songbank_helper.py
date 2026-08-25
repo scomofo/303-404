@@ -1,4 +1,6 @@
 from pathlib import Path
+
+# Adjust the supplied practice card to the Song Bank's existing rest/slide invariants.
 p = Path('tools/integrate_expanded_songbank.py')
 s = p.read_text()
 s = s.replace("{ id:'practice-5', title:'Sparse Rest Acid', sourceType:'practice', tag:'Practice pattern · rests + sparse accents', bpm:135, bpmConfirmed:true,", "{ id:'practice-5', title:'Sparse Rest Acid', sourceType:'practice', tag:'Practice pattern · rests + sparse accents', bpm:135, bpmConfirmed:true, homeOctave:2,")

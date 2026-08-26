@@ -44,7 +44,7 @@
             <h4 style="margin:0 0 8px;">Course Overview</h4>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
               <li>Target Audience: Absolute Beginners</li>
-              <li>Duration: 7 Weeks (2 Hours / Week)</li>
+              <li>Duration: 7 weeks of hands-on lessons (2 hours / week), then a self-paced 6-week practice plan</li>
               <li>Equipment Needed:
                 <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
                   <li>Pioneer DJ DDJ-FLX4 controller</li>
@@ -58,6 +58,7 @@
             </ul>
           </div>
           <p style="margin:0;font-size:12.5px;opacity:.7;">The mixer/beatmatching/hot-cue/loop/FX practice widgets in this course run on two synthesized reference loops (a simple kick + hi-hat pattern), not real music — so you can practice the mechanics of mixing without needing licensed audio. Everything you learn transfers directly to mixing real tracks.</p>
+          <p style="margin:0;font-size:12.5px;opacity:.7;">Weeks 1–7 teach the controller. The <strong>Practice Plan</strong> that follows is a six-week, self-paced curriculum of watching, drilling and recording — built around free YouTube tutorials, with a milestone closing out each week — that takes you from working the controls to a set you'd send to a booker.</p>
           <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
         </div>
       </sc-if>
@@ -78,16 +79,25 @@
             <h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3">
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
-                  <input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
-                  <span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span>
-                </label>
-              </div>
-            </sc-for>
-          </div>
+          <sc-if value="{{ currentStep.showGoal }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:12px 14px;border-radius:var(--radius-md);background:var(--color-accent-2-100);border-left:3px solid var(--color-accent-2-600);">
+              <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Goal</div>
+              <div style="font-size:14px;margin-top:3px;">{{ currentStep.goal }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.hasItems }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                    <input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                    <span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span>
+                  </label>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
 
           <sc-if value="{{ currentStep.showKnobs }}" hint-placeholder-val="{{ false }}">
             <div>
@@ -293,6 +303,84 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ currentStep.showPlanMap }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">The six practice weeks</div>
+                <div style="font-size:12px;font-weight:700;">{{ planProgress }}</div>
+              </div>
+              <sc-for list="{{ planMap }}" as="wk" hint-placeholder-count="6">
+                <button type="button" onclick="{{ wk.go }}" style="{{ wk.rowStyle }}">
+                  <span style="flex:1;min-width:0;">
+                    <span style="display:block;font-size:13.5px;font-weight:700;">{{ wk.title }}</span>
+                    <span style="display:block;font-size:12px;opacity:.7;line-height:1.45;">{{ wk.milestone }}</span>
+                  </span>
+                  <span class="tag {{ wk.tagClass }}" style="flex:none;">{{ wk.status }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showCreators }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ creatorList }}" as="c" hint-placeholder-count="3">
+                <div class="card" style="display:flex;flex-direction:column;gap:6px;">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
+                    <div style="font-family:var(--font-heading);font-size:15px;">{{ c.name }}</div>
+                    <span class="tag {{ c.tagClass }}">{{ c.role }}</span>
+                  </div>
+                  <p style="margin:0;font-size:13.5px;opacity:.85;line-height:1.5;">{{ c.blurb }}</p>
+                  <a href="{{ c.url }}" target="_blank" rel="noopener noreferrer" style="font-size:12px;align-self:flex-start;">Search YouTube for {{ c.name }} ↗</a>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showWatch }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Watch — tick each off as you go</div>
+              <sc-for list="{{ watchList }}" as="v" hint-placeholder-count="2">
+                <div style="display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:var(--radius-md);background:var(--color-surface);">
+                  <input type="checkbox" checked="{{ v.checked }}" onchange="{{ v.toggle }}" aria-label="{{ v.ariaLabel }}" style="margin-top:3px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
+                    <div style="font-size:14px;font-weight:600;line-height:1.4;{{ v.textStyle }}">{{ v.title }}</div>
+                    <div style="font-size:12px;opacity:.7;">{{ v.byline }}</div>
+                    <sc-if value="{{ v.hasNote }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:12px;opacity:.75;line-height:1.45;">{{ v.note }}</div>
+                    </sc-if>
+                    <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer" style="font-size:12px;align-self:flex-start;">Search YouTube for this title ↗</a>
+                  </div>
+                </div>
+              </sc-for>
+              <p style="margin:0;font-size:11.5px;opacity:.6;line-height:1.5;">The plan these titles came from lists video names, not links — so each link runs a YouTube search for the title rather than pointing at a video ID that could turn out to be the wrong upload.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showLessonLinks }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Drill it on the practice decks</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <sc-for list="{{ lessonLinks }}" as="l" hint-placeholder-count="2">
+                  <button type="button" class="btn btn-secondary" onclick="{{ l.go }}" style="font-size:12.5px;">{{ l.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showMilestone }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:14px;border-radius:var(--radius-md);background:{{ milestone.bg }};display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Milestone</div>
+              <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                <input type="checkbox" checked="{{ milestone.checked }}" onchange="{{ milestone.toggle }}" style="margin-top:3px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                <span style="font-size:14.5px;line-height:1.5;{{ milestone.textStyle }}">{{ milestone.text }}</span>
+              </label>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showNote }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:12px;opacity:.65;line-height:1.55;">{{ currentStep.note }}</p>
+          </sc-if>
+
         </div>
       </sc-if>
 
@@ -300,6 +388,8 @@
         <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
           <h2 style="margin:0;">You're ready to mix.</h2>
           <p style="margin:0;max-width:48ch;opacity:.85;">You've wired up the controller and installed your software, learned gain staging, EQ, faders and the crossfader, beatmatched by ear and with SYNC, used hot cues and loops, thrown in Beat FX, and mapped a full three-minute mix. Run through the weeks again any time to tighten up a technique.</p>
+          <p style="margin:0;max-width:48ch;opacity:.85;">Knowing the controls isn't the same as being able to play. The <strong>Practice Plan</strong> is the six weeks that closes that gap — watch, drill, record, and tick off a milestone a week until you have a set worth sending out.</p>
+          <button type="button" class="btn btn-secondary" onclick="{{ goPracticePlan }}">Go to the Practice Plan</button>
           <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
         </div>
       </sc-if>
@@ -365,6 +455,24 @@ class Component extends DCLogic {
     { title:'Hot Cue Flourish', time:'2:45–3:00', dur:15, desc:"Drop back to a hot cue on Deck A and bring it in under Deck B to set up your next transition." },
   ];
 
+  // Who teaches what, for the practice plan's Creators step. `search` is what gets
+  // handed to YouTube rather than the display name, so an ambiguous name (there is
+  // more than one "DJ Carlo") still lands on the right channel.
+  CREATORS = [
+    { name:'DJ Blakey', role:'Course spine', tone:'core', search:'DJ Blakey DDJ-FLX4',
+      blurb:"FLX4-specific and strong on hands-on button-pressing — every video below that isn't marked as an extra is his. He also sells a paid \"DDJ-FLX4: Beginner to Pro\" course of 30+ beginner lessons with a few free sample lessons; take those before deciding whether you want the paid track." },
+    { name:'DJ Carlo', role:'Software workflow', tone:'extra', search:'DJ Carlo djcarlo DJ tutorial',
+      blurb:"International Champion DJ with a very approachable teaching style. Strong on hot cues, quantize, stems and modern workflow across Serato and rekordbox — useful once you're past pure FLX4 mechanics and thinking about software features." },
+    { name:'Digital DJ Tips', role:'Going deeper', tone:'extra', search:'Digital DJ Tips',
+      blurb:"One of the largest dedicated DJ education channels — weekly Tuesday Tips livestreams, gear reviews and technique breakdowns. The place to go a level deeper on EQ theory, track selection or reading a crowd after Blakey introduces the topic." },
+    { name:'Off The Rack Jack', role:'Beatmatching, slower', tone:'extra', search:'Off The Rack Jack how to beatmatch',
+      blurb:"His \"How To Beatmatch (Complete Beginner's Guide)\" is a very literal walk-through of manual beatmatching, with free practice tracks — the one to reach for if Blakey's version moves too fast." },
+    { name:'Club Ready DJ School (Tribe Talk)', role:'Harmonic mixing', tone:'extra', search:'Club Ready DJ School Tribe Talk harmonic mixing',
+      blurb:"Written and video breakdowns of harmonic mixing (the Camelot wheel) and where in a track to mix in — the clearest entry point when Week 5 gets you ready for key matching." },
+    { name:'DJ Shortkut', role:'Optional: scratching', tone:'optional', search:'DJ Shortkut scratch tutorial baby scratch',
+      blurb:"The best beginner scratch walkthrough — baby scratch, stab, chirp, tear. Not required for club blend-style DJing, but common in hip-hop and open-format sets." },
+  ];
+
   constructor(props) {
     super(props);
     this.STEPS = this.buildSteps();
@@ -378,6 +486,7 @@ class Component extends DCLogic {
 
   buildSteps() {
     const W = n => `Week ${n}`;
+    const PP = 'Practice Plan';
     return [
       { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
 
@@ -482,6 +591,143 @@ class Component extends DCLogic {
         ],
       },
 
+      { id:'pp-intro', kind:'weekintro', weekTag:PP, navLabel:'Plan Overview',
+        title:'The 6-Week Practice Plan',
+        objective:"The seven weeks above teach you what every control does. This is the part that makes you a DJ: a self-paced six-week plan of watching, drilling and recording, built entirely around free YouTube content — with a milestone at the end of each week that tells you whether you're ready to move on." },
+      { id:'pp-how', kind:'content', weekTag:PP, title:'1. How to Use This Plan', navLabel:'How to Use This Plan',
+        widget:'planMap',
+        items:[
+          { text:"A week is a unit of work, not a deadline. Move on when you hit the milestone, not when seven days are up — and go back a week whenever a milestone stops holding up." },
+          { text:"Watch first, then drill. The videos are minutes long; the practice is what fills the week. Watching more videos is the most common way to feel productive without getting better." },
+          { text:"Each week links back into this course, so you can rehearse the mechanic on the practice decks here before taking it to real tracks." },
+          { text:"Tick a milestone only when you can do it twice in a row on tracks you didn't rehearse. Ticks are held in memory for this session — reloading or Start Over clears them." },
+        ],
+        note:"This plan was written around DJ Blakey's free FLX4 tutorials, with gaps filled by other teachers. Video titles are reproduced as the plan lists them; channels rename and re-upload videos, so treat a title as a search term rather than a guarantee." },
+      { id:'pp-creators', kind:'content', weekTag:PP, title:'2. Creators & Channels', navLabel:'Creators & Channels',
+        widget:'creators',
+        items:[],
+        note:"Prices and course contents are as quoted in the plan this course was built from (Blakey's paid course was listed at about £109 / $147 for 30+ beginner lessons) — check the current offer before buying. Everything in the six weeks below is achievable from free content." },
+
+      { id:'pp-w1', kind:'content', weekTag:PP, practiceWeek:1,
+        title:'3. Practice Week 1 — Setup, Layout & Software', navLabel:'Week 1 — Setup & Layout',
+        goal:"Know your controller cold before touching a mix.",
+        items:[
+          { text:"Install rekordbox or Serato — whichever you'll actually use — plug in the FLX4, and import your first 20–30 tracks." },
+          { text:"Learn the physical layout: jog wheels, channel faders, EQ knobs (High/Mid/Low), gain/trim, crossfader, browse knob, cue and play buttons, the 8 performance pads, and Shift." },
+          { text:"Load a track to each deck and set gain with the channel meter — aim for the LEDs hitting orange, never red." },
+          { text:"Put headphones on and practise cueing: isolating one deck to preview it while the other plays." },
+        ],
+        watch:[
+          { title:'Getting Started With The DDJ-FLX4 – Beginner DJ Tutorial', creator:'DJ Blakey', note:'Layout and software setup.' },
+          { title:'The Fastest Way to Master the DDJ-FLX4 as a Beginner DJ', creator:'DJ Blakey', optional:true,
+            note:"Listed among the plan's recommended videos without a week of its own; it works as a fast-track overview here in Week 1." },
+          { title:'Rekordbox / Serato workflow walkthrough', creator:'DJ Carlo', optional:true,
+            note:'Broader software-level context if you want more than the FLX4-specific setup.' },
+        ],
+        lessons:['w1-1', 'w1-2', 'w2-1'],
+        milestone:"You can load, cue and play a track on each deck without looking at the screen." },
+
+      { id:'pp-w2', kind:'content', weekTag:PP, practiceWeek:2,
+        title:'4. Practice Week 2 — Beatmatching & Tempo', navLabel:'Week 2 — Beatmatching',
+        goal:"Understand why SYNC exists by learning to beatmatch manually first, then use SYNC properly.",
+        items:[
+          { text:"Learn beats, bars and BPM: 4/4 house and pop structure — four beats to a bar, phrases of 8 and 16 bars." },
+          { text:"Practise manual pitch adjustment with the tempo fader and jog wheel nudge. Even if you use SYNC live, doing this by ear is what builds your timing." },
+          { text:"Learn what SYNC actually locks — and what it doesn't fix. Phrasing and EQ clashes are still your job." },
+        ],
+        watch:[
+          { title:'How to BEATMATCH on Pioneer DDJ-FLX4 (Beginner DJ Tutorial)', creator:'DJ Blakey' },
+          { title:"How To Beatmatch (Complete Beginner's Guide)", creator:'Off The Rack Jack', optional:true,
+            note:'A slower, more literal walkthrough of the same skill, with free practice tracks. Hearing it explained twice speeds up the moment it clicks.' },
+        ],
+        lessons:['w2-2', 'w4-1'],
+        milestone:"You can mix two tracks in and out with the beats aligned, using either manual matching or SYNC." },
+
+      { id:'pp-w3', kind:'content', weekTag:PP, practiceWeek:3,
+        title:'5. Practice Week 3 — EQ, Gain & Clean Transitions', navLabel:'Week 3 — EQ & Clean Transitions',
+        goal:"Sound clean, not muddy — the single biggest thing separating hobbyists from club-ready DJs.",
+        items:[
+          { text:"Trim/gain staging: get both decks hitting a similar level before the fader, so a blend doesn't jump in volume." },
+          { text:"Bass swap: cut the incoming track's bass, bring it in, then hand the bass over from outgoing to incoming once the beats are locked." },
+          { text:"Use the High and Mid EQ to keep vocals and hi-hats from clashing through the blend." },
+        ],
+        watch:[
+          { title:'Beginner DJ Mistakes to Avoid on Your DDJ-FLX4', creator:'DJ Blakey' },
+          { title:'The Fastest Way To Sound Good On Your DDJ-FLX4', creator:'DJ Blakey' },
+          { title:'EQ theory deep-dive', creator:'Digital DJ Tips', optional:true,
+            note:'Go a level deeper on any single topic here once Blakey has introduced it.' },
+        ],
+        lessons:['w3-1', 'w3-2'],
+        milestone:"A two-track transition where nothing clips, clashes, or dips in volume." },
+
+      { id:'pp-w4', kind:'content', weekTag:PP, practiceWeek:4,
+        title:'6. Practice Week 4 — Phrasing, Hot Cues & Loops', navLabel:'Week 4 — Phrasing & Cues',
+        goal:"Mix on the right part of the track, not just anywhere the beats happen to line up.",
+        items:[
+          { text:"Count phrases: 8, 16 and 32-bar sections — intro, build, drop or chorus, breakdown." },
+          { text:"Set hot cues and use them to jump straight to your mix-in point instead of waiting for the track to reach it." },
+          { text:"Basic looping: build a 4 or 8-beat loop to extend an intro, or to patch a section that's too short to mix over." },
+        ],
+        watch:[
+          { title:'4 DDJ-FLX4 Tricks Every Beginner DJ Should Know', creator:'DJ Blakey' },
+          { title:'Your DDJ-FLX4 Can Do WAY More Than You Think', creator:'DJ Blakey' },
+        ],
+        lessons:['w5-1', 'w5-2'],
+        milestone:"You can hear where a track's phrase starts and mix in exactly there using a hot cue." },
+
+      { id:'pp-w5', kind:'content', weekTag:PP, practiceWeek:5,
+        title:'7. Practice Week 5 — FX, Genre Blending & Set Flow', navLabel:'Week 5 — FX & Set Flow',
+        goal:"Add texture, and start thinking like a set-builder rather than a track-mixer.",
+        items:[
+          { text:"Try the onboard Smart FX and Sound Color FX — filter, echo, reverb. Sparingly, and mostly on transitions." },
+          { text:"Practise mixing across adjacent genres and tempos (house into bass house, say) using tempo and a sense of key." },
+          { text:"Start thinking in energy arcs. A set should build; a flat string of bangers has nowhere to go." },
+          { text:"Start noticing the key numbers rekordbox shows beside each track, and pick your next track partly on key compatibility, not just genre and energy." },
+        ],
+        watch:[
+          { title:'How To Mix 6 Genres in 3 Minutes on Your DDJ-FLX4', creator:'DJ Blakey' },
+          { title:'Harmonic mixing / Camelot wheel basics', creator:'Club Ready DJ School (Tribe Talk)', optional:true,
+            note:"Their written and video breakdowns of harmonic mixing and where to mix in are the clearest starting point for key matching." },
+        ],
+        lessons:['w6-1'],
+        milestone:"A 15-minute mix that moves through at least two genres or energy levels without a jarring jump." },
+
+      { id:'pp-w6', kind:'content', weekTag:PP, practiceWeek:6,
+        title:'8. Practice Week 6 — Full Sets & Club-Readiness', navLabel:'Week 6 — Full Sets',
+        goal:"Record and critique a real set, and learn what club-ready actually sounds like.",
+        items:[
+          { text:"Build a 20–30 minute set: plan a rough tracklist by energy and key, but stay ready to improvise." },
+          { text:"Record it — rekordbox has recording built in — then listen back critically for EQ clashes, missed phrasing and dead air." },
+          { text:"Re-record until the transitions are clean from start to finish." },
+          { text:"Run one practice mix with your screen brightness right down, so you're mixing by ear. Club booths with badly placed monitors will demand exactly that." },
+        ],
+        watch:[
+          { title:'What a GOOD DDJ-FLX4 DJ Set Actually Looks Like', creator:'DJ Blakey', note:'Compare your instincts against his breakdown.' },
+          { title:'Learn to DJ the Real Way: Beat Matching, Phrasing & Mixing Without Visuals', creator:'Various — search the title', optional:true,
+            note:'A gut-check for this week: mixing without staring at the waveforms is what separates a confident club DJ from someone who needs the screen.' },
+        ],
+        lessons:['w6-2'],
+        milestone:"A recorded 20–30 minute set you'd be comfortable sending to a bar or small-club booker." },
+
+      { id:'pp-rhythm', kind:'content', weekTag:PP, title:'9. Practice Rhythm', navLabel:'Practice Rhythm',
+        goal:"How often you practise matters more than how long.",
+        items:[
+          { text:"20–30 minutes a day beats two hours once a week. Muscle memory and ear training both need repetition, not marathons." },
+          { text:"Re-mix the same two tracks five or more times in a session before moving on. Repetition is how beatmatching stops being a calculation and starts being a reflex." },
+          { text:"Record every practice session. You'll hear mistakes on playback that you miss completely while you're playing." },
+        ] },
+      { id:'pp-next', kind:'content', weekTag:PP, title:'10. After the Plan', navLabel:'After the Plan',
+        goal:"Where to go once all six milestones are ticked.",
+        widget:'planMap',
+        items:[
+          { text:"Beatmatch without SYNC at all — the fastest way to push your ear training further." },
+          { text:"Go deeper on harmonic mixing and the Camelot wheel (Club Ready DJ School)." },
+          { text:"Add basic scratching — baby scratch, stab, chirp, tear (DJ Shortkut) — if you're heading toward open-format or hip-hop sets. It isn't required for club blend-style DJing." },
+          { text:"Keep technique and gear knowledge current with Digital DJ Tips' weekly content." },
+          { text:"Learn to read a crowd and adjust a set live — the one skill no video can drill into you." },
+          { text:"If you want structure and feedback on your own mixes, that's what a paid course buys you. Everything above is achievable from free content across these creators." },
+        ] },
+
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to mix." },
     ];
   }
@@ -581,6 +827,93 @@ class Component extends DCLogic {
         lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
         statusText: connected ? 'Connected' : 'Click to connect' };
     });
+  }
+
+  // ── practice plan ──
+  // The plan this section came from names videos and channels by title, never by URL.
+  // Guessing at video IDs would produce links that look authoritative and quietly point
+  // at the wrong upload, so every link here runs a search for the title instead — which
+  // is exactly as specific as the source actually was.
+  ytSearch(query) {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+  }
+
+  // Watchlist, milestone and task ticks all share one checks map, so they are namespaced
+  // by suffix. Without this, ticking off a video would also strike through a task.
+  watchKey(step) { return `${step.id}:watch`; }
+  milestoneKey(step) { return `${step.id}:milestone`; }
+
+  buildWatchList(step) {
+    if (!step.watch) return [];
+    const key = this.watchKey(step);
+    const checks = this.state.checks[key] || [];
+    return step.watch.map((v, i) => ({
+      title: v.title,
+      byline: v.optional ? `Optional extra · ${v.creator}` : v.creator,
+      note: v.note || '',
+      hasNote: !!v.note,
+      url: this.ytSearch(`${v.creator} ${v.title}`),
+      checked: !!checks[i],
+      toggle: () => this.toggleCheck(key, i),
+      ariaLabel: `Watched: ${v.title}`,
+      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
+    }));
+  }
+
+  milestoneReached(step) {
+    return !!(this.state.checks[this.milestoneKey(step)] || [])[0];
+  }
+  buildMilestone(step) {
+    if (!step.milestone) return { text: '', checked: false, textStyle: '', bg: 'transparent', toggle: () => {} };
+    const done = this.milestoneReached(step);
+    return {
+      text: step.milestone,
+      checked: done,
+      toggle: () => this.toggleCheck(this.milestoneKey(step), 0),
+      textStyle: done ? 'text-decoration:line-through;opacity:.55;' : '',
+      bg: done ? 'var(--color-accent-2-100)' : 'var(--color-accent-100)',
+    };
+  }
+
+  // Cross-links into the hands-on half of the course. Labels are read off the target
+  // step rather than written out again, so renaming a lesson can't leave a stale label.
+  buildLessonLinks(step) {
+    if (!step.lessons) return [];
+    return step.lessons.map(id => {
+      const i = this.STEPS.findIndex(t => t.id === id);
+      if (i < 0) return null;
+      const target = this.STEPS[i];
+      return { label: `${target.weekTag} · ${target.title}`, go: () => this.goToStep(i) };
+    }).filter(Boolean);
+  }
+
+  practiceWeeks() { return this.STEPS.filter(s => s.practiceWeek); }
+  planProgressLabel() {
+    const weeks = this.practiceWeeks();
+    return `${weeks.filter(w => this.milestoneReached(w)).length} of ${weeks.length} milestones reached`;
+  }
+  buildPlanMap() {
+    return this.practiceWeeks().map(w => {
+      const i = this.STEPS.indexOf(w);
+      const done = this.milestoneReached(w);
+      return {
+        title: w.navLabel || w.title,
+        milestone: w.milestone,
+        status: done ? 'Reached' : 'Not yet',
+        tagClass: done ? 'tag-accent-2' : 'tag-neutral',
+        go: () => this.goToStep(i),
+        rowStyle: `display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 13px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:pointer;font:inherit;color:var(--color-text);background:${done ? 'var(--color-accent-2-100)' : 'var(--color-surface)'};`,
+      };
+    });
+  }
+
+  buildCreators() {
+    const tagFor = { core: 'tag-accent', extra: 'tag-neutral', optional: 'tag-accent-2' };
+    return this.CREATORS.map(c => ({
+      name: c.name, role: c.role, blurb: c.blurb,
+      tagClass: tagFor[c.tone] || 'tag-neutral',
+      url: this.ytSearch(c.search),
+    }));
   }
 
   // ── step scheduling ──
@@ -927,6 +1260,7 @@ class Component extends DCLogic {
       isComplete: step.kind === 'complete',
       currentStep: {
         weekTag: step.weekTag, title: step.title, items, knobs,
+        hasItems: items.length > 0,
         showKnobs: knobs.length > 0,
         showCables: !!step.cables,
         showEngine: engineWidgets.includes(step.widget),
@@ -939,8 +1273,23 @@ class Component extends DCLogic {
         showLoop: step.widget === 'loop',
         showBeatFx: step.widget === 'beatFx',
         showPerfmap: step.widget === 'perfmap',
+        goal: step.goal || '',
+        showGoal: !!step.goal,
+        showPlanMap: step.widget === 'planMap',
+        showCreators: step.widget === 'creators',
+        showWatch: !!(step.watch && step.watch.length),
+        showLessonLinks: !!(step.lessons && step.lessons.length),
+        showMilestone: !!step.milestone,
+        note: step.note || '',
+        showNote: !!step.note,
       },
       cablesList: this.buildCables(step),
+      watchList: this.buildWatchList(step),
+      lessonLinks: this.buildLessonLinks(step),
+      milestone: this.buildMilestone(step),
+      planMap: step.widget === 'planMap' ? this.buildPlanMap() : [],
+      planProgress: this.planProgressLabel(),
+      creatorList: step.widget === 'creators' ? this.buildCreators() : [],
       engineLabel: this.state.enginePlaying ? 'Stop Decks' : 'Start Decks',
       engineToggle: this.state.enginePlaying ? () => this.stopEngine() : () => this.startEngine(),
       jogDecks: step.widget === 'jogSpin' ? ['Deck A', 'Deck B'].map(label => ({
@@ -991,6 +1340,7 @@ class Component extends DCLogic {
       isFirst: this.state.step === 0,
       isLast: this.state.step === this.STEPS.length - 1,
       restart: () => this.restart(),
+      goPracticePlan: () => this.goToStep(this.STEPS.findIndex(t => t.id === 'pp-intro')),
     };
   }
 }

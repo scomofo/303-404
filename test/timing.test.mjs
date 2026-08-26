@@ -194,6 +194,28 @@ test('Song Bank keeps long filter decays when later steps are queued', async t =
   assertEnvelopeSurvivesNextStep(filter.frequency, 'Song Bank', decayTime);
 });
 
+// The RD-6 grids are fixed at 125ms a step. Drum Bank cards are not: a 71 BPM break
+// and a 128 BPM techno pattern each have to run at the rate their own source names.
+test('the Drum Bank runs a card on its own tempo grid', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
+
+  const levee = inst.DRUM_CARDS.find(c => c.id === 'when-the-levee-breaks');
+  const step = 15 / levee.bpm;
+  assert.ok(Math.abs(step - 0.125) > 0.02, 'fixture no longer differs from the RD-6 grid');
+
+  inst.loadDrumCard(levee);
+  inst.playDrumBank();
+  await until(() => onsets(audioCtx).length >= 5, 'five Drum Bank onsets');
+  inst.stopDrumBank();
+
+  const times = onsets(audioCtx);
+  assert.ok(gridErrorMs(times, step) < 1e-6,
+    `off the ${(step * 1000).toFixed(1)}ms grid by ${gridErrorMs(times, step)}ms`);
+  assert.ok(audioCtx.__starts.every(s => s.when >= s.at),
+    'a hit was scheduled at the clock rather than ahead of it');
+});
+
 test('the lookahead widens when the tab is hidden', () => {
   // A ~120ms horizon keeps edits responsive but cannot survive a background tab,
   // where timers are clamped to about a second.

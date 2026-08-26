@@ -15,6 +15,7 @@ export const GUIDES = [
   { name: 'Behringer', file: 'Behringer Setup Guide.dc.html' },
   { name: 'DDJ-FLX4', file: 'DDJ-FLX4 Guide.dc.html' },
   { name: 'Hybrid Live Set', file: 'Hybrid Live Set.dc.html' },
+  { name: 'MPK Mini MK4', file: 'MPK Mini MK4 Guide.dc.html' },
 ];
 
 export function readGuide(file) {

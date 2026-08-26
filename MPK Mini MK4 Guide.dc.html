@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MPK Mini MK4 Guide</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>
+  a{color:var(--color-accent);} a:hover{color:var(--color-accent-700);}
+  /* Two page-local utilities. The design system has no section-label or fine-print
+     role, and both guides before this one repeated the same inline style string a
+     dozen times; every value below still comes from the tokens. */
+  .dc-kicker{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;}
+  .dc-hint{font-size:12.5px;opacity:.72;margin:0;}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+
+  <header style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+    <div style="font-family:var(--font-heading);font-size:17px;white-space:nowrap;">MPK Mini MK4 Guide</div>
+    <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);">
+        <span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span>
+      </div>
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;">
+        <div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
+          <div>
+            <h1 style="margin:0;">Beginner Production Guide</h1>
+            <h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Akai MPK Mini MK4 (MPK Mini IV)</h3>
+          </div>
+          <div>
+            <h4 style="margin:0 0 8px;">Course Overview</h4>
+            <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
+              <li>Target Audience: Absolute Beginners</li>
+              <li>Duration: 6 Weeks (short daily sessions beat one long weekly one)</li>
+              <li>Equipment Needed:
+                <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
+                  <li>Akai MPK Mini MK4 controller</li>
+                  <li>USB-C cable (included)</li>
+                  <li>Laptop or computer</li>
+                  <li>MPC Beats and the Studio Instrument Collection (both bundled free after registration) or a DAW you already use — Ableton Live, FL Studio, Logic</li>
+                  <li>Headphones or speakers</li>
+                  <li>Internet connection for registration, downloads and firmware</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div class="card" style="background:var(--color-accent-2-100);">
+            <div style="font-family:var(--font-heading);font-size:16px;">This is a production course, not a DJ course</div>
+            <p class="dc-hint" style="margin-top:6px;">The MK4 is a compact MIDI keyboard and pad controller for making music — beats, synth parts, DAW control — not a DJ controller. It also makes no sound on its own: it sends MIDI, and software makes the noise. So a real chunk of "learning the MK4" is learning MPC Beats or your DAW, and the weeks below are built that way.</p>
+          </div>
+          <p class="dc-hint">Every practice widget in this course is synthesized in the browser — drums, keys, chords, arpeggios and all — so you can rehearse the mechanics before your own software is set up. Nothing here sends real MIDI; it stands in for the hardware while you learn what each control does.</p>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 &rarr;</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWeekIntro }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);">
+          <span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span>
+          <h2 style="margin:0;">{{ currentStep.title }}</h2>
+          <p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p>
+          <sc-if value="{{ currentStep.hasMilestone }}" hint-placeholder-val="{{ false }}">
+            <div class="card" style="background:var(--color-accent-2-100);">
+              <div class="dc-kicker">Milestone</div>
+              <div style="font-size:14px;">{{ currentStep.milestone }}</div>
+            </div>
+          </sc-if>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin &rarr;</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);">
+          <div>
+            <span class="tag tag-neutral">{{ currentStep.weekTag }}</span>
+            <h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2>
+            <sc-if value="{{ currentStep.hasNote }}" hint-placeholder-val="{{ false }}">
+              <span class="tag tag-accent-2" style="margin-top:8px;display:inline-block;">{{ currentStep.note }}</span>
+            </sc-if>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                  <input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                  <span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span>
+                </label>
+                <sc-if value="{{ item.hasSub }}" hint-placeholder-val="{{ false }}">
+                  <ul style="margin:0 0 0 30px;padding-left:18px;font-size:13.5px;opacity:.8;display:flex;flex-direction:column;gap:3px;">
+                    <sc-for list="{{ item.subitems }}" as="sub" hint-placeholder-count="4">
+                      <li>{{ sub }}</li>
+                    </sc-for>
+                  </ul>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ currentStep.showCables }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div class="dc-kicker">Signal path &mdash; tap to mark connected</div>
+              <sc-for list="{{ cablesList }}" as="c" hint-placeholder-count="2">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
+                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
+                  <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
+                  <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showLessons }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="dc-kicker">Lessons worth watching, and when</div>
+              <sc-for list="{{ lessons }}" as="l" hint-placeholder-count="4">
+                <div class="card">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
+                    <div class="card-title">{{ l.title }}</div>
+                    <span class="tag tag-accent" style="flex:none;">{{ l.week }}</span>
+                  </div>
+                  <div class="card-meta">{{ l.source }} &middot; {{ l.kind }}</div>
+                  <p class="card-body" style="margin:0;">{{ l.covers }}</p>
+                </div>
+              </sc-for>
+              <p class="dc-hint">Titles rather than links, so you can find the current upload rather than a dead URL &mdash; search each title on YouTube, or the article title on Akai Pro's support site.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showLayout }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="dc-kicker">Control map &mdash; tap a control to learn its name and job</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                <sc-for list="{{ layoutParts }}" as="p" hint-placeholder-count="8">
+                  <button type="button" onclick="{{ p.select }}" aria-pressed="{{ p.pressed }}" style="{{ p.style }}">{{ p.name }}</button>
+                </sc-for>
+              </div>
+              <div class="card" style="background:var(--color-accent-100);">
+                <div style="font-family:var(--font-heading);font-size:16px;">{{ selectedPart.name }}</div>
+                <p style="margin:6px 0 0;font-size:13.5px;opacity:.85;">{{ selectedPart.blurb }}</p>
+              </div>
+              <p class="dc-hint">Control names and panel positions shift a little between MPK Mini generations. Treat this as the vocabulary, and check the panel diagram in your own MK4 manual for anything that does not match.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTempo }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;align-items:flex-end;">
+              <div>
+                <div class="dc-kicker" style="margin-bottom:6px;">Tempo</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}" aria-label="Decrease tempo">&minus;</button>
+                  <div style="min-width:82px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
+                  <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}" aria-label="Increase tempo">+</button>
+                </div>
+              </div>
+              <div>
+                <div class="dc-kicker" style="margin-bottom:6px;">Swing</div>
+                <div class="seg">
+                  <sc-for list="{{ swingOptions }}" as="opt" hint-placeholder-count="4">
+                    <label class="seg-opt">
+                      <input type="radio" name="swing" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                      {{ opt.label }}
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showPads }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">{{ padBankName }}</div>
+                <div class="seg">
+                  <sc-for list="{{ bankOptions }}" as="opt" hint-placeholder-count="4">
+                    <label class="seg-opt">
+                      <input type="radio" name="padBank" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                      {{ opt.label }}
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ padRows }}" as="row" hint-placeholder-count="2">
+                  <div style="display:flex;gap:8px;">
+                    <sc-for list="{{ row.pads }}" as="pad" hint-placeholder-count="4">
+                      <button type="button" onclick="{{ pad.hit }}" aria-pressed="{{ pad.pressed }}" style="{{ pad.style }}">
+                        <span style="font-size:10px;opacity:.65;">{{ pad.number }}</span>
+                        <span style="font-size:12.5px;font-weight:700;">{{ pad.label }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;align-items:flex-end;">
+                <div>
+                  <div class="dc-kicker" style="margin-bottom:6px;">Velocity</div>
+                  <div class="seg">
+                    <sc-for list="{{ velocityOptions }}" as="opt" hint-placeholder-count="3">
+                      <label class="seg-opt">
+                        <input type="radio" name="velocity" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                        {{ opt.label }}
+                      </label>
+                    </sc-for>
+                  </div>
+                </div>
+                <div>
+                  <div class="dc-kicker" style="margin-bottom:6px;">Note Repeat</div>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <button type="button" class="btn btn-primary" onclick="{{ noteRepeatToggle }}">{{ noteRepeatLabel }}</button>
+                    <div class="seg">
+                      <sc-for list="{{ repeatRateOptions }}" as="opt" hint-placeholder-count="3">
+                        <label class="seg-opt">
+                          <input type="radio" name="repeatRate" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                          {{ opt.label }}
+                        </label>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="dc-hint">Velocity is how hard you hit the pad. Everything at full velocity is the single most common giveaway of a beginner's beat &mdash; hit the same pad at Soft, then Full, and listen to the difference. With Note Repeat armed, a tap fires a run of hits at the chosen rate instead of one, which is how rolls get played.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showBeat }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">Step sequencer &mdash; one bar, 16 steps, {{ padBankName }}</div>
+                <button type="button" class="btn btn-primary" onclick="{{ beatToggle }}">{{ beatLabel }}</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <div style="display:flex;flex-direction:column;gap:5px;min-width:640px;padding:2px;">
+                  <sc-for list="{{ beatRows }}" as="row" hint-placeholder-count="8">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:96px;font-size:11px;font-weight:700;flex:none;{{ row.labelStyle }}">{{ row.label }}</div>
+                      <div style="display:flex;gap:4px;">
+                        <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="16">
+                          <button type="button" onclick="{{ cell.toggle }}" style="{{ cell.style }}" aria-label="{{ cell.label }}" aria-pressed="{{ cell.pressed }}"></button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <p class="dc-hint">A cell is written at whichever velocity is selected above, so the same row can hold soft ghost notes and full-force accents. Click a written cell again at the same velocity to erase it.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showScale }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">Scale Mode</div>
+                <button type="button" class="btn btn-primary" onclick="{{ scaleToggle }}">{{ scaleToggleLabel }}</button>
+              </div>
+              <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;">
+                <div>
+                  <div class="dc-kicker" style="margin-bottom:6px;">Root</div>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <button type="button" class="btn btn-secondary" onclick="{{ rootCtl.dec }}" aria-label="Previous root note">&minus;</button>
+                    <div style="min-width:42px;text-align:center;font-size:14px;font-weight:700;">{{ rootCtl.label }}</div>
+                    <button type="button" class="btn btn-secondary" onclick="{{ rootCtl.inc }}" aria-label="Next root note">+</button>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:240px;">
+                  <div class="dc-kicker" style="margin-bottom:6px;">Scale</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    <sc-for list="{{ scaleOptions }}" as="opt" hint-placeholder-count="6">
+                      <button type="button" onclick="{{ opt.select }}" aria-pressed="{{ opt.pressed }}" style="{{ opt.style }}">{{ opt.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <p class="dc-hint">{{ scaleSummary }}</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showKeys }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">Practice keyboard &mdash; 25 mini keys</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button type="button" class="btn btn-secondary" onclick="{{ octaveCtl.dec }}" aria-label="Octave down">Oct &minus;</button>
+                  <div style="min-width:88px;text-align:center;font-size:12px;font-weight:700;">{{ octaveCtl.label }}</div>
+                  <button type="button" class="btn btn-secondary" onclick="{{ octaveCtl.inc }}" aria-label="Octave up">Oct +</button>
+                </div>
+              </div>
+              <div style="overflow-x:auto;">
+                <div style="position:relative;height:118px;min-width:540px;">
+                  <div style="display:flex;height:100%;gap:2px;">
+                    <sc-for list="{{ whiteKeys }}" as="k" hint-placeholder-count="15">
+                      <button type="button" onclick="{{ k.press }}" aria-label="{{ k.aria }}" style="{{ k.style }}">{{ k.label }}</button>
+                    </sc-for>
+                  </div>
+                  <sc-for list="{{ blackKeys }}" as="k" hint-placeholder-count="10">
+                    <button type="button" onclick="{{ k.press }}" aria-label="{{ k.aria }}" style="{{ k.style }}"></button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="min-height:22px;font-size:13.5px;font-weight:700;">{{ lastNoteLabel }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showChord }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">Chord Mode &mdash; one key, one full chord</div>
+                <button type="button" class="btn btn-primary" onclick="{{ chordToggle }}">{{ chordToggleLabel }}</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div class="dc-kicker">Progression &mdash; four bars, one chord each</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  <sc-for list="{{ progSlots }}" as="slot" hint-placeholder-count="4">
+                    <div style="{{ slot.cardStyle }}">
+                      <div style="font-size:10.5px;opacity:.6;">{{ slot.barLabel }}</div>
+                      <div style="font-family:var(--font-heading);font-size:20px;">{{ slot.degreeLabel }}</div>
+                      <div style="font-size:11.5px;opacity:.75;">{{ slot.notesLabel }}</div>
+                      <div style="display:flex;gap:6px;margin-top:6px;">
+                        <button type="button" class="btn btn-secondary" onclick="{{ slot.dec }}" aria-label="{{ slot.decLabel }}">&minus;</button>
+                        <button type="button" class="btn btn-secondary" onclick="{{ slot.inc }}" aria-label="{{ slot.incLabel }}">+</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <button type="button" class="btn btn-primary" onclick="{{ progToggle }}">{{ progLabel }}</button>
+                  <span style="font-size:12.5px;opacity:.75;">{{ progHint }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showArp }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">Arpeggiator &mdash; hold a chord, get a pattern</div>
+                <button type="button" class="btn btn-primary" onclick="{{ arpToggle }}">{{ arpLabel }}</button>
+              </div>
+              <div>
+                <div class="dc-kicker" style="margin-bottom:6px;">Held chord</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <sc-for list="{{ arpChordOptions }}" as="opt" hint-placeholder-count="7">
+                    <button type="button" onclick="{{ opt.select }}" aria-pressed="{{ opt.pressed }}" style="{{ opt.style }}">{{ opt.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;">
+                <sc-for list="{{ arpControls }}" as="ctl" hint-placeholder-count="4">
+                  <div>
+                    <div class="dc-kicker" style="margin-bottom:6px;">{{ ctl.name }}</div>
+                    <div class="seg">
+                      <sc-for list="{{ ctl.options }}" as="opt" hint-placeholder-count="4">
+                        <label class="seg-opt">
+                          <input type="radio" name="{{ ctl.radioName }}" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
+                          {{ opt.label }}
+                        </label>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" onclick="{{ arpFreezeToggle }}" aria-pressed="{{ arpFreezePressed }}">{{ arpFreezeLabel }}</button>
+                <button type="button" class="btn btn-secondary" onclick="{{ arpMutateToggle }}" aria-pressed="{{ arpMutatePressed }}">{{ arpMutateLabel }}</button>
+              </div>
+              <div style="font-size:12.5px;">{{ arpSequenceLabel }}</div>
+              <p class="dc-hint">Freeze locks the note order that is running now, so changing the held chord leaves the shape alone. Mutate nudges one step of that order every time the pattern comes round &mdash; always to another note of the same chord, so it wanders without going wrong. Both are simplified stand-ins for the hardware's own arp; use them to learn what to listen for, then find the same controls on the unit.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showKnobs }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">8 assignable knobs &mdash; start the loop, then turn one</div>
+                <button type="button" class="btn btn-primary" onclick="{{ progToggle }}">{{ progLabel }}</button>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:var(--space-4);">
+                <sc-for list="{{ knobRows }}" as="k" hint-placeholder-count="8">
+                  <div style="width:158px;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-300);box-shadow:var(--shadow-sm);position:relative;">
+                      <div style="position:absolute;bottom:50%;left:50%;width:3px;height:22px;margin-left:-1.5px;background:var(--color-accent-700);border-radius:2px;transform-origin:50% 100%;transform:rotate({{ k.rot }}deg);"></div>
+                    </div>
+                    <div style="font-size:11.5px;font-weight:700;">{{ k.name }}</div>
+                    <button type="button" class="btn btn-ghost" onclick="{{ k.cycle }}" style="font-size:11.5px;" aria-label="{{ k.cycleLabel }}">{{ k.targetLabel }}</button>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <button type="button" class="btn btn-secondary" onclick="{{ k.dec }}" aria-label="{{ k.decLabel }}">&minus;</button>
+                      <div style="min-width:46px;text-align:center;font-size:12px;font-weight:700;">{{ k.valueLabel }}</div>
+                      <button type="button" class="btn btn-secondary" onclick="{{ k.inc }}" aria-label="{{ k.incLabel }}">+</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <p class="dc-hint">Each knob sends a MIDI CC message and nothing else &mdash; what it changes is decided in your software. Which CC each knob sends is set in the MPK Mini IV preset editor and listed in the manual, so the reliable way to hook one up is MIDI Learn: right-click the plugin control, choose Learn, turn the knob.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showSong }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="dc-kicker">Arrangement &mdash; {{ songLengthLabel }}</div>
+                <button type="button" class="btn btn-primary" onclick="{{ songToggle }}">{{ songPlayLabel }}</button>
+              </div>
+              <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
+                <sc-for list="{{ songSections }}" as="sec" hint-placeholder-count="4">
+                  <button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}" aria-pressed="{{ sec.pressed }}">{{ sec.title }}</button>
+                </sc-for>
+              </div>
+              <div class="card" style="background:var(--color-accent-100);">
+                <div style="font-family:var(--font-heading);font-size:16px;">{{ selectedSection.title }} &middot; {{ selectedSection.barsLabel }}</div>
+                <p style="margin:6px 0 0;font-size:13.5px;opacity:.85;">{{ selectedSection.desc }}</p>
+                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                  <sc-for list="{{ selectedSection.layerChips }}" as="chip" hint-placeholder-count="3">
+                    <span style="{{ chip.style }}">{{ chip.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="font-size:12.5px;font-weight:700;min-height:20px;">{{ songPositionLabel }}</div>
+              <p class="dc-hint">The drums come from your Week 2 grid, the chords from your Week 3 progression, and the arp from your Week 4 settings &mdash; change any of them and this arrangement changes with it.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showStyles }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="dc-kicker">Style presets &mdash; load one, then play the arrangement again</div>
+              <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                <sc-for list="{{ styleCards }}" as="s" hint-placeholder-count="4">
+                  <div class="card" style="{{ s.cardStyle }}">
+                    <div class="card-title">{{ s.name }}</div>
+                    <div class="card-meta">{{ s.meta }}</div>
+                    <p class="card-body" style="margin:0;">{{ s.desc }}</p>
+                    <button type="button" class="btn btn-secondary" onclick="{{ s.load }}" style="align-self:flex-start;">{{ s.loadLabel }}</button>
+                  </div>
+                </sc-for>
+              </div>
+              <p class="dc-hint">Loading a style rewrites tempo, swing, pad bank, drum grid, root, scale, progression and arp settings in one go &mdash; every one of them a control you set by hand earlier in the course.</p>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
+          <h2 style="margin:0;">Two tracks down.</h2>
+          <p style="margin:0;opacity:.85;">You wired the MK4 up, learned the panel, programmed beats on the pads with real velocity, played in key with Scale and Chord Mode, put the arpeggiator and the knobs to work, mapped the controller to your DAW, and arranged two finished pieces in different styles. From here the controller is no longer the thing holding you back.</p>
+          <div>
+            <h4 style="margin:0 0 8px;">Where to go next</h4>
+            <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
+              <li>A deeper course in your DAW &mdash; Ableton, FL Studio, Logic or MPC Beats. The MK4 is solved; growth now comes from software and production skill.</li>
+              <li>Basic mixing: EQ, compression and level balance, to make finished tracks sound fuller.</li>
+              <li>Music theory basics, if you want to work past the guardrails Scale and Chord Mode give you.</li>
+              <li>Melodics &mdash; or padlab, your own pad trainer &mdash; for continued finger-drumming technique.</li>
+            </ul>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="{{ restart }}" style="align-self:flex-start;">Start Over</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <footer style="display:flex;justify-content:space-between;padding:var(--space-4);border-top:1px solid var(--color-divider);">
+    <button type="button" class="btn btn-secondary" onclick="{{ goBack }}" disabled="{{ isFirst }}">&larr; Back</button>
+    <button type="button" class="btn btn-primary" onclick="{{ goNext }}" disabled="{{ isLast }}">Next &rarr;</button>
+  </footer>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog" data-course-map-dialog="true" tabIndex="-1" onclick="{{ stopProp }}" onkeydown="{{ dialogKeydown }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;">
+        <div class="dialog-title">Course map</div>
+        <sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="6">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin:12px 0 6px;">{{ grp.label }}</div>
+            <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="2">
+              <button type="button" onclick="{{ it.go }}" style="{{ it.rowStyle }}">{{ it.title }}</button>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div class="dialog-actions"><button type="button" class="btn btn-secondary" onclick="{{ closeDialog }}">Close</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+
+  // ── reference data ───────────────────────────────────────────────────────
+  // The MK4 makes no sound of its own, so everything below is a synthesized
+  // stand-in: four pad banks built from four parameterised voices, and one
+  // subtractive synth voice shared by the keys, chords and arpeggiator.
+
+  PAD_BANKS = [
+    { id:'A', name:'Bank A — Acoustic Kit', pads:[
+      { id:'a-kick',  label:'Kick',       voice:'kick',  opts:{ f0:150, f1:48, decay:0.17, gain:0.95 } },
+      { id:'a-snare', label:'Snare',      voice:'snare', opts:{ tone:190, noiseFreq:1800, Q:1.2, decay:0.16, gain:0.5 } },
+      { id:'a-hat',   label:'Closed Hat', voice:'noise', opts:{ filterType:'highpass', freq:8000, decay:0.045, gain:0.32 } },
+      { id:'a-open',  label:'Open Hat',   voice:'noise', opts:{ filterType:'highpass', freq:6500, decay:0.28, gain:0.26 } },
+      { id:'a-clap',  label:'Clap',       voice:'clap',  opts:{ freq:1500, gain:0.4 } },
+      { id:'a-rim',   label:'Rim',        voice:'noise', opts:{ filterType:'bandpass', freq:2600, Q:7, decay:0.04, gain:0.35 } },
+      { id:'a-tom',   label:'Low Tom',    voice:'tone',  opts:{ wave:'sine', freq:110, sweepTo:80, decay:0.3, gain:0.55 } },
+      { id:'a-crash', label:'Crash',      voice:'noise', opts:{ filterType:'highpass', freq:5000, decay:1.1, gain:0.2 } },
+    ] },
+    { id:'B', name:'Bank B — 808 Kit', pads:[
+      { id:'b-kick',  label:'808 Kick',   voice:'kick',  opts:{ f0:110, f1:38, decay:0.55, gain:1 } },
+      { id:'b-snare', label:'808 Snare',  voice:'snare', opts:{ tone:175, noiseFreq:1500, Q:1, decay:0.2, gain:0.45 } },
+      { id:'b-hat',   label:'808 Hat',    voice:'noise', opts:{ filterType:'highpass', freq:9000, decay:0.03, gain:0.28 } },
+      { id:'b-open',  label:'808 Open',   voice:'noise', opts:{ filterType:'highpass', freq:7000, decay:0.35, gain:0.22 } },
+      { id:'b-clap',  label:'808 Clap',   voice:'clap',  opts:{ freq:1200, gain:0.38 } },
+      { id:'b-cow',   label:'Cowbell',    voice:'tone',  opts:{ wave:'square', freq:540, decay:0.18, gain:0.22 } },
+      { id:'b-tom',   label:'808 Tom',    voice:'tone',  opts:{ wave:'sine', freq:160, sweepTo:90, decay:0.35, gain:0.5 } },
+      { id:'b-sub',   label:'Sub Drop',   voice:'tone',  opts:{ wave:'sine', freq:80, sweepTo:30, decay:0.7, gain:0.65 } },
+    ] },
+    { id:'C', name:'Bank C — Percussion', pads:[
+      { id:'c-conga-h', label:'Conga Hi', voice:'tone',  opts:{ wave:'sine', freq:400, sweepTo:360, decay:0.18, gain:0.45 } },
+      { id:'c-conga-l', label:'Conga Lo', voice:'tone',  opts:{ wave:'sine', freq:240, sweepTo:210, decay:0.25, gain:0.5 } },
+      { id:'c-shaker',  label:'Shaker',   voice:'noise', opts:{ filterType:'highpass', freq:6000, decay:0.07, gain:0.2 } },
+      { id:'c-tamb',    label:'Tambourine', voice:'noise', opts:{ filterType:'highpass', freq:7500, decay:0.18, gain:0.18 } },
+      { id:'c-wood',    label:'Woodblock', voice:'tone', opts:{ wave:'square', freq:1000, decay:0.05, gain:0.22 } },
+      { id:'c-clave',   label:'Clave',    voice:'tone',  opts:{ wave:'triangle', freq:1200, decay:0.06, gain:0.25 } },
+      { id:'c-click',   label:'Rim Click', voice:'noise', opts:{ filterType:'bandpass', freq:3000, Q:8, decay:0.035, gain:0.32 } },
+      { id:'c-ride',    label:'Ride',     voice:'noise', opts:{ filterType:'highpass', freq:8500, decay:0.6, gain:0.15 } },
+    ] },
+    { id:'D', name:'Bank D — Tuned Stabs', pads:[
+      { id:'d-bass-c', label:'Bass C',   voice:'tone', opts:{ wave:'sawtooth', midi:36, decay:0.32, gain:0.45 } },
+      { id:'d-bass-g', label:'Bass G',   voice:'tone', opts:{ wave:'sawtooth', midi:43, decay:0.32, gain:0.45 } },
+      { id:'d-stab-c', label:'Stab C',   voice:'tone', opts:{ wave:'square', midi:60, decay:0.22, gain:0.25 } },
+      { id:'d-stab-e', label:'Stab D#',  voice:'tone', opts:{ wave:'square', midi:63, decay:0.22, gain:0.25 } },
+      { id:'d-stab-g', label:'Stab G',   voice:'tone', opts:{ wave:'square', midi:67, decay:0.22, gain:0.25 } },
+      { id:'d-stab-a', label:'Stab A#',  voice:'tone', opts:{ wave:'square', midi:70, decay:0.22, gain:0.25 } },
+      { id:'d-pluck',  label:'Pluck C',  voice:'tone', opts:{ wave:'triangle', midi:72, decay:0.14, gain:0.3 } },
+      { id:'d-sweep',  label:'Noise Sweep', voice:'noise', opts:{ filterType:'highpass', freq:2000, decay:0.5, gain:0.16 } },
+    ] },
+  ];
+
+  NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  SCALES = [
+    { id:'major',    name:'Major',            steps:[0,2,4,5,7,9,11] },
+    { id:'minor',    name:'Natural Minor',    steps:[0,2,3,5,7,8,10] },
+    { id:'dorian',   name:'Dorian',           steps:[0,2,3,5,7,9,10] },
+    { id:'mixo',     name:'Mixolydian',       steps:[0,2,4,5,7,9,10] },
+    { id:'harmonic', name:'Harmonic Minor',   steps:[0,2,3,5,7,8,11] },
+    { id:'pent',     name:'Minor Pentatonic', steps:[0,3,5,7,10] },
+    { id:'blues',    name:'Blues',            steps:[0,3,5,6,7,10] },
+  ];
+
+  ARP_MODES = [
+    { id:'up',     label:'Up' },
+    { id:'down',   label:'Down' },
+    { id:'updown', label:'Up-Down' },
+    { id:'random', label:'Random' },
+  ];
+
+  // A gate mask over eight arp steps. A 0 rests that step; the note order keeps
+  // advancing underneath, so a pattern changes which notes land on the beat
+  // rather than removing any from the sequence.
+  ARP_PATTERNS = [
+    { id:'straight', name:'Straight', gate:[1,1,1,1,1,1,1,1] },
+    { id:'gallop',   name:'Gallop',   gate:[1,0,1,1,1,0,1,1] },
+    { id:'offbeat',  name:'Offbeat',  gate:[0,1,0,1,0,1,0,1] },
+    { id:'sparse',   name:'Sparse',   gate:[1,0,0,1,0,0,1,0] },
+  ];
+
+  KNOB_TARGETS = [
+    { id:'cutoff',     label:'Filter Cutoff', def:0.62 },
+    { id:'resonance',  label:'Resonance',     def:0.25 },
+    { id:'decay',      label:'Amp Decay',     def:0.35 },
+    { id:'delay',      label:'Delay Mix',     def:0.2 },
+    { id:'drive',      label:'Drive',         def:0 },
+    { id:'wave',       label:'Osc Wave',      def:0.4 },
+    { id:'padlevel',   label:'Pad Level',     def:0.75 },
+    { id:'synthlevel', label:'Synth Level',   def:0.7 },
+  ];
+
+  SONG_SECTIONS = [
+    { id:'intro', title:'Intro', bars:4, layers:['drums'],
+      desc:"Drums alone. Four bars is plenty — the job of an intro is to set the tempo and the feel, not to be interesting." },
+    { id:'build', title:'Build', bars:4, layers:['drums','chords'],
+      desc:"The chord progression joins the drums. Same groove, more harmony: the listener now knows the key." },
+    { id:'main', title:'Main', bars:8, layers:['drums','chords','arp'],
+      desc:"Everything at once — drums, chords and the arpeggio on top. This is the section people remember, so it gets the most bars." },
+    { id:'outro', title:'Outro', bars:4, layers:['chords'],
+      desc:"Drums drop out and the chords ring on alone. Ending by removing parts is the simplest ending that still sounds deliberate." },
+  ];
+
+  LAYOUT_PARTS = [
+    { id:'keys', name:'25 mini keys',
+      blurb:"Two octaves of velocity-sensitive mini keys. Two octaves is not much range, which is exactly what the Octave buttons are for." },
+    { id:'pads', name:'8 MPC pads',
+      blurb:"Backlit, velocity-sensitive pads — the same pad feel Akai's MPC hardware is known for. Drums live here, but a pad can trigger any sound, or a clip in your DAW." },
+    { id:'banks', name:'Pad banks',
+      blurb:"The 8 pads switch between banks, so a small grid reaches far more than 8 sounds — four banks is 32. Bank switching is how a full kit fits under two rows." },
+    { id:'knobs', name:'8 assignable knobs',
+      blurb:"Each knob sends a MIDI CC. What that CC does is decided by your software, which is why the same knob can be a filter in one plugin and a send level in another." },
+    { id:'wheels', name:'Pitch and modulation controls',
+      blurb:"Pitch bend and modulation, the two expressive controls every keyboard part eventually wants. On earlier MPK Minis these were a joystick; check which form your unit uses." },
+    { id:'screen', name:'Colour screen',
+      blurb:"Shows the active preset, mode and parameter values, so setting scale, chord and arp options no longer means counting Shift presses in the manual." },
+    { id:'shift', name:'Shift',
+      blurb:"The second-function key. Held with another control it reaches a mode or setting that has no dedicated button — the main thing to look up per task in the manual." },
+    { id:'arp', name:'Arp controls',
+      blurb:"Turns the arpeggiator on and sets its mode, rate and range. Hold a chord and the arp turns it into a moving line." },
+    { id:'octave', name:'Octave − / +',
+      blurb:"Shifts all 25 keys up or down an octave, which is how a two-octave keyboard covers a bass part and a lead line in the same session." },
+    { id:'transport', name:'Transport buttons',
+      blurb:"Play, stop and record, sent to your DAW so you can start and stop a take without reaching for the laptop." },
+    { id:'usb', name:'USB-C port',
+      blurb:"Power, MIDI and the connection to your computer, all on one cable. If a cable charges a phone but the controller never appears, it is a charge-only cable with no data lines." },
+    { id:'sustain', name:'Sustain pedal input',
+      blurb:"A jack for a standard sustain pedal. Optional, but it is what lets chords ring while both hands move on to something else." },
+  ];
+
+  LESSONS = [
+    { id:'quickstart', week:'Week 1', kind:'Official video', source:"Akai's MPK Academy channel",
+      title:'Getting Started with MPK Mini IV — Quickstart Guide',
+      covers:"Connecting the controller and loading the Studio Instrument Collection. The shortest path from box to first sound." },
+    { id:'buyers-checklist', week:'Week 1', kind:'Comparison and tutorial', source:'Third-party channel',
+      title:"Akai MPK Mini MK4 vs MK3 vs Launchkey 4 vs Minilab 3 — buyer's checklist and tutorial",
+      covers:"Framed as a comparison, but contains a genuine walkthrough of the MK4-specific features and what changed from the MK3." },
+    { id:'beat-in-ableton', week:'Week 2', kind:'Video', source:'Third-party channel',
+      title:'Akai MPK Mini MK4 — Making a Beat in Ableton',
+      covers:"A beat built from scratch on the MK4 in Ableton — the best end-to-end workflow example filmed on this unit rather than an older one." },
+    { id:'melodics', week:'Week 2', kind:'Practice app', source:'Melodics (third party)',
+      title:'Melodics — interactive finger-drumming lessons',
+      covers:"Gamified pad practice with real-time feedback on your timing. Not MK4-specific, but the controller plugs straight in and daily reps are exactly what pad technique needs." },
+    { id:'padlab', week:'Week 2', kind:'Practice app', source:'padlab (your own project)',
+      title:'padlab — a Melodics-style pad trainer',
+      covers:"The same drill-with-feedback idea as Melodics, in a project you control. Either one satisfies what Week 2 actually needs, which is short daily reps rather than a particular app." },
+    { id:'deep-dive', week:'Week 3', kind:'Video (MK2/MK3-era)', source:'Third-party channel',
+      title:'A deep dive to AKAI MPK MINI — tutorial guide',
+      covers:"Pads, arpeggiator, chord and scale mode and knob mapping, in more depth than any MK4-specific video yet. Some buttons and screens differ on the MK4; the workflow concepts transfer almost entirely." },
+    { id:'do-everything', week:'Week 3', kind:'Video (MK2/MK3-era)', source:'Third-party channel',
+      title:'Ultimate Akai MPK Mini DO EVERYTHING!!!',
+      covers:"A second pass over the same ground as the deep dive. Worth watching when one explanation of scale or chord mode has not clicked." },
+    { id:'ableton-setup', week:'Week 4', kind:'Official article', source:"Akai Pro's support site",
+      title:'MPK mini IV | Ableton Live Setup Guide',
+      covers:"Text, not video, and the most thorough MK4-specific document there is: firmware update, DAW control script, MIDI port settings, pad clip-launching and transport mapping." },
+    { id:'first-pop-song', week:'Week 5', kind:'Official video', source:'Akai Pro',
+      title:'MPK mini | Making Your First Pop Song',
+      covers:"Akai's own walkthrough of building a complete song in MPC Beats — the closest thing to a template for the Week 5 project." },
+  ];
+
+  STYLES = [
+    { id:'lofi', name:'Lo-Fi Hip Hop', tempo:84, swing:0.3, bank:0, root:9, scale:'dorian',
+      progression:[0,3,5,4], arpMode:'up', arpRate:4, arpOctaves:1, arpPattern:'sparse',
+      desc:"Slow, heavily swung, and sparse. The space between hits is the genre.",
+      beat:{ 'a-kick':[[0,120],[10,96]], 'a-snare':[[4,110],[12,110]], 'a-hat':[[2,64],[6,48],[10,64],[14,48]] } },
+    { id:'house', name:'House', tempo:124, swing:0, bank:1, root:0, scale:'minor',
+      progression:[0,5,3,4], arpMode:'updown', arpRate:2, arpOctaves:2, arpPattern:'straight',
+      desc:"Four-on-the-floor, straight 16ths, offbeat open hat. Relentless on purpose.",
+      beat:{ 'b-kick':[[0,127],[4,127],[8,127],[12,127]], 'b-clap':[[4,104],[12,104]],
+             'b-hat':[[2,72],[6,72],[10,72],[14,72]], 'b-open':[[2,60],[10,60]] } },
+    { id:'trap', name:'Trap', tempo:140, swing:0.1, bank:1, root:2, scale:'harmonic',
+      progression:[0,5,0,4], arpMode:'down', arpRate:1, arpOctaves:2, arpPattern:'gallop',
+      desc:"Half-time snare, sub-heavy kick, and hats that roll. Note Repeat earns its keep here.",
+      beat:{ 'b-kick':[[0,127],[6,110],[11,104]], 'b-snare':[[8,120]], 'b-sub':[[0,90]],
+             'b-hat':[[0,80],[2,56],[4,80],[6,56],[7,48],[8,80],[10,56],[12,80],[14,56],[15,48]] } },
+    { id:'ambient', name:'Ambient', tempo:72, swing:0, bank:2, root:4, scale:'major',
+      progression:[0,4,5,3], arpMode:'random', arpRate:4, arpOctaves:3, arpPattern:'offbeat',
+      desc:"Almost no drums, long chords, a wandering arp. Proof that a track needs neither speed nor a backbeat.",
+      beat:{ 'c-shaker':[[2,40],[6,40],[10,40],[14,40]], 'c-ride':[[0,36],[8,36]], 'c-conga-l':[[12,48]] } },
+  ];
+
+  VELOCITIES = [{ label:'Soft', value:48 }, { label:'Medium', value:88 }, { label:'Full', value:127 }];
+  // In 16th-note steps: a repeat every two steps is an eighth, every step a 16th,
+  // every half step a 32nd.
+  REPEAT_RATES = [{ label:'1/8', value:2 }, { label:'1/16', value:1 }, { label:'1/32', value:0.5 }];
+  SWING_AMOUNTS = [{ label:'Straight', value:0 }, { label:'Light', value:0.1 }, { label:'Medium', value:0.2 }, { label:'Heavy', value:0.3 }];
+  ARP_RATES = [{ label:'1/4', value:4 }, { label:'1/8', value:2 }, { label:'1/16', value:1 }];
+  ARP_OCTAVES = [{ label:'1 oct', value:1 }, { label:'2 oct', value:2 }, { label:'3 oct', value:3 }];
+
+  // ── state ────────────────────────────────────────────────────────────────
+  // Every resettable field lives here so the initial state and restart() can't drift apart.
+  initialState() {
+    return {
+      step: 0,
+      dialogOpen: false,
+      checks: {},
+      cableToggles: {},
+      layoutSel: 0,
+      tempo: 92,
+      swing: 0.1,
+      padBank: 0,
+      padSel: null,
+      velocity: 88,
+      noteRepeat: false,
+      repeatRate: 1,
+      beat: this.defaultBeat(),
+      beatPlaying: false, beatCol: -1,
+      octave: 0,
+      scaleOn: true,
+      scaleRoot: 0,
+      scaleId: 'minor',
+      lastNoteLabel: 'Press a key to hear it.',
+      chordOn: false,
+      progression: [0, 5, 3, 4],
+      progPlaying: false, progBar: -1,
+      arpMode: 'up',
+      arpRate: 2,
+      arpOctaves: 2,
+      arpPatternId: 'straight',
+      arpFreeze: false,
+      arpMutate: false,
+      arpDegree: 0,
+      arpPlaying: false,
+      knobs: this.KNOB_TARGETS.map(t => t.def),
+      knobTargets: this.KNOB_TARGETS.map(t => t.id),
+      songPlaying: false, songBar: -1, songCol: -1,
+      perfSel: 0,
+      styleId: null,
+    };
+  }
+
+  // A beginner beat that already varies its velocities: the point of Week 2's
+  // milestone is that not every hit is at 127.
+  defaultBeat() {
+    return this.mkBeat({
+      'a-kick':  [[0,127],[8,110],[10,88]],
+      'a-snare': [[4,118],[12,118]],
+      'a-hat':   [[0,88],[2,48],[4,88],[6,48],[8,88],[10,48],[12,88],[14,48]],
+    });
+  }
+  mkBeat(spec) {
+    const out = {};
+    for (const id of Object.keys(spec)) {
+      const row = new Array(16).fill(0);
+      for (const [stepIdx, vel] of spec[id]) row[stepIdx] = vel;
+      out[id] = row;
+    }
+    return out;
+  }
+
+  state = this.initialState();
+
+  constructor(props) {
+    super(props);
+    this.STEPS = this.buildSteps();
+    this.sequences = {};
+    this.oneShots = [];
+  }
+
+  componentWillUnmount() {
+    this.stopAll();
+    if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+  }
+
+  buildSteps() {
+    const W = n => `Week ${n}`;
+    return [
+      { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
+
+      { id:'resources', kind:'content', weekTag:'Overview', title:'Lessons & Resources', navLabel:'Lessons & Resources',
+        widgets:['lessons'], note:'Read this once, then come back per week',
+        items:[
+          { text:"There is no single beginner-to-pro course built around this exact unit, the way there is for some DJ controllers. The MK4 is recent, so most in-depth video is either Akai's own short official clips or general reviews rather than structured lessons." },
+          { text:"That is less of a problem than it sounds. Nearly every skill you need — finger drumming, scale and chord mode, the arpeggiator, knob and DAW mapping — is shared across the whole MPK Mini line, so MK3-era tutorials still teach the right workflow. A few buttons and screens differ; the concepts do not." },
+          { text:"Watch each lesson in the week it is listed for rather than all at once. Watching ahead mostly produces the feeling of having learned something." },
+        ],
+      },
+
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview',
+        title:'Week 1: Setup & Layout',
+        objective:"Get the controller talking to your computer, and learn every physical control by name.",
+        milestone:"Sound comes out when you press a key or a pad, and you can name every control on the panel." },
+      { id:'w1-1', kind:'content', weekTag:W(1), title:'1. Connect & Register', widgets:['cables'],
+        cables:[ { from:'MPK Mini MK4 USB-C', to:'Computer USB port' }, { from:'Computer audio out', to:'Headphones / speakers' } ],
+        items:[
+          { text:"Power: the MK4 is bus-powered over USB-C — there is no separate adapter. Plugging the cable in powers it on. If nothing lights up, suspect the cable before the controller: charge-only USB-C cables carry no data." },
+          { text:"Register the unit on Akai Pro's site with its serial number. Registration is what unlocks the bundled software, so do it before you go looking for downloads." },
+          { text:"Download and install the bundle: MPC Beats (a free DAW) and the Studio Instrument Collection (the sounds). The controller sends MIDI and nothing else — without software there is nothing to hear." },
+          { text:"Watch: MPK Academy — Getting Started with MPK Mini IV, and follow it with your own unit connected." },
+          { text:"Start with the Studio Instrument Collection as a standalone app rather than inside a DAW. One window, one preset, one thing that can go wrong." },
+        ],
+      },
+      { id:'w1-2', kind:'content', weekTag:W(1), title:'2. Know the Panel', widgets:['layout'],
+        items:[
+          { text:"Tap through every control below and read what it does. Naming things is not busywork here — every tutorial you watch from now on will say \"hold Shift and press…\" and assume you know which is which." },
+          { text:"Find each one on your own unit as you go. The map below is the vocabulary; your MK4's panel is the territory." },
+        ],
+      },
+      { id:'w1-3', kind:'content', weekTag:W(1), title:'3. First Sound', widgets:['keys'],
+        items:[
+          { text:"Load any preset in the Studio Instrument Collection and play a few keys. If you see MIDI activity in the software but hear nothing, the problem is the audio output, not the controller." },
+          { text:"Press Octave − and Octave + and play again. Two octaves of keys reach a lot further than they look once you can move them." },
+          { text:"Play the practice keyboard below to hear the same idea in the browser. It is a stand-in — your MK4 will sound like whatever plugin you loaded, not like this." },
+        ],
+      },
+
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview',
+        title:'Week 2: Pads & Finger Drumming',
+        objective:"Program a beat using nothing but the eight pads — and make it breathe by varying how hard you hit them.",
+        milestone:"A one-bar drum loop programmed on the pads alone, with real velocity variation rather than every hit at full." },
+      { id:'w2-1', kind:'content', weekTag:W(2), title:'1. Pads, Banks & Velocity', widgets:['pads'],
+        items:[
+          { text:"Load a drum kit in MPC Beats or the Studio Instrument Collection, then play the pads. Each pad triggers one sound." },
+          { text:"Pad banks: the 8 pads switch between banks, so four banks put 32 sounds under your fingers. Switch banks below and hear each kit change." },
+          { text:"Velocity is how hard you hit. Play the same pad Soft, then Full, and listen — this is the difference between a drum machine and a drummer." },
+          { text:"Note Repeat: arm it, hold a pad, and the sound retriggers at the chosen rate instead of once. It is how hi-hat rolls and trap hats get played rather than drawn in." },
+          { text:"Practice daily rather than weekly. Pad coordination is physical technique; it responds to reps, not to study.", subitems:[
+            "20-30 minutes is plenty for one session.",
+            "Kick and snare first, hats after — hands before ornamentation.",
+            "If you want structured drills with feedback, Melodics plugs straight into the MK4 — as does padlab, if you would rather drill in your own trainer.",
+          ] },
+        ],
+      },
+      { id:'w2-2', kind:'content', weekTag:W(2), title:'2. Program a One-Bar Beat', widgets:['pads','beat','tempo'],
+        items:[
+          { text:"Build the classic starting point: kick on step 1, snare on steps 5 and 13, hats on the off-beats. The grid below starts there — press Play and listen before you change anything." },
+          { text:"Now vary the velocities. Pick Soft above and write a couple of quiet hat hits between the loud ones. A hat line where every hit is identical is the most common tell in a beginner's beat." },
+          { text:"Add swing. Straight 16ths are correct and lifeless; a Light or Medium swing delays every off-beat 16th and is most of what makes a groove feel human." },
+          { text:"Watch: Akai MPK Mini MK4 — Making a Beat in Ableton, for the same job done end to end in a real DAW." },
+        ],
+      },
+
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview',
+        title:'Week 3: Keys, Scale Mode & Chord Mode',
+        objective:"Play melodic parts with confidence, with or without a theory background.",
+        milestone:"A four-to-eight bar chord progression or melody you built using Scale and Chord Mode." },
+      { id:'w3-1', kind:'content', weekTag:W(3), title:'1. Scale Mode', widgets:['scale','keys'],
+        items:[
+          { text:"Scale Mode constrains the keyboard to one scale, so the notes that would sound wrong are simply not available. It is the fastest way to sound in key on day one." },
+          { text:"Pick a root and a scale below, then play. In-scale keys are tinted; anything else snaps to its nearest scale tone, so no key can produce a wrong note. Check your manual for exactly how your MK4 maps out-of-scale keys." },
+          { text:"Turn Scale Mode off and play the same keys. Hearing what it was protecting you from is the point of the exercise." },
+          { text:"Minor Pentatonic is the friendliest starting scale — five notes, no leading tone, and almost any order of them sounds intentional." },
+          { text:"Watch: A deep dive to AKAI MPK MINI, or Ultimate Akai MPK Mini DO EVERYTHING, for both modes walked through on the hardware." },
+        ],
+      },
+      { id:'w3-2', kind:'content', weekTag:W(3), title:'2. Chord Mode & Your First Progression', widgets:['scale','chord','keys','tempo'],
+        items:[
+          { text:"Chord Mode turns one key press into a full chord, so a progression is four presses rather than twelve. Turn it on and play the keyboard again." },
+          { text:"Build a four-bar progression below. Each slot is a degree of the current scale, written in Roman numerals — capitals are major chords, lower case minor, and a small circle marks a diminished chord." },
+          { text:"i - VI - IV - V, the default, is a minor progression you have heard several hundred times. Change one slot at a time and listen to what each swap does." },
+          { text:"Then play the same progression by hand with Chord Mode off and Scale Mode on. Slower, and the single best exercise in this week — it is how the shapes stop being abstract." },
+        ],
+      },
+
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview',
+        title:'Week 4: Arpeggiator, Knobs & DAW Control',
+        objective:"Use the MK4's newer features, and make the controller drive your DAW instead of just feeding it notes.",
+        milestone:"Your knobs move a real plugin parameter, and play, stop and record work from the controller's transport buttons." },
+      { id:'w4-1', kind:'content', weekTag:W(4), title:'1. The Arpeggiator', widgets:['arp','tempo'],
+        items:[
+          { text:"An arpeggiator takes a held chord and plays its notes one at a time, in time. Hold a chord, get a moving line — no keyboard technique required." },
+          { text:"Work through the controls in order: Mode changes the direction, Rate the speed, Octaves the range. Change one at a time with it running." },
+          { text:"Pattern adds rests to the arp's rhythm, so it stops sounding like an exercise. Freeze locks the note order that is currently running, and Mutate keeps nudging one step of it to another note of the same chord." },
+          { text:"The arp is a texture, not a part. It works best under something else — which is exactly what Week 5 does with it." },
+        ],
+      },
+      { id:'w4-2', kind:'content', weekTag:W(4), title:'2. The 8 Knobs', widgets:['knobs'],
+        items:[
+          { text:"Start the loop and turn Filter Cutoff. That is the whole idea: a knob moves a parameter in software, in real time, while the music plays." },
+          { text:"Each knob sends a MIDI CC number and nothing more. The software decides what that CC controls, which is why the same knob can be a filter in one plugin and a reverb send in another." },
+          { text:"The reliable way to map one is MIDI Learn: right-click the plugin control, choose Learn (or MIDI Learn), turn the knob. Your unit's CC assignments live in the MPK Mini IV preset editor and its manual." },
+          { text:"Reassign a couple of knobs below and hear what changes. Filter Cutoff and Amp Decay are the two worth muscle memory — they shape more of a sound's character than anything else on the list." },
+        ],
+      },
+      { id:'w4-3', kind:'content', weekTag:W(4), title:'3. DAW Control & Mapping',
+        items:[
+          { text:"Update the firmware first, before any DAW setup. A mapping problem on old firmware can waste an evening that a two-minute update would have prevented." },
+          { text:"Ableton Live: follow Akai's own MPK mini IV Ableton Live Setup Guide. It is a support article rather than a video, and it is the most thorough MK4-specific document available.", subitems:[
+            "Install the DAW control script Akai provides.",
+            "Enable the MK4's ports in Live's MIDI preferences, with Track, Sync and Remote set as the guide specifies.",
+            "Confirm the pads launch clips and the transport buttons drive Live's transport.",
+          ] },
+          { text:"FL Studio, Logic or another DAW: Akai ship mappings for the major DAWs — search that DAW's own MPK Mini MK4 setup guide rather than adapting the Ableton steps." },
+          { text:"Whatever the DAW, MIDI Learn is the universal fallback when a specific control does not map itself." },
+          { text:"Test the milestone properly: press record on the controller, play four bars, press stop, and check that a clip exists. Transport that only half works will annoy you every session from here on." },
+        ],
+      },
+
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview',
+        title:'Week 5: Building a Full Track',
+        objective:"Combine four weeks of parts into one finished piece of music.",
+        milestone:"One finished short track, arranged start to finish, built entirely on the MK4." },
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Arranging the Parts', widgets:['song','tempo'],
+        items:[
+          { text:"An arrangement is mostly deciding when parts enter and leave. The four sections below do it with three parts and no new material at all." },
+          { text:"Press Play and follow the timeline: drums alone, chords join, the arp comes in on top, then everything drops away but the chords." },
+          { text:"Keep it short. Thirty to sixty seconds is a completely valid first finished piece, and a finished short piece teaches more than a perfect eight-bar loop." },
+          { text:"Watch: MPK mini — Making Your First Pop Song, for the same structure built in MPC Beats with real instruments." },
+          { text:"Then build yours in your DAW: record the drum pattern, the chords and the arp as separate clips, and arrange them the way the timeline below does." },
+        ],
+      },
+
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview',
+        title:'Week 6: Refine & Expand',
+        objective:"Tighten the workflow, prove the skills transfer, and work out what to learn next.",
+        milestone:"Two finished tracks, and a clear idea of whether theory, mixing or a specific genre is the next thing to study." },
+      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Revisit, Then Change Style', widgets:['styles','song'],
+        items:[
+          { text:"Go back to your Week 2 beat first. Most people's rhythm programming improves sharply once they have spent time on melody, arps and knob mapping — the same grid usually reveals two or three lazy choices." },
+          { text:"Then build a second track in a different style. Load a preset below and play the arrangement again: same skills, different tempo, swing, kit, scale and arp settings." },
+          { text:"Notice what each style actually changes. Lo-fi is slow and heavily swung; house is straight and relentless; trap is half-time with rolling hats; ambient barely has drums at all." },
+          { text:"Building the second track in a genre you did not choose first is the real test of whether the skills transferred, or whether you learned one song." },
+        ],
+      },
+      { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Practice Rhythm & What Comes Next',
+        items:[
+          { text:"Short and frequent beats long and rare. Twenty to thirty minutes daily builds pad coordination in a way one long weekend session does not." },
+          { text:"Finish something small every week rather than perfecting one loop for a month. Momentum matters far more than polish this early." },
+          { text:"By now the bottleneck has moved. It is no longer the controller — it is DAW skill, so general MPC Beats or Ableton tutorials will teach you more per hour than another MK4 video." },
+          { text:"Pick the next thing deliberately: music theory if Scale and Chord Mode feel like guardrails, mixing if your tracks sound thin next to references, or a specific genre's production techniques if you know what you want to make." },
+        ],
+      },
+
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:'Two tracks down.' },
+    ];
+  }
+
+  // ── navigation ───────────────────────────────────────────────────────────
+  getDialogFocusables(dialog) {
+    if (!dialog || typeof dialog.querySelectorAll !== 'function') return [];
+    return Array.from(dialog.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    ));
+  }
+  restoreDialogFocus(target) {
+    if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus();
+  }
+  openCourseMap() {
+    this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement;
+    this.setState({ dialogOpen: true }, () => {
+      if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
+      const dialog = document.querySelector('[data-course-map-dialog="true"]');
+      const target = this.getDialogFocusables(dialog)[0] || dialog;
+      if (target && typeof target.focus === 'function') target.focus();
+    });
+  }
+  closeCourseMap() {
+    const target = this.dialogReturnFocus;
+    this.dialogReturnFocus = null;
+    this.setState({ dialogOpen: false }, () => this.restoreDialogFocus(target));
+  }
+  onCourseMapKeydown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.closeCourseMap();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const focusables = this.getDialogFocusables(e.currentTarget);
+    if (!focusables.length) {
+      e.preventDefault();
+      if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus();
+      return;
+    }
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+  goToStep(i) {
+    this.stopAll();
+    const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
+    const target = this.state.dialogOpen ? this.dialogReturnFocus : null;
+    if (target) this.dialogReturnFocus = null;
+    this.setState({ step: idx, dialogOpen: false }, () => this.restoreDialogFocus(target));
+  }
+  goNext() { this.goToStep(this.state.step + 1); }
+  goBack() { this.goToStep(this.state.step - 1); }
+  restart() {
+    this.stopAll();
+    this.arpSeqRef = null;
+    this.setState(this.initialState());
+  }
+  buildNavGroups() {
+    const groups = [];
+    this.STEPS.forEach((s, i) => {
+      let g = groups.find(x => x.label === s.weekTag);
+      if (!g) { g = { label: s.weekTag, items: [] }; groups.push(g); }
+      g.items.push({
+        title: s.navLabel || s.title,
+        go: () => this.goToStep(i),
+        rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
+      });
+    });
+    return groups;
+  }
+
+  // ── checklist & cables ───────────────────────────────────────────────────
+  toggleCheck(stepId, idx) {
+    this.setState(s => {
+      const arr = (s.checks[stepId] || []).slice();
+      arr[idx] = !arr[idx];
+      return { checks: { ...s.checks, [stepId]: arr } };
+    });
+  }
+  buildItems(step) {
+    if (!step.items) return [];
+    const checks = this.state.checks[step.id] || [];
+    return step.items.map((it, i) => ({
+      text: it.text,
+      checked: !!checks[i],
+      toggle: () => this.toggleCheck(step.id, i),
+      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
+      hasSub: !!(it.subitems && it.subitems.length),
+      subitems: it.subitems || [],
+    }));
+  }
+  toggleCable(key) { this.setState(s => ({ cableToggles: { ...s.cableToggles, [key]: !s.cableToggles[key] } })); }
+  buildCables(step) {
+    if (!step.cables) return [];
+    return step.cables.map((d, i) => {
+      const key = `${step.id}:${i}`;
+      const connected = !!this.state.cableToggles[key];
+      return { from: d.from, to: d.to, toggle: () => this.toggleCable(key), pressed: connected ? 'true' : 'false',
+        dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
+        lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
+        statusText: connected ? 'Connected' : 'Click to connect' };
+    });
+  }
+
+  // ── step scheduling ──────────────────────────────────────────────────────
+  // Every engine below queues its audio ahead of time against the AudioContext
+  // clock rather than firing each note from the timer callback. setInterval and
+  // setTimeout drift by several ms a tick, and browsers clamp background-tab
+  // timers to ~1s; either is plainly audible as a wobbling groove. Here the
+  // timer only decides *when to look ahead* — each note's start time is computed
+  // exactly on the audio clock.
+  SCHED_TICK_MS = 25;
+  // Queue only a little while the tab is visible, so edits to a playing pattern
+  // are heard almost immediately...
+  LOOKAHEAD_VISIBLE = 0.12;
+  // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in
+  // the audio. Nobody is editing a pattern they can't see.
+  LOOKAHEAD_HIDDEN = 1.6;
+
+  lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
+
+  // spec.onStep(col, time) schedules one step's audio at the exact AudioContext
+  // time `time`, returning the source nodes it created (so a stop can silence
+  // ones that haven't sounded yet) plus optional `meta` carried through to the
+  // visual update. spec.stepDur(col) is the seconds until the next step;
+  // spec.nextCol(col) advances it.
+  startSequence(key, spec) {
+    const ctx = this.audioCtx;
+    const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
+                  queue: [], pending: [], shown: null, timer: null };
+    this.sequences[key] = seq;
+    const tick = () => {
+      const horizon = ctx.currentTime + this.lookahead();
+      while (seq.nextTime < horizon) {
+        const at = seq.nextTime;
+        const r = spec.onStep(seq.col, at) || {};
+        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
+        seq.queue.push({ col: seq.col, time: at, meta: r.meta });
+        seq.nextTime = at + spec.stepDur(seq.col);
+        seq.col = spec.nextCol(seq.col);
+      }
+      this.drainSequence(seq);
+      seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
+    };
+    tick();
+    return seq;
+  }
+
+  // Move the on-screen playhead to the step that is actually sounding now, not
+  // the one most recently *scheduled* — those are up to a lookahead apart.
+  drainSequence(seq) {
+    const now = this.audioCtx.currentTime;
+    let cur = null;
+    while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
+    seq.pending = seq.pending.filter(p => p.time + 1 > now);
+    if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
+      seq.shown = cur;
+      seq.spec.onVisual(cur.col, cur.meta);
+    }
+  }
+
+  // Silence steps queued but not yet sounded. Without this, stopping would still
+  // let a lookahead's worth of already-scheduled notes through.
+  flushPending(seq, from) {
+    let earliest = seq.nextTime;
+    seq.pending.forEach(p => {
+      if (p.time > from) {
+        try { p.node.stop(from); } catch (e) {}
+        if (p.time < earliest) earliest = p.time;
+      }
+    });
+    seq.pending = seq.pending.filter(p => p.time <= from);
+    seq.queue = seq.queue.filter(q => q.time <= from);
+    return earliest;
+  }
+
+  stopSequence(key) {
+    const seq = this.sequences[key];
+    if (!seq) return;
+    clearTimeout(seq.timer);
+    if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
+    delete this.sequences[key];
+  }
+
+  // Pad hits and key presses are played outside any sequence, so they get their
+  // own register — a Note Repeat roll can still have most of its hits in the
+  // future when you navigate away from the step that started it.
+  pushOneShots(shots) {
+    const now = this.audioCtx.currentTime;
+    this.oneShots = this.oneShots.filter(o => o.time + 2 > now).concat(shots);
+  }
+  flushOneShots(from) {
+    this.oneShots.forEach(o => { if (o.time > from) { try { o.node.stop(from); } catch (e) {} } });
+    this.oneShots = this.oneShots.filter(o => o.time <= from);
+  }
+
+  stopAll() {
+    for (const key of Object.keys(this.sequences || {})) this.stopSequence(key);
+    if (this.audioCtx) this.flushOneShots(this.audioCtx.currentTime);
+    const s = this.state;
+    if (s.beatPlaying || s.progPlaying || s.arpPlaying || s.songPlaying) {
+      this.setState({ beatPlaying: false, beatCol: -1, progPlaying: false, progBar: -1,
+                      arpPlaying: false, songPlaying: false, songBar: -1, songCol: -1 });
+    }
+  }
+
+  // ── audio graph ──────────────────────────────────────────────────────────
+  ensureAudio() {
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (!this.noiseBuffer) {
+      const size = Math.floor(this.audioCtx.sampleRate * 0.5);
+      const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+      this.noiseBuffer = buf;
+    }
+    if (!this.master) this.buildGraph();
+    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+  }
+  // Built once and kept: the knobs edit this graph live, which is the whole
+  // point of Week 4, so it can't be torn down between plays.
+  buildGraph() {
+    const ctx = this.audioCtx;
+    this.master = ctx.createGain(); this.master.gain.value = 0.9;
+    this.master.connect(ctx.destination);
+
+    this.padGain = ctx.createGain();
+    this.padGain.connect(this.master);
+
+    this.synthIn = ctx.createBiquadFilter(); this.synthIn.type = 'lowpass';
+    this.shaper = ctx.createWaveShaper();
+    this.synthGain = ctx.createGain();
+    this.synthIn.connect(this.shaper); this.shaper.connect(this.synthGain);
+    this.synthGain.connect(this.master);
+
+    this.delay = ctx.createDelay(1.5);
+    this.delayFb = ctx.createGain(); this.delayFb.gain.value = 0.3;
+    this.delayWet = ctx.createGain();
+    this.synthGain.connect(this.delay);
+    this.delay.connect(this.delayFb).connect(this.delay);
+    this.delay.connect(this.delayWet).connect(this.master);
+
+    this.applyKnobs();
+  }
+  makeDistortionCurve(amount) {
+    const k = amount * 50;
+    const n = 4096;
+    const curve = new Float32Array(n);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = k === 0 ? x : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+  }
+
+  // ── knobs ────────────────────────────────────────────────────────────────
+  // A knob is only a CC sender; what it does lives here, in the "plugin".
+  // An unassigned target falls back to its own default rather than to zero,
+  // so reassigning a knob never silently mutes the instrument.
+  knobValue(targetId) {
+    const i = this.state.knobTargets.indexOf(targetId);
+    if (i >= 0) return this.state.knobs[i];
+    const t = this.KNOB_TARGETS.find(x => x.id === targetId);
+    return t ? t.def : 0;
+  }
+  knobWave() {
+    return ['sine', 'triangle', 'sawtooth', 'square'][Math.min(3, Math.floor(this.knobValue('wave') * 4))];
+  }
+  synthDecay() { return 0.12 + this.knobValue('decay') * 1.2; }
+  applyKnobs() {
+    if (!this.master) return;
+    this.synthIn.frequency.value = 200 * Math.pow(60, this.knobValue('cutoff'));
+    this.synthIn.Q.value = 0.7 + this.knobValue('resonance') * 18;
+    this.shaper.curve = this.makeDistortionCurve(this.knobValue('drive'));
+    this.delayWet.gain.value = this.knobValue('delay') * 0.5;
+    this.delay.delayTime.value = this.baseStepSeconds() * 2;
+    this.padGain.gain.value = this.knobValue('padlevel') * 1.2;
+    this.synthGain.gain.value = this.knobValue('synthlevel');
+  }
+  stepKnob(i, delta) {
+    this.setState(s => {
+      const knobs = s.knobs.slice();
+      knobs[i] = Math.max(0, Math.min(1, +(knobs[i] + delta).toFixed(3)));
+      return { knobs };
+    }, () => this.applyKnobs());
+  }
+  cycleKnobTarget(i) {
+    this.setState(s => {
+      const targets = s.knobTargets.slice();
+      const next = this.KNOB_TARGETS[(this.KNOB_TARGETS.findIndex(t => t.id === targets[i]) + 1) % this.KNOB_TARGETS.length];
+      targets[i] = next.id;
+      const knobs = s.knobs.slice();
+      knobs[i] = next.def;
+      return { knobTargets: targets, knobs };
+    }, () => this.applyKnobs());
+  }
+
+  // ── voices ───────────────────────────────────────────────────────────────
+  voiceKick(t, level, opts, out) {
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(opts.f0, t);
+    osc.frequency.exponentialRampToValueAtTime(opts.f1, t + opts.decay * 0.8);
+    g.gain.setValueAtTime(level, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + opts.decay);
+    osc.connect(g).connect(out);
+    osc.start(t); osc.stop(t + opts.decay + 0.03);
+    return osc;
+  }
+  voiceNoise(t, level, opts, out) {
+    const ctx = this.audioCtx;
+    const src = ctx.createBufferSource(); src.buffer = this.noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = opts.filterType; filter.frequency.value = opts.freq;
+    if (opts.Q) filter.Q.value = opts.Q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(level, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + opts.decay);
+    src.connect(filter).connect(g).connect(out);
+    src.start(t); src.stop(t + opts.decay + 0.02);
+    return src;
+  }
+  voiceTone(t, level, opts, out) {
+    const ctx = this.audioCtx;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = opts.wave || 'sine';
+    const f0 = opts.midi != null ? this.midiToFreq(opts.midi) : opts.freq;
+    osc.frequency.setValueAtTime(f0, t);
+    if (opts.sweepTo) osc.frequency.exponentialRampToValueAtTime(opts.sweepTo, t + opts.decay);
+    g.gain.setValueAtTime(level, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + opts.decay);
+    osc.connect(g).connect(out);
+    osc.start(t); osc.stop(t + opts.decay + 0.03);
+    return osc;
+  }
+  voiceSnare(t, level, opts, out) {
+    const noise = this.voiceNoise(t, level, { filterType: 'bandpass', freq: opts.noiseFreq, Q: opts.Q, decay: opts.decay }, out);
+    const body = this.voiceTone(t, level * 0.6, { wave: 'triangle', freq: opts.tone, decay: opts.decay * 0.5 }, out);
+    return [noise, body];
+  }
+  // Three fast noise bursts and a longer tail — the standard way a clap gets its
+  // characteristic flam without a sample.
+  voiceClap(t, level, opts, out) {
+    const nodes = [];
+    for (let i = 0; i < 3; i++) {
+      nodes.push(this.voiceNoise(t + i * 0.012, level, { filterType: 'bandpass', freq: opts.freq, Q: 1.4, decay: 0.03 }, out));
+    }
+    nodes.push(this.voiceNoise(t + 0.03, level * 0.7, { filterType: 'bandpass', freq: opts.freq, Q: 1.1, decay: 0.16 }, out));
+    return nodes;
+  }
+  padNodes(pad, t, vel) {
+    const level = Math.max(0.0005, (vel / 127) * (pad.opts.gain != null ? pad.opts.gain : 0.5));
+    const out = this.padGain;
+    if (pad.voice === 'kick') return [this.voiceKick(t, level, pad.opts, out)];
+    if (pad.voice === 'noise') return [this.voiceNoise(t, level, pad.opts, out)];
+    if (pad.voice === 'tone') return [this.voiceTone(t, level, pad.opts, out)];
+    if (pad.voice === 'snare') return this.voiceSnare(t, level, pad.opts, out);
+    if (pad.voice === 'clap') return this.voiceClap(t, level, pad.opts, out);
+    return [];
+  }
+  synthNote(midi, t, dur, level) {
+    const ctx = this.audioCtx;
+    const hold = Math.max(0.06, dur);
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = this.knobWave();
+    osc.frequency.setValueAtTime(this.midiToFreq(midi), t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(level, t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + hold);
+    osc.connect(g).connect(this.synthIn);
+    osc.start(t); osc.stop(t + hold + 0.03);
+    return osc;
+  }
+
+  // ── music theory ─────────────────────────────────────────────────────────
+  midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  midiToName(m) { return this.NOTE_NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1); }
+  scaleDef() { return this.SCALES.find(s => s.id === this.state.scaleId) || this.SCALES[0]; }
+  scalePitchClasses() {
+    return this.scaleDef().steps.map(s => (s + this.state.scaleRoot) % 12);
+  }
+  inScale(midi) { return this.scalePitchClasses().includes(((midi % 12) + 12) % 12); }
+  // Nearest scale tone, preferring the one below on a tie. Every scale shipped
+  // here is dense enough that this never moves a key more than a semitone, but
+  // the search is written for any scale.
+  snapToScale(midi) {
+    if (this.inScale(midi)) return midi;
+    for (let d = 1; d <= 6; d++) {
+      if (this.inScale(midi - d)) return midi - d;
+      if (this.inScale(midi + d)) return midi + d;
+    }
+    return midi;
+  }
+  scaleRootMidi() { return 48 + this.state.scaleRoot; }
+  // A triad stacked in scale steps, so every note is in the scale by
+  // construction — which is exactly the guarantee Chord Mode gives you.
+  chordMidis(degree, rootMidi) {
+    const steps = this.scaleDef().steps;
+    const n = steps.length;
+    const base = rootMidi == null ? this.scaleRootMidi() : rootMidi;
+    const out = [];
+    for (let i = 0; i < 3; i++) {
+      const idx = degree + i * 2;
+      out.push(base + steps[((idx % n) + n) % n] + 12 * Math.floor(idx / n));
+    }
+    return out;
+  }
+  // Roman numerals read off the intervals the stack actually produced, rather
+  // than assumed from the degree: a five-note scale stacks to shapes the
+  // major-scale numerals have no name for, and those get a * instead.
+  degreeLabel(degree) {
+    const m = this.chordMidis(degree, 60);
+    const third = m[1] - m[0], fifth = m[2] - m[0];
+    const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+    const base = numerals[degree % 7] || String(degree + 1);
+    if (third === 4 && fifth === 7) return base;
+    if (third === 3 && fifth === 7) return base.toLowerCase();
+    if (third === 3 && fifth === 6) return base.toLowerCase() + '°';
+    if (third === 4 && fifth === 8) return base + '+';
+    return base.toLowerCase() + '*';
+  }
+  degreeForMidi(midi) {
+    const snapped = this.snapToScale(midi);
+    const pc = (((snapped - this.state.scaleRoot) % 12) + 12) % 12;
+    const i = this.scaleDef().steps.indexOf(pc);
+    return i < 0 ? 0 : i;
+  }
+  degreeCount() { return this.scaleDef().steps.length; }
+  arpPattern() { return this.ARP_PATTERNS.find(p => p.id === this.state.arpPatternId) || this.ARP_PATTERNS[0]; }
+  arpSequence(chord, mode, octaves) {
+    const expanded = [];
+    for (let o = 0; o < octaves; o++) for (const n of chord) expanded.push(n + 12 * o);
+    expanded.sort((a, b) => a - b);
+    if (mode === 'down') return expanded.slice().reverse();
+    if (mode === 'updown') {
+      return expanded.length < 3 ? expanded.slice() : expanded.concat(expanded.slice(1, -1).reverse());
+    }
+    if (mode === 'random') {
+      const out = expanded.slice();
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = out[i]; out[i] = out[j]; out[j] = tmp;
+      }
+      return out;
+    }
+    return expanded;
+  }
+  // Mutate moves one step of the running order — an octave jump or a swap with
+  // another step. Both keep the set of pitch classes intact, which is why a
+  // mutating arp wanders without ever landing outside the held chord. The
+  // octave jump is skipped rather than clamped when it would leave the usable
+  // range, because a clamp would land on a note that isn't in the chord.
+  mutateSequence(seq) {
+    const out = seq.slice();
+    if (out.length < 2) return out;
+    const i = Math.floor(Math.random() * out.length);
+    const delta = Math.random() < 0.5 ? 12 : -12;
+    const shifted = out[i] + delta;
+    if (Math.random() < 0.6 && shifted >= 24 && shifted <= 96) {
+      out[i] = shifted;
+    } else {
+      const j = Math.floor(Math.random() * out.length);
+      const tmp = out[i]; out[i] = out[j]; out[j] = tmp;
+    }
+    return out;
+  }
+  // The working arp order. Freeze pins it so a chord change leaves the shape
+  // alone; otherwise it is rebuilt whenever anything it derives from changes.
+  currentArpSequence() {
+    const sig = [this.state.arpDegree, this.state.arpMode, this.state.arpOctaves,
+                 this.state.scaleId, this.state.scaleRoot].join(':');
+    if (!this.arpSeqRef || (!this.state.arpFreeze && sig !== this.arpSig)) {
+      this.arpSeqRef = this.arpSequence(this.chordMidis(this.state.arpDegree), this.state.arpMode, this.state.arpOctaves);
+      this.arpSig = sig;
+    }
+    return this.arpSeqRef;
+  }
+
+  // ── engines ──────────────────────────────────────────────────────────────
+  baseStepSeconds() { return 60 / this.state.tempo / 4; }
+  // Swing stretches the wait into each odd (off-beat) 16th and shortens the wait
+  // back out of it, so off-beats land late and the bar keeps its length.
+  stepSeconds(col) {
+    const s = this.state.swing || 0;
+    return this.baseStepSeconds() * (col % 2 === 0 ? 1 + s : 1 - s);
+  }
+  padById(id) {
+    for (const bank of this.PAD_BANKS) {
+      const pad = bank.pads.find(p => p.id === id);
+      if (pad) return pad;
+    }
+    return null;
+  }
+  // Plays every row in the grid, not only the visible bank's, so a pattern
+  // written across two kits still sounds after you switch banks.
+  scheduleDrums(col, t) {
+    const nodes = [];
+    const beat = this.state.beat;
+    for (const padId of Object.keys(beat)) {
+      const vel = beat[padId][col];
+      if (!vel) continue;
+      const pad = this.padById(padId);
+      if (pad) nodes.push(...this.padNodes(pad, t, vel));
+    }
+    return nodes;
+  }
+  scheduleChord(degree, t) {
+    const dur = this.baseStepSeconds() * 16 * 0.92;
+    return this.chordMidis(degree).map(m => this.synthNote(m, t, dur, 0.075));
+  }
+  playBeat() {
+    this.ensureAudio(); this.stopAll();
+    this.setState({ beatPlaying: true, beatCol: 0 });
+    this.startSequence('beat', {
+      // The grid is read at schedule time, so edits land within a lookahead.
+      onStep: (col, t) => ({ nodes: this.scheduleDrums(col, t) }),
+      stepDur: col => this.stepSeconds(col),
+      nextCol: col => (col + 1) % 16,
+      onVisual: col => this.setState({ beatCol: col }),
+    });
+  }
+  playProgression() {
+    this.ensureAudio(); this.stopAll();
+    this.progBarRef = 0;
+    this.setState({ progPlaying: true, progBar: 0 });
+    this.startSequence('prog', {
+      onStep: (col, t) => {
+        const bar = this.progBarRef;
+        const nodes = col === 0 ? this.scheduleChord(this.state.progression[bar % this.state.progression.length], t) : [];
+        return { nodes, meta: bar };
+      },
+      stepDur: col => this.stepSeconds(col),
+      nextCol: col => {
+        const n = (col + 1) % 16;
+        if (n === 0) this.progBarRef = (this.progBarRef + 1) % this.state.progression.length;
+        return n;
+      },
+      onVisual: (col, bar) => this.setState({ progBar: bar }),
+    });
+  }
+  playArp() {
+    this.ensureAudio(); this.stopAll();
+    this.arpIdx = 0;
+    this.setState({ arpPlaying: true });
+    this.startSequence('arp', {
+      onStep: (col, t) => ({ nodes: this.scheduleArpStep(col, t) }),
+      stepDur: col => this.stepSeconds(col),
+      nextCol: col => (col + 1) % 16,
+      onVisual: () => {},
+    });
+  }
+  scheduleArpStep(col, t) {
+    const rate = this.state.arpRate;
+    if (col % rate !== 0) return [];
+    const seq = this.currentArpSequence();
+    if (!seq.length) return [];
+    const idx = this.arpIdx++;
+    if (idx > 0 && idx % 8 === 0 && this.state.arpMutate) this.arpSeqRef = this.mutateSequence(this.arpSeqRef);
+    if (!this.arpPattern().gate[idx % 8]) return [];
+    const note = this.arpSeqRef[idx % this.arpSeqRef.length];
+    return [this.synthNote(note, t, Math.min(0.5, this.baseStepSeconds() * rate * 0.9), 0.085)];
+  }
+  songTotalBars() { return this.SONG_SECTIONS.reduce((n, s) => n + s.bars, 0); }
+  sectionIndexForBar(bar) {
+    let acc = 0;
+    for (let i = 0; i < this.SONG_SECTIONS.length; i++) {
+      acc += this.SONG_SECTIONS[i].bars;
+      if (bar < acc) return i;
+    }
+    return this.SONG_SECTIONS.length - 1;
+  }
+  sectionForBar(bar) { return this.SONG_SECTIONS[this.sectionIndexForBar(bar)]; }
+  // The arrangement's arp index is derived from the bar and step rather than
+  // counted, so the same bar always plays the same part of the pattern.
+  scheduleSongArp(bar, col, t) {
+    const rate = this.state.arpRate;
+    if (col % rate !== 0) return [];
+    const degree = this.state.progression[bar % this.state.progression.length];
+    const seq = this.arpSequence(this.chordMidis(degree), this.state.arpMode, this.state.arpOctaves);
+    if (!seq.length) return [];
+    const idx = Math.round((bar * 16 + col) / rate);
+    if (!this.arpPattern().gate[idx % 8]) return [];
+    return [this.synthNote(seq[idx % seq.length], t, Math.min(0.5, this.baseStepSeconds() * rate * 0.9), 0.08)];
+  }
+  playSong() {
+    this.ensureAudio(); this.stopAll();
+    this.songBarRef = 0;
+    this.setState({ songPlaying: true, songBar: 0, songCol: 0 });
+    this.startSequence('song', {
+      onStep: (col, t) => {
+        const bar = this.songBarRef;
+        const layers = this.sectionForBar(bar).layers;
+        const nodes = [];
+        if (layers.includes('drums')) nodes.push(...this.scheduleDrums(col, t));
+        if (layers.includes('chords') && col === 0) {
+          nodes.push(...this.scheduleChord(this.state.progression[bar % this.state.progression.length], t));
+        }
+        if (layers.includes('arp')) nodes.push(...this.scheduleSongArp(bar, col, t));
+        return { nodes, meta: bar };
+      },
+      stepDur: col => this.stepSeconds(col),
+      nextCol: col => {
+        const n = (col + 1) % 16;
+        if (n === 0) this.songBarRef = (this.songBarRef + 1) % this.songTotalBars();
+        return n;
+      },
+      onVisual: (col, bar) => this.setState({ songCol: col, songBar: bar }),
+    });
+  }
+
+  // ── interactions ─────────────────────────────────────────────────────────
+  hitPad(pad) {
+    this.ensureAudio();
+    const t0 = this.audioCtx.currentTime + 0.03;
+    const vel = this.state.velocity;
+    const shots = [];
+    const add = t => this.padNodes(pad, t, vel).forEach(node => shots.push({ node, time: t }));
+    if (this.state.noteRepeat) {
+      // A repeat is a fixed subdivision, so it ignores swing.
+      const gap = this.baseStepSeconds() * this.state.repeatRate;
+      for (let i = 0; i < 8; i++) add(t0 + i * gap);
+    } else {
+      add(t0);
+    }
+    this.pushOneShots(shots);
+    this.setState({ padSel: pad.id });
+  }
+  pressKey(keyIndex) {
+    this.ensureAudio();
+    const pressed = 36 + this.state.octave * 12 + keyIndex;
+    const played = this.state.scaleOn ? this.snapToScale(pressed) : pressed;
+    const t = this.audioCtx.currentTime + 0.03;
+    const dur = this.synthDecay();
+    let notes = [played];
+    let label;
+    if (this.state.chordOn) {
+      const degree = this.degreeForMidi(played);
+      // Voice the chord from the scale root at or below the key played, so
+      // chord mode follows your hand up the keyboard.
+      const rootMidi = this.state.scaleRoot + 12 * Math.floor((played - this.state.scaleRoot) / 12);
+      notes = this.chordMidis(degree, rootMidi);
+      label = `Chord ${this.degreeLabel(degree)} · ${notes.map(n => this.midiToName(n)).join(' ')}`;
+    } else if (played !== pressed) {
+      label = `Played ${this.midiToName(played)} — snapped from ${this.midiToName(pressed)}`;
+    } else {
+      label = `Played ${this.midiToName(played)}`;
+    }
+    const shots = notes.map(n => ({ node: this.synthNote(n, t, dur, 0.1), time: t }));
+    this.pushOneShots(shots);
+    this.setState({ lastNoteLabel: label });
+  }
+  toggleBeatCell(padId, col) {
+    this.setState(s => {
+      const row = (s.beat[padId] || new Array(16).fill(0)).slice();
+      row[col] = row[col] === s.velocity ? 0 : s.velocity;
+      return { beat: { ...s.beat, [padId]: row } };
+    });
+  }
+  stepTempo(delta) {
+    this.setState(s => ({ tempo: Math.max(60, Math.min(180, s.tempo + delta)) }), () => this.applyKnobs());
+  }
+  stepRoot(delta) {
+    this.setState(s => ({ scaleRoot: (((s.scaleRoot + delta) % 12) + 12) % 12 }));
+  }
+  stepOctave(delta) {
+    this.setState(s => ({ octave: Math.max(-2, Math.min(2, s.octave + delta)) }));
+  }
+  stepProgSlot(i, delta) {
+    this.setState(s => {
+      const n = this.SCALES.find(x => x.id === s.scaleId).steps.length;
+      const prog = s.progression.slice();
+      prog[i] = (((prog[i] + delta) % n) + n) % n;
+      return { progression: prog };
+    });
+  }
+  loadStyle(style) {
+    this.stopAll();
+    this.arpSeqRef = null;
+    this.setState({
+      styleId: style.id, tempo: style.tempo, swing: style.swing, padBank: style.bank,
+      beat: this.mkBeat(style.beat), scaleRoot: style.root, scaleId: style.scale,
+      progression: style.progression.slice(), arpMode: style.arpMode, arpRate: style.arpRate,
+      arpOctaves: style.arpOctaves, arpPatternId: style.arpPattern, padSel: null,
+    }, () => this.applyKnobs());
+  }
+
+  // ── view models ──────────────────────────────────────────────────────────
+  segOptions(list, current, onSelect) {
+    return list.map(o => ({ label: o.label, checked: o.value === current, select: () => onSelect(o.value) }));
+  }
+  pillStyle(active) {
+    return `padding:6px 12px;border-radius:999px;cursor:pointer;font:inherit;font-size:12.5px;` +
+      `border:1px solid ${active ? 'var(--color-accent)' : 'var(--color-divider)'};` +
+      `background:${active ? 'var(--color-accent)' : 'var(--color-surface)'};` +
+      `color:${active ? 'var(--color-bg)' : 'var(--color-text)'};`;
+  }
+  chipStyle(active) {
+    return `display:inline-flex;align-items:center;font-size:11px;padding:3px 10px;border-radius:calc(var(--radius-md) * 0.75);` +
+      `background:${active ? 'var(--color-accent-2-200)' : 'var(--color-neutral-200)'};` +
+      `color:${active ? 'var(--color-accent-2-800)' : 'var(--color-neutral-600)'};`;
+  }
+  currentBank() { return this.PAD_BANKS[this.state.padBank] || this.PAD_BANKS[0]; }
+  // Whichever engine is running owns the playhead; the grid highlights its column.
+  activeCol() {
+    if (this.state.beatPlaying) return this.state.beatCol;
+    if (this.state.songPlaying) return this.state.songCol;
+    return -1;
+  }
+  buildLayoutParts() {
+    return this.LAYOUT_PARTS.map((p, i) => ({
+      name: p.name,
+      select: () => this.setState({ layoutSel: i }),
+      pressed: this.state.layoutSel === i ? 'true' : 'false',
+      style: this.pillStyle(this.state.layoutSel === i),
+    }));
+  }
+  buildPadRows() {
+    const pads = this.currentBank().pads;
+    const mk = list => ({ pads: list.map(idx => {
+      const pad = pads[idx];
+      const selected = this.state.padSel === pad.id;
+      return {
+        number: idx + 1, label: pad.label, hit: () => this.hitPad(pad),
+        pressed: selected ? 'true' : 'false',
+        style: `flex:1;min-width:76px;height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;` +
+          `border-radius:var(--radius-md);cursor:pointer;font:inherit;color:var(--color-text);` +
+          `border:2px solid ${selected ? 'var(--color-accent-700)' : 'transparent'};` +
+          `background:${selected ? 'var(--color-accent-200)' : 'var(--color-neutral-300)'};`,
+      };
+    }) });
+    // MPC layout: pads 5-8 sit above pads 1-4.
+    return [mk([4, 5, 6, 7]), mk([0, 1, 2, 3])];
+  }
+  buildBeatRows() {
+    const col = this.activeCol();
+    return this.currentBank().pads.map(pad => {
+      const row = this.state.beat[pad.id] || new Array(16).fill(0);
+      return {
+        label: pad.label,
+        labelStyle: this.state.padSel === pad.id ? 'color:var(--color-accent-700);' : '',
+        cells: row.map((vel, i) => {
+          const pct = Math.round((vel / 127) * 100);
+          const bg = vel
+            ? `color-mix(in srgb, var(--color-accent) ${pct}%, var(--color-neutral-200))`
+            : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-neutral-200)');
+          return {
+            toggle: () => this.toggleBeatCell(pad.id, i),
+            label: vel ? `${pad.label} step ${i + 1}, velocity ${vel}` : `${pad.label} step ${i + 1}, empty`,
+            pressed: vel ? 'true' : 'false',
+            style: `width:28px;height:28px;border-radius:8px;padding:0;flex:none;cursor:pointer;background:${bg};` +
+              `border:2px solid ${col === i ? 'var(--color-accent-2-700)' : 'transparent'};`,
+          };
+        }),
+      };
+    });
+  }
+  buildKeys() {
+    const white = [], black = [];
+    const whitePcs = [0, 2, 4, 5, 7, 9, 11];
+    let whiteSeen = 0;
+    for (let i = 0; i < 25; i++) {
+      const midi = 36 + this.state.octave * 12 + i;
+      const name = this.midiToName(midi);
+      const inScale = this.inScale(midi);
+      const isRoot = ((midi - this.state.scaleRoot) % 12 + 12) % 12 === 0;
+      const lit = this.state.scaleOn && inScale;
+      const aria = `Key ${name}${this.state.scaleOn ? (inScale ? ', in scale' : ', outside the scale') : ''}`;
+      const press = () => this.pressKey(i);
+      if (whitePcs.includes(i % 12)) {
+        const bg = lit ? (isRoot ? 'var(--color-accent-300)' : 'var(--color-accent-100)') : 'var(--color-neutral-100)';
+        white.push({ label: name, aria, press,
+          style: `flex:1;min-width:30px;height:100%;display:flex;align-items:flex-end;justify-content:center;padding:0 0 6px;` +
+            `font:inherit;font-size:9px;color:var(--color-text);cursor:pointer;background:${bg};` +
+            `border:1px solid var(--color-divider);border-radius:0 0 var(--radius-sm) var(--radius-sm);` });
+        whiteSeen++;
+      } else {
+        const bg = lit ? (isRoot ? 'var(--color-accent-700)' : 'var(--color-accent-600)') : 'var(--color-neutral-800)';
+        black.push({ aria, press,
+          style: `position:absolute;top:0;left:${(whiteSeen * 100 / 15).toFixed(3)}%;width:4.2%;margin-left:-2.1%;height:62%;` +
+            `border:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);cursor:pointer;padding:0;background:${bg};` });
+      }
+    }
+    return { white, black };
+  }
+  buildProgSlots() {
+    return this.state.progression.map((degree, i) => {
+      const live = this.state.progPlaying && this.state.progBar === i;
+      return {
+        barLabel: `Bar ${i + 1}`,
+        degreeLabel: this.degreeLabel(degree),
+        notesLabel: this.chordMidis(degree).map(m => this.midiToName(m)).join(' '),
+        dec: () => this.stepProgSlot(i, -1), inc: () => this.stepProgSlot(i, 1),
+        decLabel: `Previous chord for bar ${i + 1}`, incLabel: `Next chord for bar ${i + 1}`,
+        cardStyle: `flex:1;min-width:132px;display:flex;flex-direction:column;gap:2px;padding:var(--space-3);` +
+          `border-radius:var(--radius-md);background:${live ? 'var(--color-accent-200)' : 'var(--color-surface)'};`,
+      };
+    });
+  }
+  buildArpControls() {
+    return [
+      { name: 'Mode', radioName: 'arpMode',
+        options: this.segOptions(this.ARP_MODES.map(m => ({ label: m.label, value: m.id })), this.state.arpMode, v => this.setState({ arpMode: v })) },
+      { name: 'Rate', radioName: 'arpRate',
+        options: this.segOptions(this.ARP_RATES, this.state.arpRate, v => this.setState({ arpRate: v })) },
+      { name: 'Range', radioName: 'arpOctaves',
+        options: this.segOptions(this.ARP_OCTAVES, this.state.arpOctaves, v => this.setState({ arpOctaves: v })) },
+      { name: 'Pattern', radioName: 'arpPattern',
+        options: this.segOptions(this.ARP_PATTERNS.map(p => ({ label: p.name, value: p.id })), this.state.arpPatternId, v => this.setState({ arpPatternId: v })) },
+    ];
+  }
+  // A preview of the order the arp is running, without disturbing it: while it
+  // plays (or is frozen) that is the live sequence, mutations and all.
+  arpPreview() {
+    if ((this.state.arpPlaying || this.state.arpFreeze) && this.arpSeqRef) return this.arpSeqRef;
+    return this.arpSequence(this.chordMidis(this.state.arpDegree), this.state.arpMode, this.state.arpOctaves);
+  }
+  knobDisplay(id, v) {
+    if (id === 'cutoff') return `${Math.round(200 * Math.pow(60, v))} Hz`;
+    if (id === 'wave') return ['Sine', 'Tri', 'Saw', 'Square'][Math.min(3, Math.floor(v * 4))];
+    if (id === 'decay') return `${(0.12 + v * 1.2).toFixed(2)} s`;
+    return `${Math.round(v * 100)}%`;
+  }
+  buildKnobRows() {
+    return this.state.knobs.map((v, i) => {
+      const target = this.KNOB_TARGETS.find(t => t.id === this.state.knobTargets[i]) || this.KNOB_TARGETS[0];
+      return {
+        name: `Knob ${i + 1}`,
+        // 0-1 drawn across the 300 degrees a real knob turns through.
+        rot: -150 + v * 300,
+        targetLabel: target.label,
+        cycle: () => this.cycleKnobTarget(i),
+        cycleLabel: `Reassign knob ${i + 1}, currently ${target.label}`,
+        valueLabel: this.knobDisplay(target.id, v),
+        dec: () => this.stepKnob(i, -0.125), inc: () => this.stepKnob(i, 0.125),
+        decLabel: `Turn knob ${i + 1} down`, incLabel: `Turn knob ${i + 1} up`,
+      };
+    });
+  }
+  buildSongSections() {
+    return this.SONG_SECTIONS.map((s, i) => {
+      const sel = this.state.perfSel === i;
+      const live = this.state.songPlaying && this.sectionIndexForBar(this.state.songBar) === i;
+      const filled = live || sel;
+      return {
+        title: s.title, select: () => this.setState({ perfSel: i }), pressed: sel ? 'true' : 'false',
+        barStyle: `flex:${s.bars} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;` +
+          `padding:4px;cursor:pointer;border:none;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` +
+          `background:${live ? 'var(--color-accent-2-600)' : (sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)')};` +
+          `color:${filled ? 'var(--color-bg)' : 'var(--color-text)'};border-right:1px solid var(--color-bg);`,
+      };
+    });
+  }
+  buildSelectedSection() {
+    const s = this.SONG_SECTIONS[this.state.perfSel] || this.SONG_SECTIONS[0];
+    const chips = [['drums', 'Drums'], ['chords', 'Chords'], ['arp', 'Arp']].map(([id, label]) => ({
+      label: s.layers.includes(id) ? label : `${label} (out)`,
+      style: this.chipStyle(s.layers.includes(id)),
+    }));
+    return { title: s.title, barsLabel: `${s.bars} bars`, desc: s.desc, layerChips: chips };
+  }
+  buildStyleCards() {
+    return this.STYLES.map(s => {
+      const loaded = this.state.styleId === s.id;
+      const scale = this.SCALES.find(x => x.id === s.scale);
+      return {
+        name: s.name, desc: s.desc,
+        meta: `${s.tempo} BPM · ${this.NOTE_NAMES[s.root]} ${scale ? scale.name : s.scale} · ${this.PAD_BANKS[s.bank].name}`,
+        load: () => this.loadStyle(s),
+        loadLabel: loaded ? 'Loaded — play it' : 'Load style',
+        // Capped at half the row so the last card never stretches across a line of its own.
+        cardStyle: `flex:1 1 228px;max-width:calc(50% - 5px);${loaded ? 'outline:2px solid var(--color-accent);' : ''}`,
+      };
+    });
+  }
+
+  renderVals() {
+    const step = this.STEPS[this.state.step];
+    const has = w => (step.widgets || []).includes(w);
+    const keys = has('keys') ? this.buildKeys() : { white: [], black: [] };
+    const scale = this.scaleDef();
+    const rootName = this.NOTE_NAMES[this.state.scaleRoot];
+    const progToggle = this.state.progPlaying ? () => this.stopAll() : () => this.playProgression();
+    const arpNotes = has('arp') ? this.arpPreview().map(m => this.midiToName(m)) : [];
+    const totalBars = this.songTotalBars();
+    const songSeconds = Math.round(totalBars * 4 * 60 / this.state.tempo);
+    return {
+      weekLabel: step.weekTag,
+      stepNumber: this.state.step + 1,
+      totalSteps: this.STEPS.length,
+      progressPct: Math.round((this.state.step) / (this.STEPS.length - 1) * 100),
+      isOverview: step.kind === 'overview',
+      isWeekIntro: step.kind === 'weekintro',
+      isContent: step.kind === 'content',
+      isComplete: step.kind === 'complete',
+      currentStep: {
+        weekTag: step.weekTag, title: step.title,
+        items: this.buildItems(step),
+        hasNote: !!step.note, note: step.note || '',
+        hasMilestone: !!step.milestone, milestone: step.milestone || '',
+        objective: step.objective || '',
+        showCables: has('cables'),
+        showLessons: has('lessons'),
+        showLayout: has('layout'),
+        showTempo: has('tempo'),
+        showPads: has('pads'),
+        showBeat: has('beat'),
+        showScale: has('scale'),
+        showKeys: has('keys'),
+        showChord: has('chord'),
+        showArp: has('arp'),
+        showKnobs: has('knobs'),
+        showSong: has('song'),
+        showStyles: has('styles'),
+      },
+      cablesList: this.buildCables(step),
+      lessons: has('lessons') ? this.LESSONS : [],
+      layoutParts: has('layout') ? this.buildLayoutParts() : [],
+      selectedPart: this.LAYOUT_PARTS[this.state.layoutSel] || this.LAYOUT_PARTS[0],
+
+      tempoCtl: { label: `${this.state.tempo} BPM`, dec: () => this.stepTempo(-2), inc: () => this.stepTempo(2) },
+      swingOptions: this.segOptions(this.SWING_AMOUNTS, this.state.swing, v => this.setState({ swing: v })),
+
+      padBankName: this.currentBank().name,
+      bankOptions: this.segOptions(this.PAD_BANKS.map((b, i) => ({ label: b.id, value: i })), this.state.padBank,
+        v => this.setState({ padBank: v, padSel: null })),
+      padRows: has('pads') ? this.buildPadRows() : [],
+      velocityOptions: this.segOptions(this.VELOCITIES, this.state.velocity, v => this.setState({ velocity: v })),
+      noteRepeatLabel: this.state.noteRepeat ? 'Note Repeat ON' : 'Note Repeat OFF',
+      noteRepeatToggle: () => this.setState(s => ({ noteRepeat: !s.noteRepeat })),
+      repeatRateOptions: this.segOptions(this.REPEAT_RATES, this.state.repeatRate, v => this.setState({ repeatRate: v })),
+
+      beatRows: has('beat') ? this.buildBeatRows() : [],
+      beatLabel: this.state.beatPlaying ? 'Stop' : 'Play Beat',
+      beatToggle: this.state.beatPlaying ? () => this.stopAll() : () => this.playBeat(),
+
+      scaleToggleLabel: this.state.scaleOn ? 'Scale Mode ON' : 'Scale Mode OFF',
+      scaleToggle: () => this.setState(s => ({ scaleOn: !s.scaleOn })),
+      rootCtl: { label: rootName, dec: () => this.stepRoot(-1), inc: () => this.stepRoot(1) },
+      scaleOptions: has('scale') ? this.SCALES.map(s => ({
+        label: s.name, select: () => this.setState({ scaleId: s.id, progression: this.state.progression.map(d => d % s.steps.length) }),
+        pressed: s.id === this.state.scaleId ? 'true' : 'false', style: this.pillStyle(s.id === this.state.scaleId),
+      })) : [],
+      scaleSummary: this.state.scaleOn
+        ? `${rootName} ${scale.name}: ${scale.steps.map(st => this.NOTE_NAMES[(st + this.state.scaleRoot) % 12]).join(' ')} — every key plays one of these.`
+        : `Scale Mode is off: all 12 notes are available, ${rootName} ${scale.name} or not.`,
+
+      octaveCtl: {
+        label: this.state.octave === 0 ? 'Octave 0' : `Octave ${this.state.octave > 0 ? '+' : ''}${this.state.octave}`,
+        dec: () => this.stepOctave(-1), inc: () => this.stepOctave(1),
+      },
+      whiteKeys: keys.white,
+      blackKeys: keys.black,
+      lastNoteLabel: this.state.lastNoteLabel,
+
+      chordToggleLabel: this.state.chordOn ? 'Chord Mode ON' : 'Chord Mode OFF',
+      chordToggle: () => this.setState(s => ({ chordOn: !s.chordOn })),
+      progSlots: has('chord') ? this.buildProgSlots() : [],
+      progLabel: this.state.progPlaying ? 'Stop' : 'Play Progression',
+      progToggle,
+      progHint: `One chord per bar at ${this.state.tempo} BPM, looping.`,
+
+      arpChordOptions: has('arp') ? Array.from({ length: this.degreeCount() }, (_, d) => ({
+        label: this.degreeLabel(d), select: () => this.setState({ arpDegree: d }),
+        pressed: d === this.state.arpDegree ? 'true' : 'false', style: this.pillStyle(d === this.state.arpDegree),
+      })) : [],
+      arpControls: has('arp') ? this.buildArpControls() : [],
+      arpLabel: this.state.arpPlaying ? 'Stop' : 'Play Arp',
+      arpToggle: this.state.arpPlaying ? () => this.stopAll() : () => this.playArp(),
+      arpFreezeLabel: this.state.arpFreeze ? 'Freeze ON' : 'Freeze OFF',
+      arpFreezePressed: this.state.arpFreeze ? 'true' : 'false',
+      arpFreezeToggle: () => this.setState(s => ({ arpFreeze: !s.arpFreeze })),
+      arpMutateLabel: this.state.arpMutate ? 'Mutate ON' : 'Mutate OFF',
+      arpMutatePressed: this.state.arpMutate ? 'true' : 'false',
+      arpMutateToggle: () => this.setState(s => ({ arpMutate: !s.arpMutate })),
+      arpSequenceLabel: `Order: ${arpNotes.join(' ')} (${arpNotes.length} steps, ${this.arpPattern().name})`,
+
+      knobRows: has('knobs') ? this.buildKnobRows() : [],
+
+      songSections: has('song') ? this.buildSongSections() : [],
+      selectedSection: this.buildSelectedSection(),
+      songLengthLabel: `${totalBars} bars, about ${songSeconds}s at ${this.state.tempo} BPM`,
+      songPlayLabel: this.state.songPlaying ? 'Stop' : 'Play Arrangement',
+      songToggle: this.state.songPlaying ? () => this.stopAll() : () => this.playSong(),
+      songPositionLabel: this.state.songPlaying
+        ? `Bar ${this.state.songBar + 1} of ${totalBars} · ${this.sectionForBar(this.state.songBar).title}`
+        : 'Stopped.',
+      styleCards: has('styles') ? this.buildStyleCards() : [],
+
+      navGroups: this.buildNavGroups(),
+      dialogOpen: this.state.dialogOpen,
+      openDialog: () => this.openCourseMap(),
+      closeDialog: () => this.closeCourseMap(),
+      dialogKeydown: e => this.onCourseMapKeydown(e),
+      stopProp: e => e.stopPropagation(),
+      goNext: () => this.goNext(),
+      goBack: () => this.goBack(),
+      isFirst: this.state.step === 0,
+      isLast: this.state.step === this.STEPS.length - 1,
+      restart: () => this.restart(),
+    };
+  }
+}
+</script>
+</body>
+</html>

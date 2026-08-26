@@ -726,6 +726,7 @@ class Component extends DCLogic {
       arpPlaying: false,
       knobs: this.KNOB_TARGETS.map(t => t.def),
       knobTargets: this.KNOB_TARGETS.map(t => t.id),
+      knobMoved: this.KNOB_TARGETS.map(() => 0),
       songPlaying: false, songBar: -1, songCol: -1,
       perfSel: 0,
       styleId: null,
@@ -1193,9 +1194,18 @@ class Component extends DCLogic {
   // A knob is only a CC sender; what it does lives here, in the "plugin".
   // An unassigned target falls back to its own default rather than to zero,
   // so reassigning a knob never silently mutes the instrument.
+  // Two knobs pointing at one parameter is legal — it is what happens if you
+  // MIDI-Learn two CCs onto the same plugin control — so resolving by the first
+  // assignment would leave the other knob visibly turning and audibly doing
+  // nothing. The knob turned most recently wins; before either has been turned
+  // they hold equal values anyway, and the lowest-numbered one takes it.
   knobValue(targetId) {
-    const i = this.state.knobTargets.indexOf(targetId);
-    if (i >= 0) return this.state.knobs[i];
+    let best = -1;
+    for (let i = 0; i < this.state.knobTargets.length; i++) {
+      if (this.state.knobTargets[i] !== targetId) continue;
+      if (best < 0 || this.state.knobMoved[i] > this.state.knobMoved[best]) best = i;
+    }
+    if (best >= 0) return this.state.knobs[best];
     const t = this.KNOB_TARGETS.find(x => x.id === targetId);
     return t ? t.def : 0;
   }
@@ -1217,7 +1227,9 @@ class Component extends DCLogic {
     this.setState(s => {
       const knobs = s.knobs.slice();
       knobs[i] = Math.max(0, Math.min(1, +(knobs[i] + delta).toFixed(3)));
-      return { knobs };
+      const knobMoved = s.knobMoved.slice();
+      knobMoved[i] = Math.max(...s.knobMoved) + 1;
+      return { knobs, knobMoved };
     }, () => this.applyKnobs());
   }
   cycleKnobTarget(i) {
@@ -1227,7 +1239,12 @@ class Component extends DCLogic {
       targets[i] = next.id;
       const knobs = s.knobs.slice();
       knobs[i] = next.def;
-      return { knobTargets: targets, knobs };
+      // Reassigning is not turning: the knob takes the new target's default and
+      // waits its turn, so a knob already on that target keeps control until
+      // this one is actually moved.
+      const knobMoved = s.knobMoved.slice();
+      knobMoved[i] = 0;
+      return { knobTargets: targets, knobs, knobMoved };
     }, () => this.applyKnobs());
   }
 
@@ -1602,6 +1619,17 @@ class Component extends DCLogic {
   stepOctave(delta) {
     this.setState(s => ({ octave: Math.max(-2, Math.min(2, s.octave + delta)) }));
   }
+  // Switching to a shorter scale can leave a degree pointing past its last step.
+  // chordMidis wraps, so it still sounds — but no held-chord button matches it and
+  // the arp plays a chord nothing on screen names. Normalize on the way in.
+  setScale(scaleId) {
+    const n = (this.SCALES.find(s => s.id === scaleId) || this.SCALES[0]).steps.length;
+    this.setState(s => ({
+      scaleId,
+      progression: s.progression.map(d => d % n),
+      arpDegree: s.arpDegree % n,
+    }));
+  }
   stepProgSlot(i, delta) {
     this.setState(s => {
       const n = this.SCALES.find(x => x.id === s.scaleId).steps.length;
@@ -1613,11 +1641,13 @@ class Component extends DCLogic {
   loadStyle(style) {
     this.stopAll();
     this.arpSeqRef = null;
+    const degrees = (this.SCALES.find(s => s.id === style.scale) || this.SCALES[0]).steps.length;
     this.setState({
       styleId: style.id, tempo: style.tempo, swing: style.swing, padBank: style.bank,
       beat: this.mkBeat(style.beat), scaleRoot: style.root, scaleId: style.scale,
       progression: style.progression.slice(), arpMode: style.arpMode, arpRate: style.arpRate,
       arpOctaves: style.arpOctaves, arpPatternId: style.arpPattern, padSel: null,
+      arpDegree: this.state.arpDegree % degrees,
     }, () => this.applyKnobs());
   }
 
@@ -1874,7 +1904,7 @@ class Component extends DCLogic {
       scaleToggle: () => this.setState(s => ({ scaleOn: !s.scaleOn })),
       rootCtl: { label: rootName, dec: () => this.stepRoot(-1), inc: () => this.stepRoot(1) },
       scaleOptions: has('scale') ? this.SCALES.map(s => ({
-        label: s.name, select: () => this.setState({ scaleId: s.id, progression: this.state.progression.map(d => d % s.steps.length) }),
+        label: s.name, select: () => this.setScale(s.id),
         pressed: s.id === this.state.scaleId ? 'true' : 'false', style: this.pillStyle(s.id === this.state.scaleId),
       })) : [],
       scaleSummary: this.state.scaleOn

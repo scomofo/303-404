@@ -12,6 +12,7 @@ import { loadComponent, renderStep } from './harness.mjs';
 
 const BEHRINGER = 'Behringer Setup Guide.dc.html';
 const DDJ = 'DDJ-FLX4 Guide.dc.html';
+const MPK = 'MPK Mini MK4 Guide.dc.html';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -249,4 +250,99 @@ test('a phase jump moves the column without disturbing the tempo grid', async t 
   const step = 60 / inst.DECK_A_BPM / 4;
   const live = onsets(audioCtx).filter((_, i, a) => i > a.length / 3);
   assert.ok(gridErrorMs(live, step) < 1, `nudge knocked onsets off the grid by ${gridErrorMs(live, step)}ms`);
+});
+
+/** A 16-step row with a hit on every step, so each gap is visible on its own. */
+function denseBeat(padId) {
+  return { [padId]: new Array(16).fill(100) };
+}
+
+test('MPK beat grid schedules every hit on the tempo\'s 16th grid', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(MPK);
+  t.after(dispose);
+  inst.state = { ...inst.state, tempo: 120, swing: 0, beat: denseBeat('a-hat') };
+  inst.playBeat();
+  await until(() => onsets(audioCtx).length >= 6, 'six MPK drum onsets');
+  inst.stopAll();
+
+  const step = 60 / 120 / 4;
+  assert.ok(gridErrorMs(onsets(audioCtx), step) < 1e-6,
+    `off the ${step * 1000}ms grid by ${gridErrorMs(onsets(audioCtx), step)}ms`);
+});
+
+test('MPK swing delays off-beat 16ths and keeps the bar the same length', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(MPK);
+  t.after(dispose);
+  inst.state = { ...inst.state, tempo: 120, swing: 0.25, beat: denseBeat('a-hat') };
+  inst.playBeat();
+  await until(() => onsets(audioCtx).length >= 5, 'five swung onsets');
+  inst.stopAll();
+
+  const straight = 60 / 120 / 4;
+  const gaps = onsets(audioCtx).slice(1).map((x, i) => x - onsets(audioCtx)[i]);
+  // The first gap leaves step 0 — an even step — so it must be the stretched
+  // one, delaying the off-beat that follows. The inverse is the classic bug.
+  assert.ok(gaps[0] > straight, `first gap ${(gaps[0] * 1000).toFixed(2)}ms should be stretched`);
+  assert.ok(gaps.some(g => g < straight), 'no shortened step: swing was not applied');
+  for (let i = 0; i + 1 < gaps.length; i++) {
+    const pair = gaps[i] + gaps[i + 1];
+    assert.ok(Math.abs(pair - straight * 2) < 1e-9,
+      `a swung pair sums to ${pair}s rather than ${straight * 2}s — swing is dragging the tempo`);
+  }
+});
+
+test('MPK Note Repeat rolls at its own subdivision, ignoring swing', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(MPK);
+  t.after(dispose);
+  // Heavy swing is deliberately on: a repeat is a fixed subdivision and must
+  // not inherit the groove's shuffle, or rolls would come out lopsided.
+  inst.state = { ...inst.state, tempo: 120, swing: 0.3, noteRepeat: true, repeatRate: 1 };
+  inst.ensureAudio();
+  inst.hitPad(inst.padById('a-kick'));
+
+  const times = onsets(audioCtx);
+  assert.equal(times.length, 8, 'a roll should be eight hits');
+  const gap = 60 / 120 / 4;
+  assert.ok(gridErrorMs(times, gap) < 1e-9, `the roll is not evenly spaced by ${gap * 1000}ms`);
+
+  // And the rate control actually changes the rate.
+  audioCtx.__starts.length = 0;
+  inst.setState({ repeatRate: 2 });
+  inst.hitPad(inst.padById('a-kick'));
+  const wide = onsets(audioCtx);
+  assert.ok(Math.abs((wide[1] - wide[0]) - gap * 2) < 1e-9, '1/8 repeats did not double the spacing');
+});
+
+test('MPK stopping silences both a running pattern and a Note Repeat roll', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(MPK);
+  t.after(dispose);
+  inst.state = { ...inst.state, tempo: 100, swing: 0, noteRepeat: true, repeatRate: 2, beat: denseBeat('a-hat') };
+  inst.playBeat();
+  inst.hitPad(inst.padById('a-kick'));
+  // Waiting for a queued-ahead note keeps the assertion below non-vacuous.
+  await until(() => audioCtx.__starts.some(x => x.when > audioCtx.currentTime),
+    'a hit queued ahead of the clock');
+
+  const at = audioCtx.currentTime;
+  inst.stopAll();
+  const leaked = audioCtx.__starts.filter(s => s.when > at && s.stopAt > s.when);
+  assert.deepEqual(leaked.map(s => +s.when.toFixed(4)), [],
+    'hits queued past the stop were left to sound');
+  assert.equal(Object.keys(inst.sequences).length, 0, 'a sequence timer survived the stop');
+});
+
+test('MPK arrangement keeps drums, chords and arp on one grid', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(MPK);
+  t.after(dispose);
+  inst.state = { ...inst.state, tempo: 120, swing: 0, beat: denseBeat('a-hat') };
+  // Start inside the section that runs all three layers at once.
+  inst.playSong();
+  inst.songBarRef = inst.SONG_SECTIONS[0].bars + inst.SONG_SECTIONS[1].bars;
+  await until(() => onsets(audioCtx).length >= 8, 'eight arrangement onsets');
+  inst.stopAll();
+
+  const step = 60 / 120 / 4;
+  const times = onsets(audioCtx);
+  assert.ok(gridErrorMs(times, step) < 1e-6,
+    `a layer landed off the 16th grid by ${gridErrorMs(times, step)}ms`);
 });

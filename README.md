@@ -1,6 +1,6 @@
 # Hardware Guides
 
-Two single-page, interactive setup courses that share one runtime and design system: [**TD-3 & RD-6 Guide**](#td-3--rd-6-guide) for the Behringer TD-3-MO / RD-6-BK, and [**DDJ-FLX4 Guide**](#ddj-flx4-guide) for the Pioneer DJ DDJ-FLX4 controller.
+Three single-page, interactive courses that share one runtime and design system: [**TD-3 & RD-6 Guide**](#td-3--rd-6-guide) for the Behringer TD-3-MO / RD-6-BK, [**DDJ-FLX4 Guide**](#ddj-flx4-guide) for the Pioneer DJ DDJ-FLX4 controller, and [**MPK Mini MK4 Guide**](#mpk-mini-mk4-guide) for the Akai MPK Mini MK4.
 
 ## TD-3 & RD-6 Guide
 
@@ -96,21 +96,61 @@ All of it — mixer, beatmatching, hot cues, loops, Beat FX — runs on **two sy
 - **Beat FX** (Week 6) — an ON/OFF toggle and Low/Med/High level presets driving a real synced `DelayNode` echo (with feedback) on the master send.
 - **Performance map** (Week 6) — the same proportional-timeline pattern as the Behringer guide's Week 4, mapped to a 6-section, 3-minute mix.
 
+## MPK Mini MK4 Guide
+
+A single-page, interactive production course for the **Akai MPK Mini MK4** (Akai also calls it the MPK Mini IV). Six weeks, from unboxing and panel vocabulary through finger drumming, Scale and Chord Mode, the arpeggiator, knob and DAW mapping, and on to two finished arrangements in different styles.
+
+Two facts shape the course. The MK4 is a keyboard and pad controller for music production rather than a DJ controller, so this is a production curriculum; and it makes no sound of its own — it sends MIDI, and software makes the noise — so a real share of "learning the MK4" is learning MPC Beats or your DAW. Everything in the guide is synthesized in the browser, which is what lets you rehearse the mechanics before your own software is set up.
+
+### Running it
+
+Open `MPK Mini MK4 Guide.dc.html` directly, or `python -m http.server 8000` then http://localhost:8000/MPK%20Mini%20MK4%20Guide.dc.html. Same requirements as the other two: an internet connection (React/Babel/fonts from their CDNs), and a click on a Play button before any audio plays.
+
+### The course
+
+| | Week | Covers |
+| --- | --- | --- |
+| — | Lessons & Resources | Nine entries, each tagged with the week it belongs to, plus why there is less MK4-specific material than for other controllers and which MK3-era tutorials still apply |
+| 1 | Setup & Layout | USB-C connection, registration and the bundled software, a tap-through map of twelve panel controls, and first sound |
+| 2 | Pads & Finger Drumming | Four pad banks of eight, velocity, Note Repeat, and a 16-step grid that stores a velocity per hit |
+| 3 | Keys, Scale Mode & Chord Mode | Scale Mode over seven scales and twelve roots, Chord Mode, and a four-bar progression builder |
+| 4 | Arpeggiator, Knobs & DAW Control | Arp mode, rate, range, Pattern, Freeze and Mutate; eight reassignable knobs on a live synth; DAW script and MIDI Learn setup |
+| 5 | Building a Full Track | A 20-bar arrangement layering the drum grid, the progression and the arp across four sections |
+| 6 | Refine & Expand | Four style presets, practice rhythm, and how to choose what to study next |
+
+### Interactive pieces
+
+Every sound is synthesized — five parameterised drum voices and one subtractive synth voice shared by the keys, chords and arpeggiator — so the course needs no sample library and no licensed audio.
+
+- **Pads** — 4 banks x 8 pads, 32 sounds in all. Velocity presets (Soft/Medium/Full) change both what you hear and what gets written into the grid; **Note Repeat** turns a tap into an eight-hit roll at 1/8, 1/16 or 1/32, at a fixed subdivision that deliberately ignores swing.
+- **Step sequencer** — 16 steps across the current bank's eight pads. A cell stores the selected velocity rather than a boolean and is shaded by it; clicking again at the same velocity erases. Playback reads the grid at schedule time, so edits land within a lookahead, and it plays every row in the pattern — including rows written in a bank you have since switched away from.
+- **Tempo & swing** — 60-180 BPM, and Straight/Light/Medium/Heavy swing that delays every off-beat 16th while keeping the bar the same length.
+- **Practice keyboard** — 25 mini keys with working Octave − / +. With Scale Mode on, in-scale keys are tinted and anything else snaps to the *nearest* scale tone, so no key can produce an out-of-scale note; the readout names what sounded and what it snapped from.
+- **Chord Mode and the progression builder** — one key press triggers a triad stacked in scale steps, so every note is in the scale by construction, voiced from the scale root at or below the key you pressed. The four bar slots are labelled with Roman numerals read off the intervals the stack actually produced rather than assumed from the degree: a five-note scale stacks into shapes the triad numerals cannot name, and those are marked rather than mislabelled as majors and minors.
+- **Arpeggiator** — Up / Down / Up-Down / Random over 1-3 octaves at 1/4, 1/8 or 1/16, with a four-option **Pattern** gate across eight steps that rests without removing notes from the order. **Freeze** pins the running order across a chord change; **Mutate** nudges one step per cycle by an octave jump or a swap, so the order wanders without ever leaving the held chord — an octave jump that would leave the playable range is abandoned rather than clamped, because a clamp would land on a note outside the chord.
+- **8 knobs** — each reassignable through eight targets (filter cutoff, resonance, amp decay, delay mix, drive, osc wave, pad level, synth level) and wired into a real graph: a lowpass filter, a `WaveShaper`, a tempo-synced `DelayNode` with feedback, and two gain stages, all edited live while the loop plays. An unassigned target falls back to its own default rather than to zero, so reassigning a knob never silently mutes the instrument.
+- **Arrangement** (Week 5) — 20 bars over four sections. Each section declares its layers and the player schedules only those: drums from your Week 2 grid, one chord a bar from your Week 3 progression, and the arp from your Week 4 settings, all on one 16th grid.
+- **Style presets** (Week 6) — lo-fi, house, trap and ambient, each rewriting tempo, swing, pad bank, drum grid, root, scale, progression and every arp setting in a single action.
+- **Lesson list** — titles rather than links, so you look up the current upload instead of following a dead URL. The pad-practice entry names both Melodics and padlab as ways to get the daily reps.
+
+Checklists, cable states, the grid, the progression and every knob position are held in memory for the session — reloading, or **Start Over**, resets them.
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-No install step — the suite uses only `node:test` and `node:assert`, so it needs nothing but Node 20+. It runs in about four seconds and is wired to GitHub Actions on every push and pull request.
+No install step — the suite uses only `node:test` and `node:assert`, so it needs nothing but Node 20+. It runs in about six seconds and is wired to GitHub Actions on every push and pull request.
 
-The tests load each guide's `<script type="text/x-dc">` block and run its `Component` class against a stub runtime and a stub Web Audio API (`test/harness.mjs`), so the logic is exercised without a browser. Three areas are covered:
+The tests load each guide's `<script type="text/x-dc">` block and run its `Component` class against a stub runtime and a stub Web Audio API (`test/harness.mjs`), so the logic is exercised without a browser. Four areas are covered:
 
 | File | Guards |
 | --- | --- |
 | `test/structure.test.mjs` | Every step renders; ids and nav labels are unique; the course map reaches every step and traps/restores focus; `restart()` restores the whole of `initialState()`; each page declares a title and a language; no hardcoded hex colors; every control has an accessible name |
 | `test/songbank.test.mjs` | Every card's notes resolve to a real frequency; accent/slide indices stay in range; tempos are plausible and applied on load; documentation matches the 19-card schema and distinguishes the three source types; each card's chart agrees with the engine data |
-| `test/timing.test.mjs` | Notes are scheduled ahead of the audio clock and land on an exact grid; Stop silences queued hits; shuffle swings without changing bar length or leaking cleanup timers; TD-3/Song Bank filter envelopes survive lookahead scheduling; DDJ phase jumps stay on-grid |
+| `test/mpk.test.mjs` | No key escapes the selected scale and none snaps further than it must; chords stack only scale tones and their numerals match the intervals; arp orderings are what they claim and Mutate never leaves the held chord; a knob reaches the live graph and an unassigned target falls back to its default; style presets reference only controls and pads that exist; the arrangement partitions its bars and plays only each section's layers; every widget a step names renders, and only those |
+| `test/timing.test.mjs` | Notes are scheduled ahead of the audio clock and land on an exact grid; Stop silences queued hits and Note Repeat rolls; shuffle and swing swing without changing bar length or leaking cleanup timers; TD-3/Song Bank filter envelopes survive lookahead scheduling; DDJ phase jumps stay on-grid |
 
 The stub clock advances with real time, so the schedulers run for real and only the audio nodes are faked. Reverting an engine to fire notes at `ctx.currentTime` fails the grid assertions immediately.
 
@@ -123,15 +163,16 @@ Each of these guards a bug this repo has actually shipped, and each was checked 
 ```
 Behringer Setup Guide.dc.html   the TD-3/RD-6 app — markup plus its component logic
 DDJ-FLX4 Guide.dc.html          the DDJ-FLX4 app — markup plus its component logic
-support.js                      generated dc-runtime (loads React/Babel, renders <x-dc>) — shared by both
-_ds/organic-…/                  the Organic design system: styles.css, manifest, its own readme — shared by both
+MPK Mini MK4 Guide.dc.html      the MPK Mini MK4 app — markup plus its component logic
+support.js                      generated dc-runtime (loads React/Babel, renders <x-dc>) — shared by all three
+_ds/organic-…/                  the Organic design system: styles.css, manifest, its own readme — shared by all three
 uploads/                        td3.jpg, rd-6.jpg — retained reference photos (not currently displayed)
-test/                           the test suite — harness.mjs plus three .test.mjs files
+test/                           the test suite — harness.mjs plus four .test.mjs files
 package.json                    test script only; the guides themselves still have no build step
 .thumbnail                      WebP cover image
 ```
 
-Each guide's markup is templated: `{{ … }}` bindings, `<sc-if>` and `<sc-for>` are resolved by the dc-runtime in `support.js` against that file's own `Component` class in its inline `<script type="text/x-dc">` block at the bottom of the HTML. Edit that class to change behavior; edit the markup above it to change layout. The two files are independent — neither imports the other's `Component` class or state.
+Each guide's markup is templated: `{{ … }}` bindings, `<sc-if>` and `<sc-for>` are resolved by the dc-runtime in `support.js` against that file's own `Component` class in its inline `<script type="text/x-dc">` block at the bottom of the HTML. Edit that class to change behavior; edit the markup above it to change layout. The three files are independent — none imports another's `Component` class or state.
 
 All color, type, spacing, radius and shadow values come from CSS variables defined in the design system's `styles.css` — see [its readme](_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/readme.md) before changing any styling, and prefer the tokens over hard-coded values.
 

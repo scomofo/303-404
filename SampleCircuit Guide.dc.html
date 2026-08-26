@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample &amp; Circuit Guide — Groovebox / Sampler Curriculum</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>
+  a{color:var(--color-accent);} a:hover{color:var(--color-accent-700);}
+  canvas{touch-action:none;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+  <header style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+    <div style="font-family:var(--font-heading);font-size:17px;white-space:nowrap;">Sample &amp; Circuit</div>
+    <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);"><span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span></div>
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;"><div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div></div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-5);">
+          <div><h1 style="margin:0;">Sample &amp; Circuit Guide</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Groovebox / Sampler Curriculum</h3></div>
+          <p style="margin:0;line-height:1.6;">An eight-week, computer-light course for Novation Circuit Tracks / Rhythm, Elektron Model:Samples, Roland SP-404MKII, or the browser sampler below. Treat the sampler as a band in a box: slice, sequence, resample, arrange and perform.</p>
+          <div><h4 style="margin:0 0 8px;">By Week 8 you will be able to</h4><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;"><li>Import, organise and safely gain-stage samples.</li><li>Auto-slice and manually refine a break.</li><li>Record with or without quantisation and preserve human feel.</li><li>Chain eight or more patterns into a complete arrangement.</li><li>Resample internal audio and export a stereo WAV.</li><li>Perform a three-track mini-set with live mutes and FX moves.</li></ul></div>
+          <div class="card" style="padding:var(--space-4);background:var(--color-accent-100);"><strong>Original sample pack:</strong> all 15 cards are generated locally by this page. No third-party recording is downloaded, embedded or redistributed.</div>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWeekIntro }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);"><span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span><h2 style="margin:0;">{{ currentStep.title }}</h2><p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p><button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button></div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-5);">
+          <div><span class="tag tag-neutral">{{ currentStep.weekTag }}</span><h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2></div>
+          <p style="margin:0;line-height:1.6;">{{ currentStep.body }}</p>
+          <div style="display:flex;flex-direction:column;gap:12px;"><sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;"><input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" /><span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span></label></sc-for></div>
+
+          <sc-if value="{{ currentStep.showSliceBank }}" hint-placeholder-val="{{ false }}">
+            <section aria-label="Slice Bank" style="display:flex;flex-direction:column;gap:var(--space-4);border-top:1px solid var(--color-divider);padding-top:var(--space-5);">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><span class="tag tag-accent-2">Slice Bank</span><h3 style="margin:8px 0 0;">15 original browser-generated sounds</h3></div><label class="btn btn-secondary" style="cursor:pointer;">Import audio<input type="file" accept=".wav,.wave,.aif,.aiff,.mp3,audio/wav,audio/aiff,audio/mpeg" onchange="{{ importSample }}" style="position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);" /></label></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;"><sc-for list="{{ sliceCards }}" as="card" hint-placeholder-count="15"><button type="button" onclick="{{ card.select }}" aria-pressed="{{ card.pressed }}" style="{{ card.style }}"><span style="font-size:11px;opacity:.65;">{{ card.id }}</span><span style="font-weight:700;">{{ card.title }}</span><span style="font-size:11px;opacity:.7;">{{ card.meta }}</span></button></sc-for></div>
+              <div class="card" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-accent-100);">
+                <div style="display:flex;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><strong>{{ selectedCard.title }}</strong><div style="font-size:12px;opacity:.72;">{{ selectedCard.provenance }}</div></div><span class="tag tag-neutral">{{ selectedCard.tempoLabel }}</span></div>
+                <canvas data-sampler-waveform="true" width="800" height="180" aria-label="{{ selectedCard.waveformLabel }}" onpointerdown="{{ waveformPointerDown }}" onpointermove="{{ waveformPointerMove }}" onpointerup="{{ waveformPointerUp }}" onpointercancel="{{ waveformPointerUp }}" style="width:100%;height:180px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);cursor:ew-resize;"></canvas>
+                <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;"><label style="font-size:13px;">Sensitivity <input type="range" min="0" max="100" value="{{ sensitivity }}" oninput="{{ setSensitivity }}" aria-label="Auto-slice sensitivity" /></label><button type="button" class="btn btn-secondary" onclick="{{ autoSlice }}">Auto-slice</button><button type="button" class="btn btn-secondary" onclick="{{ resample }}">Resample</button><button type="button" class="btn btn-primary" onclick="{{ exportWav }}">Export WAV</button></div>
+                <div style="display:grid;grid-template-columns:repeat(8,minmax(54px,1fr));gap:8px;"><sc-for list="{{ slicePads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.play }}" aria-label="{{ pad.ariaLabel }}" style="{{ pad.style }}"><span style="font-size:11px;opacity:.65;">{{ pad.number }}</span><span style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;">{{ pad.label }}</span></button></sc-for></div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showPatternGrid }}" hint-placeholder-val="{{ false }}">
+            <section aria-label="Tempo grid" style="display:flex;flex-direction:column;gap:var(--space-3);border-top:1px solid var(--color-divider);padding-top:var(--space-5);">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><span class="tag tag-accent">Pattern Lab</span><h3 style="margin:8px 0 0;">16-step tempo grid</h3></div><label style="font-size:13px;">Tempo <input type="number" min="40" max="240" value="{{ tempo }}" onchange="{{ setTempo }}" aria-label="Pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label></div>
+              <div style="display:grid;grid-template-columns:repeat(8,minmax(54px,1fr));gap:8px;"><sc-for list="{{ trackPads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.select }}" aria-pressed="{{ pad.pressed }}" style="{{ pad.style }}">Pad {{ pad.number }}</button></sc-for></div>
+              <div style="display:grid;grid-template-columns:repeat(16,minmax(30px,1fr));gap:5px;overflow-x:auto;padding-bottom:4px;"><sc-for list="{{ patternSteps }}" as="cell" hint-placeholder-count="16"><button type="button" onclick="{{ cell.toggle }}" aria-label="{{ cell.ariaLabel }}" aria-pressed="{{ cell.pressed }}" style="{{ cell.style }}">{{ cell.number }}</button></sc-for></div>
+              <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;"><button type="button" class="btn btn-primary" onclick="{{ toggleTransport }}">{{ transportLabel }}</button><button type="button" class="btn btn-secondary" onclick="{{ clearPattern }}">Clear pattern</button></div>
+              <p style="font-size:12px;opacity:.72;margin:0;">The grid schedules sixteenth notes against the audio clock. Changing BPM stops and re-triggers the scheduler so the next bar uses the new tempo.</p>
+            </section>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}"><div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);"><h2 style="margin:0;">Your sampler is a band in a box.</h2><p style="margin:0;max-width:58ch;opacity:.85;">You can slice, sequence, resample, arrange, perform and export a complete sampler-based track. Save your three-minute WAV and your self-assessment notes together.</p><button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button></div></sc-if>
+    </div>
+  </main>
+
+  <footer style="display:flex;justify-content:space-between;padding:var(--space-4);border-top:1px solid var(--color-divider);"><button type="button" class="btn btn-secondary" onclick="{{ goBack }}" disabled="{{ isFirst }}">← Back</button><button type="button" class="btn btn-primary" onclick="{{ goNext }}" disabled="{{ isLast }}">Next →</button></footer>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}"><div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;"><div class="dialog" data-course-map-dialog="true" tabIndex="-1" onclick="{{ stopProp }}" onkeydown="{{ dialogKeydown }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;"><div class="dialog-title">Course map</div><sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="8"><div><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin:12px 0 6px;">{{ grp.label }}</div><sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="6"><button type="button" onclick="{{ it.go }}" style="{{ it.rowStyle }}">{{ it.title }}</button></sc-for></div></sc-for><div class="dialog-actions"><button type="button" class="btn btn-secondary" onclick="{{ closeDialog }}">Close</button></div></div></div></sc-if>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script>
+class SamplerEngine {
+  constructor(ctx) { this.ctx = ctx; this.buffers = new Map(); this.lastTrigger = null; }
+
+  async loadSample(file, id) {
+    if (!file || typeof file.arrayBuffer !== 'function') throw new Error('Choose a WAV, AIFF or MP3 file.');
+    var decoded = await this.ctx.decodeAudioData(await file.arrayBuffer());
+    this.buffers.set(id, decoded);
+    return decoded;
+  }
+
+  cloneBuffer(source) {
+    var copy = this.ctx.createBuffer(source.numberOfChannels || 1, source.length, source.sampleRate);
+    for (var ch = 0; ch < (source.numberOfChannels || 1); ch += 1) {
+      var input = source.getChannelData(ch);
+      var output = copy.getChannelData(ch);
+      output.set(input);
+    }
+    return copy;
+  }
+
+  createGenerated(card) {
+    if (this.buffers.has(card.id)) return this.buffers.get(card.id);
+    var rate = card.sampleRate;
+    var length = Math.max(1, Math.round(card.duration * rate));
+    var buffer = this.ctx.createBuffer(2, length, rate);
+    var seed = card.seed || 1;
+    var random = function () { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return ((seed >>> 0) / 4294967295) * 2 - 1; };
+    var bpm = card.originalBpm || 120;
+    var beat = 60 / bpm;
+    var hits = card.slices.map(function (slice) { return slice.start; });
+    for (var ch = 0; ch < 2; ch += 1) {
+      var data = buffer.getChannelData(ch);
+      for (var i = 0; i < length; i += 1) {
+        var t = i / rate;
+        var v = 0;
+        if (card.generator === 'kick' || card.generator === 'sub') {
+          var phase = 2 * Math.PI * (card.generator === 'kick' ? 52 : 43) * t;
+          v = Math.sin(phase + 18 * Math.exp(-t * 25)) * Math.exp(-t * (card.generator === 'kick' ? 10 : 2.5));
+        } else if (card.generator === 'snare' || card.generator === 'clap') {
+          v = random() * Math.exp(-t * (card.generator === 'clap' ? 7 : 13)) * 0.7 + Math.sin(2 * Math.PI * 180 * t) * Math.exp(-t * 18) * 0.25;
+        } else if (card.generator === 'hat' || card.generator === 'ride' || card.generator === 'dust') {
+          v = random() * Math.exp(-t * (card.generator === 'ride' ? 1.8 : 16)) * (card.generator === 'dust' ? 0.18 : 0.5);
+        } else if (card.generator === 'pad' || card.generator === 'vocal') {
+          var notes = card.generator === 'vocal' ? [220,330,495] : [110,130.81,164.81,196];
+          for (var n = 0; n < notes.length; n += 1) v += Math.sin(2 * Math.PI * notes[n] * t + ch * 0.06 * n) / notes.length;
+          v *= Math.min(1, t * 8) * Math.min(1, (card.duration - t) * 3) * 0.42;
+        } else if (card.generator === 'reese') {
+          v = (Math.sin(2 * Math.PI * 55 * t) + Math.sin(2 * Math.PI * 55.7 * t)) * 0.28;
+        } else {
+          for (var h = 0; h < hits.length; h += 1) {
+            var dt = t - hits[h];
+            if (dt >= 0 && dt < Math.min(0.32, beat * 0.48)) {
+              var isSnare = h % 4 === 2;
+              v += isSnare ? random() * Math.exp(-dt * 16) * 0.42 : Math.sin(2 * Math.PI * (58 + 90 * Math.exp(-dt * 25)) * dt) * Math.exp(-dt * 11) * 0.62;
+            }
+          }
+          if (card.generator === 'congaLoop') v += Math.sin(2 * Math.PI * (170 + 45 * Math.sin(2 * Math.PI * t / beat)) * t) * 0.16;
+          if (card.generator === 'hatLoop') v += random() * Math.pow(Math.max(0, Math.cos(Math.PI * t / (beat / 2))), 24) * 0.17;
+        }
+        var edge = Math.min(1, i / 64, (length - 1 - i) / 64);
+        data[i] = Math.max(-0.96, Math.min(0.96, v * Math.max(0, edge)));
+      }
+    }
+    this.buffers.set(card.id, buffer);
+    return buffer;
+  }
+
+  slice(id, sensitivity) {
+    var buffer = this.buffers.get(id);
+    if (!buffer) throw new Error('Load or generate the sample before slicing.');
+    var data = buffer.getChannelData(0);
+    var windowSize = Math.max(64, Math.round(buffer.sampleRate * 0.005));
+    var threshold = 0.08 + (100 - sensitivity) * 0.006;
+    var starts = [0];
+    var last = 0;
+    for (var i = windowSize; i < data.length - windowSize; i += windowSize) {
+      var peak = 0;
+      for (var j = i; j < i + windowSize; j += 1) peak = Math.max(peak, Math.abs(data[j] || 0));
+      if (peak >= threshold && (i - last) / buffer.sampleRate >= 0.05) { starts.push(i / buffer.sampleRate); last = i; }
+      if (starts.length === 16) break;
+    }
+    return starts.map(function (start, index) {
+      var end = index + 1 < starts.length ? starts[index + 1] : buffer.length / buffer.sampleRate;
+      return { index:index, start:start, end:Math.max(start + 0.005, end), label:'Slice ' + (index + 1) };
+    }).filter(function (s) { return s.end <= buffer.length / buffer.sampleRate + 0.000001; });
+  }
+
+  playSlice(card, index, when) {
+    var buffer = this.createGenerated(card);
+    var slice = card.slices[index];
+    if (!slice) throw new RangeError('Slice ' + (index + 1) + ' does not exist.');
+    var source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(this.ctx.destination);
+    var startAt = when === undefined ? this.ctx.currentTime : when;
+    source.start(startAt, slice.start, slice.end - slice.start);
+    this.lastTrigger = { cardId:card.id, pad:index + 1, offset:slice.start, duration:slice.end - slice.start, when:startAt };
+    return this.lastTrigger;
+  }
+
+  async resample(card) {
+    var sourceBuffer = this.createGenerated(card);
+    var Offline = typeof window !== 'undefined' && (window.OfflineAudioContext || window.webkitOfflineAudioContext);
+    if (!Offline) return this.cloneBuffer(sourceBuffer);
+    var offline = new Offline(sourceBuffer.numberOfChannels || 1, sourceBuffer.length, sourceBuffer.sampleRate);
+    var source = offline.createBufferSource();
+    source.buffer = sourceBuffer;
+    source.connect(offline.destination);
+    source.start(0);
+    var rendered = await offline.startRendering();
+    return rendered;
+  }
+
+  encodeWav(audioBuffer, bitDepth) {
+    bitDepth = bitDepth === 24 ? 24 : 16;
+    var channels = Math.min(2, audioBuffer.numberOfChannels || 1);
+    var bytesPerSample = bitDepth / 8;
+    var dataLength = audioBuffer.length * channels * bytesPerSample;
+    var out = new ArrayBuffer(44 + dataLength);
+    var view = new DataView(out);
+    var write = function (offset, value) { for (var i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i)); };
+    write(0, 'RIFF'); view.setUint32(4, 36 + dataLength, true); write(8, 'WAVE'); write(12, 'fmt ');
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, channels, true);
+    view.setUint32(24, audioBuffer.sampleRate, true); view.setUint32(28, audioBuffer.sampleRate * channels * bytesPerSample, true);
+    view.setUint16(32, channels * bytesPerSample, true); view.setUint16(34, bitDepth, true); write(36, 'data'); view.setUint32(40, dataLength, true);
+    var channelData = [];
+    for (var ch = 0; ch < channels; ch += 1) channelData.push(audioBuffer.getChannelData(ch));
+    var offset = 44;
+    for (var frame = 0; frame < audioBuffer.length; frame += 1) {
+      for (var c = 0; c < channels; c += 1) {
+        var sample = Math.max(-1, Math.min(1, channelData[c][frame] || 0));
+        if (bitDepth === 16) { view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true); offset += 2; }
+        else { var q = Math.round(sample < 0 ? sample * 8388608 : sample * 8388607); view.setUint8(offset, q & 255); view.setUint8(offset + 1, (q >> 8) & 255); view.setUint8(offset + 2, (q >> 16) & 255); offset += 3; }
+      }
+    }
+    return out;
+  }
+
+  exportWav(card, bitDepth) {
+    var buffer = this.createGenerated(card);
+    return { buffer:this.encodeWav(buffer, bitDepth || card.bitDepth), sampleRate:buffer.sampleRate, bitDepth:bitDepth || card.bitDepth, mimeType:'audio/wav' };
+  }
+
+  rms(buffer) {
+    var data = buffer.getChannelData(0), total = 0;
+    for (var i = 0; i < data.length; i += 1) total += data[i] * data[i];
+    return Math.sqrt(total / Math.max(1, data.length));
+  }
+
+  transitionMetrics(previous, next, scheduledGap) {
+    var a = previous.getChannelData(0), b = next.getChannelData(0);
+    var click = Math.abs((b[0] || 0) - (a[a.length - 1] || 0));
+    return { gapSeconds:Math.max(0, scheduledGap || 0), clickDb:click === 0 ? -Infinity : 20 * Math.log10(click) };
+  }
+}
+
+class Component extends DCLogic {
+  makePattern() { return Array.from({ length:8 }, function () { return Array(16).fill(false); }); }
+  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, status:'' }; }
+  state = this.initialState();
+
+  constructor(props) {
+    super(props);
+    this.SamplerEngineClass = SamplerEngine;
+    this.SLICE_CARDS = this.buildSliceCards();
+    this.STEPS = this.buildSteps();
+    this.sampler = null;
+    this.transportTimer = null;
+    this.nextBarTime = 0;
+    this.dragSliceIndex = null;
+    this.sequences = {};
+  }
+
+  makeSlices(count, duration, labels) {
+    var width = duration / count;
+    return Array.from({ length:count }, function (_, i) { return { index:i, start:Number((i * width).toFixed(4)), end:Number(((i + 1) * width).toFixed(4)), label:(labels && labels[i]) || ('Slice ' + (i + 1)) }; });
+  }
+
+  makeWaveform(seed) {
+    var points = [], x = seed || 1;
+    for (var i = 0; i < 96; i += 1) { x = (x * 1664525 + 1013904223) >>> 0; points.push(Number((0.12 + (x / 4294967295) * 0.82).toFixed(3))); }
+    return points;
+  }
+
+  buildSliceCards() {
+    var self = this;
+    var raw = [
+      ['SL-001','Pocket Funk Break',82,16,4.2,8,'breakLoop',101,['Kick','Hat','Snare','Hat','Kick','Ghost','Snare','Hat']],
+      ['SL-002','Classic House Kick',null,24,0.8,1,'kick',102,['Kick']],
+      ['SL-003','Deep Sub Bass',null,16,1.6,1,'sub',103,['Sub']],
+      ['SL-004','Bright Machine Snare',null,16,0.7,1,'snare',104,['Snare']],
+      ['SL-005','Chord Pad (Amin7)',100,24,4.8,4,'pad',105,['Attack','Bloom','Hold','Tail']],
+      ['SL-006','Breakbeat Lab',136,16,3.53,8,'breakLoop',106,['Kick','Snare','Hat','Kick','Ghost','Snare','Kick','Hat']],
+      ['SL-007','Dust & Crackle Texture',null,16,2.0,1,'dust',107,['Texture']],
+      ['SL-008','Reese Bass Loop',140,24,3.43,4,'reese',108,['A','B','C','D']],
+      ['SL-009','Synthetic Conga Loop',110,16,4.36,8,'congaLoop',109,['Low','High','Low','Slap','Low','High','Open','Slap']],
+      ['SL-010','Long Ride Cymbal',null,16,2.8,1,'ride',110,['Ride']],
+      ['SL-011','Formant Ahh Chop',128,16,1.88,4,'vocal',111,['Ah','Eh','Oh','Tail']],
+      ['SL-012','Closed Hat Loop',120,16,2.0,8,'hatLoop',112,['Hat 1','Hat 2','Hat 3','Hat 4','Hat 5','Hat 6','Hat 7','Hat 8']],
+      ['SL-013','Gated Clap',null,24,0.9,1,'clap',113,['Clap']],
+      ['SL-014','Deep 808-Style Kick',null,16,1.2,1,'kick',114,['Kick']],
+      ['SL-015','Ambient Pad (C Major)',null,24,6.0,1,'pad',115,['Pad']]
+    ];
+    return raw.map(function (r) {
+      var isLoop = r[2] !== null;
+      return { id:r[0], title:r[1], sourceType:'original_synthesis', originalBpm:r[2], bpmConfirmed:isLoop, bitDepth:r[3], sampleRate:48000, duration:r[4], slices:self.makeSlices(r[5], r[4], r[8]), autoSliced:isLoop, algorithm:isLoop ? 'transient_detection' : null, sensitivity:isLoop ? 70 : null, waveform:self.makeWaveform(r[7]), generator:r[6], seed:r[7], provenance:'Generated locally by the Sample & Circuit engine; no external recording.', license:'Repository original' };
+    });
+  }
+
+  buildSteps() {
+    var W = function (n) { return 'Week ' + n; };
+    var lesson = function (id, week, day, title, body, items, widget) { return { id:id, kind:'content', weekTag:W(week), title:'Day ' + day + ': ' + title, body:body, items:items.map(function (text) { return { text:text }; }), widget:widget || null }; };
+    return [
+      { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview', title:'Week 1: Power, Routing & the Empty Canvas', objective:'Get sound out of the box, protect headroom and understand the path from a pad to the speakers.' },
+      lesson('w1-d1',1,1,'Power and wiring','Connect power, headphones and speakers before raising any level.', ['Use the correct power supply or supported battery mode.','Connect headphones or monitors with the master level down.','Raise track, master and speaker levels in that order; keep meters out of the red.']),
+      lesson('w1-d2',1,2,'Reset, firmware and track types','Start from a known state and identify what each track controls.', ['Back up anything important before a factory reset.','Install only the firmware published for your exact hardware model.','Identify sample, synth and MIDI tracks on your device.']),
+      lesson('w1-d3',1,3,'Load the starter pack','Use the original Slice Bank in the browser or export your own captures for hardware.', ['Open every Slice Bank card and read its tempo and bit-depth metadata.','On hardware, place imported files in one clearly named project folder.','Leave source BPM blank for one-shots instead of inventing a tempo.'],'sliceBank'),
+      lesson('w1-d4',1,4,'Play one-shots','Learn pad response with a kick, snare and hat.', ['Play pads softly and firmly to hear velocity.','Balance kick, snare and hat without clipping.','Practice alternating hands while keeping relaxed wrists.'],'sliceBank'),
+      lesson('w1-d5',1,5,'Milestone: first beat','Record a one-bar four-on-the-floor beat.', ['Kick on beats 1, 2, 3 and 4.','Snare on beats 2 and 4; hats on eighth notes.','Confirm playback is steady and free of clicks or clipping.'],'patternGrid'),
+
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview', title:'Week 2: Step Sequencing vs. Real-Time Recording', objective:'Use quantisation deliberately without erasing human feel.' },
+      lesson('w2-d1',2,1,'Step sequencing','Enter notes on a 16-step grid, then add available flams or ratchets.', ['Program the main kick and snare on the grid.','Add hats on alternating steps.','Try one ratchet or flam and listen for crowding.'],'patternGrid'),
+      lesson('w2-d2',2,2,'Real-time recording','Compare a live pad take with sixteenth-note quantisation.', ['Record one pass without quantisation.','Duplicate it and quantise the copy to sixteenths.','Describe which version feels better and why.'],'patternGrid'),
+      lesson('w2-d3',2,3,'Erase and undo','Distinguish a reversible edit from clearing a whole track.', ['Erase one note without stopping playback.','Undo and confirm the note returns.','Locate erase-track and avoid it during a live take.']),
+      lesson('w2-d4',2,4,'Shuffle and swing','Move the off-beats later without moving the downbeats.', ['Start at 50 percent swing.','Raise swing gradually toward 70 percent.','Stop before kick and snare timing becomes unstable.']),
+      lesson('w2-d5',2,5,'Milestone: human funk beat','Record two bars with quiet ghost snares.', ['Play ghost notes at visibly lower velocity.','Quantise the kick and main snare only.','Keep the ghost notes unquantised and confirm the groove remains audible.'],'patternGrid'),
+
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview', title:'Week 3: Chopping & Slicing Breaks', objective:'Turn a generated break into eight playable, editable slices.' },
+      lesson('w3-d1',3,1,'Auto-slicing','Use transient sensitivity to propose slice markers.', ['Load Pocket Funk Break.','Compare low, medium and high sensitivity.','Reject any marker that creates a slice shorter than 5 ms.'],'sliceBank'),
+      lesson('w3-d2',3,2,'Manual slicing','Drag markers while listening for clean attacks and tails.', ['Move a marker to the start of a transient.','Leave enough tail to avoid an abrupt cut.','Confirm adjacent slices still meet with no overlap or gap.'],'sliceBank'),
+      lesson('w3-d3',3,3,'Pad mapping','Verify slice one maps to pad one and continues in order.', ['Play all eight pads from left to right.','Name each slice by its strongest sound.','Correct any empty or misordered slice.'],'sliceBank'),
+      lesson('w3-d4',3,4,'Re-pitching','Use a single slice as raw material for a bass phrase.', ['Choose a kick or tonal slice.','Transpose it across the available pad range on hardware.','Keep the lowest note clear rather than excessively sub-heavy.'],'sliceBank'),
+      lesson('w3-d5',3,5,'Milestone: chopped pattern','Rearrange a break into a distinct one-bar phrase.', ['Trigger a new Kick → Snare → Hat → Kick order.','Record the order as Pattern 1.','Confirm the result is recognisably different from the source.'],'patternGrid'),
+
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview', title:'Week 4: Motion Recording & Parameter Locks', objective:'Create controlled movement that repeats reliably.' },
+      lesson('w4-d1',4,1,'Filter sweeps','Record a four-bar cutoff movement.', ['Compare smooth motion recording with stepped automation.','Keep resonance below an uncomfortable peak.','Replay twice and confirm the sweep repeats.']),
+      lesson('w4-d2',4,2,'Pitch envelopes','Automate pitch on selected bass steps.', ['Lock one step above the root.','Use a short envelope for a percussive result.','Check that the following step returns to its stored pitch.']),
+      lesson('w4-d3',4,3,'Send effects','Create a delay throw without washing out the whole pattern.', ['Raise delay only on the final snare.','Leave the kick send low or off.','Set feedback so the echo decays before the next phrase.']),
+      lesson('w4-d4',4,4,'LFO movement','Route a slow LFO to pan or volume.', ['Start with shallow depth.','Listen in headphones for uncomfortable hard panning.','Match the LFO period to the phrase.']),
+      lesson('w4-d5',4,5,'Milestone: four-bar build','Combine a rising filter and final-snare delay throw.', ['Move cutoff from roughly 200 Hz toward 10 kHz over four bars.','Place the delay throw on the last snare only.','Confirm repeat playback is identical and free of crackle.']),
+
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview', title:'Week 5: Pattern Chaining & Song Mode', objective:'Build a dependable structure beyond a one-bar loop.' },
+      lesson('w5-d1',5,1,'Pattern duplication','Create four related patterns from one groove.', ['Pattern 2 adds hats.','Pattern 3 removes the kick.','Pattern 4 becomes the breakdown.'],'patternGrid'),
+      lesson('w5-d2',5,2,'Manual chaining','Launch patterns on phrase boundaries.', ['Count four bars before each change.','Queue the next pattern without double-triggering.','Recover by returning to Pattern 1 on a downbeat.']),
+      lesson('w5-d3',5,3,'Song or chain mode','Program eight pattern slots to play automatically.', ['Use your device chain or song mode.','Repeat sections intentionally rather than duplicating by accident.','Play the chain twice and compare transitions.']),
+      lesson('w5-d4',5,4,'Mute states','Store which tracks are active in each section.', ['Keep the intro sparse.','Remove the kick for the build or breakdown.','Restore the full rhythm exactly on the drop.']),
+      lesson('w5-d5',5,5,'Milestone: 16-bar song','Arrange Intro → Groove → Build → Drop.', ['Give each section four bars.','Confirm there are no gaps or stutters at boundaries.','Save the project to internal memory.'],'patternGrid'),
+
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview', title:'Week 6: Resampling Internally', objective:'Turn your own patterns into new, lighter and more textured source material.' },
+      lesson('w6-d1',6,1,'Bounce a pattern','Capture four bars to a new pad using internal resampling.', ['Choose an empty destination pad.','Keep the resample path internal rather than using a microphone.','Compare source and resample length, pitch and level.'],'sliceBank'),
+      lesson('w6-d2',6,2,'Reverse transition','Reverse a bounce and place it before a section change.', ['Trim silence before reversing.','End the reversed sound exactly on the downbeat.','Lower its level if it masks the incoming kick.'],'sliceBank'),
+      lesson('w6-d3',6,3,'Layered resamples','Capture two filter states and layer them carefully.', ['Resample once dark and once bright.','High-pass one layer to reduce low-frequency buildup.','Check the combined level for clipping.'],'sliceBank'),
+      lesson('w6-d4',6,4,'Micro-chopping','Slice a chord into sixteen tiny pieces for a glitch texture.', ['Use slices longer than 5 ms.','Vary the order rather than repeating one slice.','Reduce density if the result becomes harsh.'],'sliceBank'),
+      lesson('w6-d5',6,5,'Milestone: ambient resample','Make two bars using only resampled or reversed material.', ['Do not trigger the original one-shots.','Confirm the captured audio keeps its original pitch.','Listen for clicks and unwanted DC offset.'],'sliceBank'),
+
+      { id:'w7-intro', kind:'weekintro', weekTag:W(7), navLabel:'Week Overview', title:'Week 7: Master FX & Performance Muting', objective:'Turn a saved arrangement into a playable, recoverable performance.' },
+      lesson('w7-d1',7,1,'Compression and limiting','Use dynamics control for cohesion, not loudness alone.', ['Lower threshold until gain reduction is visible.','Use a moderate ratio and compare bypassed level.','Avoid make-up gain that causes the master to clip.']),
+      lesson('w7-d2',7,2,'Isolator EQ','Practice high-pass and low-pass transitions.', ['Remove lows before a build.','Return bass on a downbeat.','Avoid leaving the master filtered by accident.']),
+      lesson('w7-d3',7,3,'Sidechain motion','Duck bass under the kick with a dedicated control or volume LFO.', ['Match the duck period to the kick pattern.','Use enough depth to create space without silencing bass.','Check headphones and speakers.']),
+      lesson('w7-d4',7,4,'Performance layout','Place eight patterns in a predictable physical order.', ['Arrange patterns left to right by song section.','Put essential mute controls under your dominant hand.','Write a one-page recovery map.']),
+      lesson('w7-d5',7,5,'Milestone: live arrangement','Perform the Week 5 song without Song Mode.', ['Launch scenes and mutes manually.','Keep the kick active through the main drop.','Record and review the complete pass.']),
+
+      { id:'w8-intro', kind:'weekintro', weekTag:W(8), navLabel:'Week Overview', title:'Week 8: Capstone — Export & Reflect', objective:'Finish, export and critically assess a complete track.' },
+      lesson('w8-d1',8,1,'Final arrangement','Extend the 16-bar form to at least 32 bars.', ['Add a breakdown and second drop.','Use contrast rather than adding every layer.','Aim for a clear Intro, Build, Drop and Outro.']),
+      lesson('w8-d2',8,2,'Hardware export','Render a stereo master from the device or recorder.', ['Prefer 48 kHz / 24-bit when the device supports it.','Leave peak headroom below clipping.','Name the file with track title and version.']),
+      lesson('w8-d3',8,3,'Browser export','Use the Slice Bank Export WAV control when hardware is unavailable.', ['Choose a card or resampled pattern.','Export only 44.1 or 48 kHz at 16 or 24 bit.','Play the downloaded WAV outside the guide.'],'sliceBank'),
+      lesson('w8-d4',8,4,'Critical listening','Compare balance, dynamics and structure with a legally sourced reference.', ['Is the kick punchy without dominating?','Are hats clear without becoming sharp?','Can you hear every major section change?']),
+      lesson('w8-d5',8,5,'Milestone: final track','Save a three-minute, arrangement-complete stereo WAV.', ['Confirm the export opens and plays from start to finish.','Complete the kick, hats and arrangement self-assessment.','Keep the project and export together for future revision.'],'sliceBank'),
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:'Course complete' }
+    ];
+  }
+
+  ensureAudio() {
+    if (!this.audioCtx) { var Audio = window.AudioContext || window.webkitAudioContext; this.audioCtx = new Audio(); }
+    if (this.audioCtx.state === 'suspended' && this.audioCtx.resume) this.audioCtx.resume();
+    return this.audioCtx;
+  }
+  ensureSampler() { if (!this.sampler) this.sampler = new this.SamplerEngineClass(this.ensureAudio()); return this.sampler; }
+  selectedCard() { return this.SLICE_CARDS.find(function (card) { return card.id === this.state.selectedCardId; }, this) || this.SLICE_CARDS[0]; }
+  selectCard(id) { this.setState({ selectedCardId:id, status:'' }, this.drawWaveform.bind(this)); }
+  setSensitivity(value) { var n = Number(value && value.target ? value.target.value : value); this.setState({ sensitivity:Math.max(0, Math.min(100, n)) }); }
+
+  async importSample(event) {
+    var file = event && event.target && event.target.files && event.target.files[0];
+    if (!file) return;
+    var card = this.selectedCard();
+    try {
+      var buffer = await this.ensureSampler().loadSample(file, card.id);
+      card.duration = buffer.length / buffer.sampleRate;
+      card.sampleRate = buffer.sampleRate;
+      card.waveform = this.waveformFromBuffer(buffer);
+      card.slices = [{ index:0, start:0, end:card.duration, label:'Imported' }];
+      card.autoSliced = false; card.algorithm = null; card.sensitivity = null;
+      card.provenance = 'User-imported local file: ' + file.name + '. Not stored after refresh.';
+      this.setState({ status:'Imported ' + file.name }, this.drawWaveform.bind(this));
+    } catch (error) { this.setState({ status:error.message || 'Could not decode this file.' }); }
+  }
+
+  waveformFromBuffer(buffer) {
+    var data = buffer.getChannelData(0), points = [], block = Math.max(1, Math.floor(data.length / 96));
+    for (var i = 0; i < 96; i += 1) { var peak = 0; for (var j = i * block; j < Math.min(data.length, (i + 1) * block); j += 1) peak = Math.max(peak, Math.abs(data[j])); points.push(Number(peak.toFixed(3))); }
+    return points;
+  }
+
+  autoSliceSelected() {
+    var card = this.selectedCard(), sampler = this.ensureSampler();
+    sampler.createGenerated(card);
+    var slices = sampler.slice(card.id, this.state.sensitivity);
+    if (slices.length < 2) slices = this.makeSlices(Math.min(8, Math.max(2, card.slices.length)), card.duration);
+    card.slices = slices; card.autoSliced = true; card.algorithm = 'transient_detection'; card.sensitivity = this.state.sensitivity;
+    this.setState({ status:'Created ' + slices.length + ' slices.' }, this.drawWaveform.bind(this));
+  }
+
+  playSlice(index, when) { return this.ensureSampler().playSlice(this.selectedCard(), index, when); }
+  async resampleSelected() {
+    var card = this.selectedCard(), sampler = this.ensureSampler();
+    var result = await sampler.resample(card);
+    sampler.buffers.set(card.id, result);
+    this.setState({ status:'Resampled ' + card.title + ' at ' + result.sampleRate + ' Hz.' }, this.drawWaveform.bind(this));
+    return result;
+  }
+  exportSelectedWav() {
+    var card = this.selectedCard(), exported = this.ensureSampler().exportWav(card, card.bitDepth);
+    if (typeof document !== 'undefined' && typeof URL !== 'undefined' && URL.createObjectURL && document.createElement) {
+      var blob = new Blob([exported.buffer], { type:exported.mimeType });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob); link.download = card.id + '-' + card.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.wav'; link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 0);
+    }
+    this.setState({ status:'Exported ' + exported.sampleRate + ' Hz / ' + exported.bitDepth + '-bit WAV.' });
+    return exported;
+  }
+
+  tempoGrid(bpm, count, start) {
+    var step = 60 / Math.max(20, Math.min(300, Number(bpm) || 120)) / 4;
+    return Array.from({ length:count || 16 }, function (_, i) { return (start || 0) + i * step; });
+  }
+  patternChainTimeline(patterns, bpm, start) {
+    var bar = 60 / bpm * 4, cursor = start || 0;
+    return patterns.map(function (id) { var item = { id:id, start:cursor, end:cursor + bar }; cursor += bar; return item; });
+  }
+  setTempo(value) {
+    var next = Math.max(40, Math.min(240, Number(value && value.target ? value.target.value : value) || 120));
+    var wasPlaying = this.state.playing;
+    if (wasPlaying) this.stopTransport();
+    this.setState({ tempo:next }, wasPlaying ? this.startTransport.bind(this) : undefined);
+  }
+  togglePatternStep(index) { this.setState(function (state) { var pattern = state.pattern.map(function (row) { return row.slice(); }); pattern[state.selectedTrack][index] = !pattern[state.selectedTrack][index]; return { pattern:pattern }; }); }
+  clearPattern() { this.setState({ pattern:this.makePattern() }); }
+  selectTrack(index) { this.setState({ selectedTrack:index }); }
+  scheduleBar(when) {
+    var grid = this.tempoGrid(this.state.tempo, 16, when), self = this;
+    this.state.pattern.forEach(function (row, pad) { row.forEach(function (on, step) { if (on) self.playSlice(Math.min(pad, self.selectedCard().slices.length - 1), grid[step]); }); });
+    this.nextBarTime = grid[0] + 60 / this.state.tempo * 4;
+    return grid;
+  }
+  startTransport() {
+    if (this.transportTimer) return;
+    var ctx = this.ensureAudio();
+    this.setState({ playing:true });
+    this.scheduleBar(ctx.currentTime + 0.06);
+    var self = this;
+    this.transportTimer = setInterval(function () { if (self.nextBarTime - ctx.currentTime < 0.6) self.scheduleBar(self.nextBarTime); }, 100);
+    this.sequences.sampler = true;
+  }
+  stopTransport() { if (this.transportTimer) clearInterval(this.transportTimer); this.transportTimer = null; this.sequences = {}; this.setState({ playing:false }); }
+  stopSequence() { this.stopTransport(); }
+  toggleTransport() { if (this.state.playing) this.stopTransport(); else this.startTransport(); }
+
+  drawWaveform() {
+    if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
+    var canvas = document.querySelector('[data-sampler-waveform="true"]');
+    if (!canvas || typeof canvas.getContext !== 'function') return;
+    var ctx = canvas.getContext('2d'), card = this.selectedCard(), w = canvas.width, h = canvas.height;
+    var style = typeof getComputedStyle === 'function' ? getComputedStyle(canvas) : null;
+    var ink = style ? style.color : 'currentColor';
+    ctx.clearRect(0, 0, w, h); ctx.strokeStyle = ink; ctx.globalAlpha = 0.58; ctx.lineWidth = 2; ctx.beginPath();
+    card.waveform.forEach(function (amp, i) { var x = i / (card.waveform.length - 1) * w; ctx.moveTo(x, h / 2 - amp * h * 0.42); ctx.lineTo(x, h / 2 + amp * h * 0.42); }); ctx.stroke();
+    ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
+    card.slices.slice(1).forEach(function (slice) { var x = slice.start / card.duration * w; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); });
+    ctx.globalAlpha = 1;
+  }
+  markerFromEvent(event) {
+    var canvas = event.currentTarget, rect = canvas.getBoundingClientRect(), card = this.selectedCard();
+    var time = Math.max(0, Math.min(card.duration, (event.clientX - rect.left) / rect.width * card.duration));
+    var nearest = -1, distance = Infinity;
+    for (var i = 1; i < card.slices.length; i += 1) { var d = Math.abs(card.slices[i].start - time); if (d < distance) { nearest = i; distance = d; } }
+    return { index:nearest, time:time, threshold:card.duration * 0.035 };
+  }
+  waveformPointerDown(event) { var marker = this.markerFromEvent(event); if (marker.index >= 1 && marker.threshold >= Math.abs(this.selectedCard().slices[marker.index].start - marker.time)) { this.dragSliceIndex = marker.index; if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId); } }
+  waveformPointerMove(event) {
+    if (this.dragSliceIndex === null) return;
+    var marker = this.markerFromEvent(event), card = this.selectedCard(), i = this.dragSliceIndex;
+    var min = card.slices[i - 1].start + 0.005, max = card.slices[i].end - 0.005, time = Math.max(min, Math.min(max, marker.time));
+    card.slices[i - 1].end = time; card.slices[i].start = time; this.drawWaveform();
+  }
+  waveformPointerUp() { this.dragSliceIndex = null; }
+
+  getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
+  restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }
+  openCourseMap() { this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement; this.setState({ dialogOpen:true }, function () { if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return; var dialog = document.querySelector('[data-course-map-dialog="true"]'); var target = this.getDialogFocusables(dialog)[0] || dialog; if (target && typeof target.focus === 'function') target.focus(); }.bind(this)); }
+  closeCourseMap() { var target = this.dialogReturnFocus; this.dialogReturnFocus = null; this.setState({ dialogOpen:false }, this.restoreDialogFocus.bind(this, target)); }
+  onCourseMapKeydown(e) { if (e.key === 'Escape') { e.preventDefault(); this.closeCourseMap(); return; } if (e.key !== 'Tab') return; var focusables = this.getDialogFocusables(e.currentTarget); if (!focusables.length) { e.preventDefault(); if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus(); return; } var first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+  goToStep(i) { this.stopTransport(); var idx = Math.max(0, Math.min(this.STEPS.length - 1, i)); var target = this.state.dialogOpen ? this.dialogReturnFocus : null; if (target) this.dialogReturnFocus = null; this.setState({ step:idx, dialogOpen:false }, function () { this.restoreDialogFocus(target); this.drawWaveform(); }.bind(this)); }
+  goNext() { this.goToStep(this.state.step + 1); }
+  goBack() { this.goToStep(this.state.step - 1); }
+  restart() { this.stopTransport(); this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; this.setState(this.initialState(), this.drawWaveform.bind(this)); }
+  toggleCheck(stepId, idx) { this.setState(function (state) { var arr = (state.checks[stepId] || []).slice(); arr[idx] = !arr[idx]; return { checks:Object.assign({}, state.checks, { [stepId]:arr }) }; }); }
+  buildItems(step) { var self = this, checks = this.state.checks[step.id] || []; return (step.items || []).map(function (item, i) { return { text:item.text, checked:!!checks[i], toggle:function () { self.toggleCheck(step.id, i); }, textStyle:checks[i] ? 'text-decoration:line-through;opacity:.5;' : '' }; }); }
+  buildNavGroups() { var self = this, groups = []; this.STEPS.forEach(function (step, i) { var group = groups.find(function (g) { return g.label === step.weekTag; }); if (!group) { group = { label:step.weekTag, items:[] }; groups.push(group); } group.items.push({ title:step.navLabel || step.title, go:function () { self.goToStep(i); }, rowStyle:'display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:' + (i === self.state.step ? 'var(--color-accent-100)' : 'transparent') + ';color:var(--color-text);' }); }); return groups; }
+  buildSliceCardsView() { var self = this; return this.SLICE_CARDS.map(function (card) { var selected = card.id === self.state.selectedCardId; return { id:card.id, title:card.title, meta:(card.originalBpm ? card.originalBpm + ' BPM · ' : 'One-shot · ') + card.bitDepth + '-bit', pressed:selected ? 'true' : 'false', select:function () { self.selectCard(card.id); }, style:'display:flex;flex-direction:column;text-align:left;gap:3px;padding:10px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:pointer;font:inherit;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
+  buildSlicePads(card) { var self = this; return Array.from({ length:8 }, function (_, i) { var slice = card.slices[i]; return { number:i + 1, label:slice ? slice.label : 'Empty', ariaLabel:slice ? 'Play pad ' + (i + 1) + ': ' + slice.label : 'Pad ' + (i + 1) + ' is empty', play:function () { if (slice) self.playSlice(i); }, style:'min-height:62px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:8px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:' + (slice ? 'pointer' : 'not-allowed') + ';font:inherit;background:' + (slice ? 'var(--color-accent-2-200)' : 'var(--color-neutral-300)') + ';color:var(--color-text);' }; }); }
+  buildTrackPads() { var self = this; return Array.from({ length:8 }, function (_, i) { var selected = i === self.state.selectedTrack; return { number:i + 1, pressed:selected ? 'true' : 'false', select:function () { self.selectTrack(i); }, style:'padding:9px 5px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:12px;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
+  buildPatternSteps() { var self = this, row = this.state.pattern[this.state.selectedTrack]; return row.map(function (on, i) { return { number:i + 1, pressed:on ? 'true' : 'false', ariaLabel:'Pad ' + (self.state.selectedTrack + 1) + ', step ' + (i + 1), toggle:function () { self.togglePatternStep(i); }, style:'min-width:30px;aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:' + (on ? 'var(--color-accent-2-600)' : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-bg)')) + ';color:' + (on ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
+  componentDidMount() { this.drawWaveform(); }
+  componentDidUpdate() { this.drawWaveform(); }
+  componentWillUnmount() { this.stopTransport(); }
+
+  renderVals() {
+    var step = this.STEPS[this.state.step], card = this.selectedCard();
+    return {
+      weekLabel:step.weekTag, stepNumber:this.state.step + 1, totalSteps:this.STEPS.length, progressPct:Math.round(this.state.step / (this.STEPS.length - 1) * 100),
+      isOverview:step.kind === 'overview', isWeekIntro:step.kind === 'weekintro', isContent:step.kind === 'content', isComplete:step.kind === 'complete',
+      currentStep:{ weekTag:step.weekTag, title:step.title, objective:step.objective, body:step.body || '', items:this.buildItems(step), showSliceBank:step.widget === 'sliceBank', showPatternGrid:step.widget === 'patternGrid' },
+      sliceCards:this.buildSliceCardsView(), selectedCard:{ title:card.title, provenance:card.provenance, tempoLabel:card.originalBpm ? card.originalBpm + ' BPM confirmed' : 'One-shot · no source BPM', waveformLabel:'Waveform for ' + card.title + ' with ' + card.slices.length + ' slice regions' }, slicePads:this.buildSlicePads(card),
+      sensitivity:this.state.sensitivity, status:this.state.status, importSample:function (e) { return this.importSample(e); }.bind(this), setSensitivity:function (e) { this.setSensitivity(e); }.bind(this), autoSlice:function () { this.autoSliceSelected(); }.bind(this), resample:function () { return this.resampleSelected(); }.bind(this), exportWav:function () { return this.exportSelectedWav(); }.bind(this), waveformPointerDown:function (e) { this.waveformPointerDown(e); }.bind(this), waveformPointerMove:function (e) { this.waveformPointerMove(e); }.bind(this), waveformPointerUp:function () { this.waveformPointerUp(); }.bind(this),
+      tempo:this.state.tempo, trackPads:this.buildTrackPads(), patternSteps:this.buildPatternSteps(), transportLabel:this.state.playing ? 'Stop' : 'Play', toggleTransport:function () { this.toggleTransport(); }.bind(this), clearPattern:function () { this.clearPattern(); }.bind(this), setTempo:function (e) { this.setTempo(e); }.bind(this),
+      navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen, openDialog:function () { this.openCourseMap(); }.bind(this), closeDialog:function () { this.closeCourseMap(); }.bind(this), dialogKeydown:function (e) { this.onCourseMapKeydown(e); }.bind(this), stopProp:function (e) { e.stopPropagation(); }, goNext:function () { this.goNext(); }.bind(this), goBack:function () { this.goBack(); }.bind(this), isFirst:this.state.step === 0, isLast:this.state.step === this.STEPS.length - 1, restart:function () { this.restart(); }.bind(this)
+    };
+  }
+}
+</script>
+</body>
+</html>

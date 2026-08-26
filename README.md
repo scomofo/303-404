@@ -1,6 +1,6 @@
-# Hardware Guides
+# Hardware Music Guides
 
-Four single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide** for the Behringer TD-3-MO / RD-6-BK, the **DDJ-FLX4 Guide** for the Pioneer DJ DDJ-FLX4, the **MPK Mini MK4 Guide** for the Akai MPK Mini MK4, and the **Hybrid Live Set Guide** that combines both hardware systems into one performance workflow.
+Five single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide**, **DDJ-FLX4 Guide**, **MPK Mini MK4 Guide**, **Hybrid Live Set Guide**, and the eight-week **Sample & Circuit Guide** for grooveboxes and samplers.
 
 ## TD-3 & RD-6 Guide
 
@@ -21,7 +21,7 @@ The Behringer guide takes an absolute beginner from wiring and basic drum sequen
 
 ### Song Bank
 
-The Song Bank contains **27 cards ship by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
+The Song Bank contains **27 cards by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
 
 Each `SONG_CARDS` entry can include `sourceType`, `needsAccentSlideReview`, `homeOctave`, `overdrive`, tempo/provenance fields, filter settings, note names, accents and slides. Notes use names such as `C2` and `F#3`, with **`null` for a rest**. Unknown source details remain blank or explicitly estimated rather than being invented. Six legacy chart entries remain marked with `needsAccentSlideReview: true` until their original source rows can be revalidated.
 
@@ -37,15 +37,26 @@ Add a card in `DRUM_CARDS` with fields such as `{ id, title, artist?, sourceType
 
 ## DDJ-FLX4 Guide
 
-The DDJ-FLX4 guide covers seven weeks of hands-on controller lessons: setup, transport, tempo, mixer fundamentals, beatmatching, Sync, hot cues, loops, Beat FX and a mapped first mix. It then hands off to a self-paced **6-week Practice Plan**.
+The **DJ-404 performance curriculum** in `DDJ-FLX4 Guide.dc.html` is one eight-week intensive rather than separate beginner and practice plans. Each week contains five applied sessions and ends with a recorded milestone.
 
-### Practice Plan
+| Week | Covers |
+| --- | --- |
+| 1 | Wiring, software, cueing, controller anatomy and library preparation |
+| 2 | Jog nudging, tempo ranges, pitch riding and manual beatmatching |
+| 3 | Channel faders, EQ, filters, gain staging and eight-bar transitions |
+| 4 | Hot cues, loops, phrase counting and loop rolls |
+| 5 | Echo, reverb, filters and controlled FX-led transitions |
+| 6 | Camelot guidance, harmonic listening and a five-track key journey |
+| 7 | A planned 28–32 minute energy arc and critical playback notes |
+| 8 | Re-recording, safe export, artwork, tracklist and self-assessment |
 
-The Practice Plan turns knowing the controls into being able to play: each week has a goal, practice tasks, a watchlist and one milestone, with links back to the relevant hands-on lesson. The six-week progression covers setup/software, beatmatching, EQ and transitions, phrasing/hot cues/loops, FX and set flow, then a recorded 20–30 minute set.
+The existing cable, jog, tempo, mixer, beatmatch, cue, loop, FX and performance-map widgets remain part of the course. New labs add a phase-meter canvas, harmonic-compatibility guidance and a short practice recorder. The browser recorder creates original-synth stereo WAV drills at **44.1 kHz / 16-bit**, with a three-minute memory cap. The final 30-minute set should be recorded in rekordbox or Serato.
 
-Video and creator links are deliberately YouTube **search** links rather than guessed video IDs. The source curriculum names titles and channels but does not supply authoritative video IDs, so the guide searches for those titles instead of pretending a guessed URL is exact.
+### Transition Bank
 
-Progress ticks for tasks, watch items and milestones share the in-memory checks map but are namespaced so they cannot overwrite one another. Start Over clears the whole course and Practice Plan.
+The Transition Bank contains **12 technique cards**, not sample audio. Each card records `id`, `title`, `type`, optional `bpmRange`, `difficulty`, `sourceAttribution`, four instructional `steps`, and a `videoSearch`. Cards can be filtered by type and difficulty. Video references remain YouTube **search** links rather than guessed upload IDs.
+
+The practice engine uses two original synthesized reference grooves with millisecond beat-grid offsets. EQ kill reaches -60 dB in the simulation; echo feedback decays below -60 dB within four beats; hot-cue analysis can snap to a local zero crossing; and Camelot mismatches warn without blocking playback. The FLX4 has no physical FX paddles, so lessons refer to Beat FX, Smart CFX, Smart Fader and software mappings actually available to the selected setup.
 
 ## Hybrid Live Set Guide
 
@@ -59,7 +70,7 @@ Progress ticks for tasks, watch items and milestones share the in-memory checks 
 | 4 | A 10–12 minute full hybrid arrangement |
 | 5 | Stage-readiness checklist and recovery drills |
 
-Week 4 includes a dual performance timeline that shows the **TD-3/RD-6 role and DDJ-FLX4 role side by side** across Intro, Hardware Groove, Breakdown, Drop and Outro. The timeline is horizontally scrollable and keyboard-focusable on narrow screens. Checklist state is kept in memory and Start Over restores the guide to its initial state.
+Week 4 includes a dual-pane performance timeline that shows the **TD-3/RD-6 role and DDJ-FLX4 role side by side** across Intro, Hardware Groove, Breakdown, Drop and Outro. The timeline is horizontally scrollable and keyboard-focusable on narrow screens; Left/Right Arrow, Home and End select sections without requiring a pointer. Checklist state is kept in memory and Start Over restores the guide to its initial state.
 
 ## MPK Mini MK4 Guide
 
@@ -80,6 +91,31 @@ Everything is synthesized in the browser — five parameterised drum voices and 
 Three guarantees the guide states in its own copy are enforced by tests rather than left to trust: **no key can produce an out-of-scale note**, and none snaps further than the nearest scale tone; a chord stacks **only scale tones**, with its Roman numeral read off the intervals the stack produced rather than assumed from the degree; and **Mutate never leaves the held chord**, abandoning an octave jump at the edge of the playable range rather than clamping onto a note outside the chord. The eight knobs edit a live filter, waveshaper and tempo-synced delay while the loop plays, and an unassigned knob target falls back to its own default rather than to zero, so reassigning a knob never silently mutes the instrument.
 
 Lessons are listed by **title rather than link**, for the same reason the DDJ Practice Plan uses searches: the source names videos and channels but no authoritative IDs. The pad-practice entry names both Melodics and padlab.
+
+## Sample & Circuit Guide
+
+`SampleCircuit Guide.dc.html` is an eight-week, beginner-friendly curriculum for Novation Circuit Tracks / Rhythm, Elektron Model:Samples, Roland SP-404MKII, or the built-in browser sampler. Its sequence is power and routing, live versus step recording, slicing, motion recording, pattern chaining, resampling, performance controls, and a final stereo export.
+
+| Week | Covers |
+| --- | --- |
+| 1 | Power, routing, gain staging, sample organisation and a first pattern |
+| 2 | Step sequencing, real-time recording, quantisation, swing and ghost notes |
+| 3 | Transient detection, draggable slice markers, pad mapping and chopping |
+| 4 | Motion recording, parameter locks, sends and LFO movement |
+| 5 | Pattern variants, chains, mute states and a 16-bar form |
+| 6 | Internal resampling, reverse transitions, layering and micro-chopping |
+| 7 | Master dynamics, isolator EQ, sidechain motion and live muting |
+| 8 | A 32-bar capstone, stereo WAV export and critical listening |
+
+### Slice Bank and browser sampler
+
+The Slice Bank contains **15 cards**. Every bundled sound is deterministically generated in the browser and uses `sourceType: original_synthesis`; the repository does not embed or download commercial recordings. This keeps the default experience immediately playable while making its provenance exact. The page can also decode a user-selected WAV, AIFF or MP3 locally, but imported audio remains the user's responsibility and is not persisted after refresh.
+
+Each card keeps `id`, `title`, `sourceType`, `originalBpm`, `bpmConfirmed`, `bitDepth`, `sampleRate`, `duration`, `slices`, `autoSliced`, `algorithm`, `sensitivity`, `waveform`, `provenance` and `license`. One-shots use `originalBpm: null` and do not claim a tempo. Auto-sliced loops record `algorithm: transient_detection` and a 0–100 sensitivity value. Slice indices are zero-based in data and map directly to one-based pad labels.
+
+The raw Web Audio `SamplerEngine` is authored inside the guide, not in generated `support.js`. It provides `loadSample()`, transient-based `slice()`, `playSlice()`, OfflineAudioContext-backed `resample()`, and stereo PCM `exportWav()`. The internal WAV writer supports 44.1/48 kHz at 16 or 24 bit. The 16-step Pattern Lab schedules against the audio clock; a tempo change stops and restarts transport before using the new grid.
+
+A symbolic rhythm chart and an audio sample are not the same asset. A properly sourced chart may describe a rhythm such as the Amen pattern without bundling the original recording. Any future audio card must still document a redistribution-compatible recording license; a software or pattern-dataset license must not be reused as an audio-sample license.
 
 ## Running the guides
 
@@ -103,13 +139,15 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 
 | File | Guards |
 | --- | --- |
-| `test/structure.test.mjs` | Step rendering, unique ids/nav labels, Course Map behavior, restart state, accessibility and design-system rules across all four guides |
+| `test/structure.test.mjs` | Step rendering, unique ids/nav labels, Course Map behavior, restart state, accessibility and design-system rules across all five guides |
 | `test/songbank.test.mjs` | Song-card notes, rests, tempo provenance, schema, chart/engine agreement, source types and audio behavior |
 | `test/drumbank.test.mjs` | Drum-card row sets and lengths, provenance, source omissions, switch pairs, accent behavior, per-card tempo/length, navigation cleanup and sheet/engine agreement |
 | `test/mpk.test.mjs` | Scale snapping and its nearest-tone claim, scale-only chord stacks and interval-derived numerals, arp orderings, Mutate staying inside the held chord, knob assignment and default fallback, style-preset and arrangement integrity, and every widget a step names rendering (and only those) |
-| `test/timing.test.mjs` | Lookahead scheduling, exact grids, stop cleanup, shuffle and swing, filter envelopes, Note Repeat rolls and arrangement layers, a Drum Bank card's own tempo grid, and DDJ phase behavior |
-| `test/curriculum.test.mjs` | Six complete Practice Plan weeks, valid lesson cross-links, search-only video links, namespaced progress, milestone tallying, creators and README consistency |
-| `test/hybrid.test.mjs` | Five-week hybrid structure, dual performance timeline, independent checklists, reset behavior and Course Map grouping |
+| `test/slicebank.test.mjs` | Eight-week curriculum, 15-card schema and provenance, minimum slice length, tempo rules, resampling RMS, WAV format, chain continuity, pad mapping and transient metadata |
+| `test/transitionbank.test.mjs` | Twelve-card transition schema and filters, phase lock, EQ kill depth, echo decay, recording WAV format and peak, hot-cue zero crossing, Camelot warnings and beat-grid offsets |
+| `test/timing.test.mjs` | Lookahead scheduling, exact grids, stop cleanup, shuffle and swing, filter envelopes, Note Repeat rolls and arrangement layers, Drum/Slice Bank tempo grids, pattern-chain boundaries and DDJ phase behavior |
+| `test/curriculum.test.mjs` | Eight five-day DJ-404 weeks, independent recorded milestones, search-only learning resources, widget coverage and README consistency |
+| `test/hybrid.test.mjs` | Five-week hybrid structure, dual-pane scrollable timeline and keyboard controls, independent checklists, reset behavior and Course Map grouping |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
 
@@ -120,11 +158,12 @@ Behringer Setup Guide.dc.html   TD-3/RD-6 course and audio engines
 DDJ-FLX4 Guide.dc.html          DDJ-FLX4 course and Practice Plan
 MPK Mini MK4 Guide.dc.html      MPK Mini MK4 production course and its synth engines
 Hybrid Live Set.dc.html         Combined hardware/controller performance course
+SampleCircuit Guide.dc.html     Groovebox/sampler course, Slice Bank and sampler engine
 support.js                      shared generated runtime
 _ds/                            shared Organic design system
 uploads/                        retained hardware reference images
-test/                           harness plus seven .test.mjs files
+test/                           harness plus nine .test.mjs files
 package.json                    test script and Node engine requirement
 ```
 
-The four guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values.
+The five guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values. Maintainer notes live in `docs/HANDOFF_MODULES_1_4.md`, `docs/HANDOFF_SAMPLE_CIRCUIT.md`, and `docs/HANDOFF_DJ_404.md`.

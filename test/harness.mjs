@@ -16,6 +16,7 @@ export const GUIDES = [
   { name: 'DDJ-FLX4', file: 'DDJ-FLX4 Guide.dc.html' },
   { name: 'Hybrid Live Set', file: 'Hybrid Live Set.dc.html' },
   { name: 'MPK Mini MK4', file: 'MPK Mini MK4 Guide.dc.html' },
+  { name: 'Sample & Circuit', file: 'SampleCircuit Guide.dc.html' },
 ];
 
 export function readGuide(file) {
@@ -81,7 +82,7 @@ export function makeAudioContext() {
     // `stopAt` follows Web Audio's rule that a source stopped at or before its start
     // time never sounds. Every voice here calls stop(when + duration) as it is built,
     // so only a stop moved back to or before `when` actually silences one.
-    start(when) { starts.push({ when: when ?? ctx.currentTime, at: ctx.currentTime, stopAt: Infinity, node: this }); },
+    start(when, offset = 0, duration) { starts.push({ when: when ?? ctx.currentTime, at: ctx.currentTime, offset, duration, stopAt: Infinity, node: this }); },
     stop(when) {
       const e = starts.find(s => s.node === this);
       if (e) e.stopAt = Math.min(e.stopAt, when ?? ctx.currentTime);
@@ -96,12 +97,23 @@ export function makeAudioContext() {
   const make = (kind, n) => { created.push({ kind, node: n }); return n; };
 
   ctx.createOscillator = () => make('oscillator', source({ type: 'sine', frequency: param(440), detune: param() }));
-  ctx.createBufferSource = () => make('bufferSource', source({ buffer: null }));
+  ctx.createBufferSource = () => make('bufferSource', source({ buffer: null, playbackRate: param(1) }));
   ctx.createGain = () => make('gain', node(ctx, { gain: param(1) }));
   ctx.createBiquadFilter = () => make('biquad', node(ctx, { type: 'lowpass', frequency: param(350), Q: param(1), gain: param(0) }));
   ctx.createWaveShaper = () => make('waveShaper', node(ctx, { curve: null, oversample: 'none' }));
   ctx.createDelay = () => make('delay', node(ctx, { delayTime: param(0) }));
-  ctx.createBuffer = (ch, len) => ({ getChannelData: () => new Float32Array(len) });
+  ctx.createBuffer = (ch, len, rate = ctx.sampleRate) => {
+    const channels = Array.from({ length: ch }, () => new Float32Array(len));
+    return {
+      numberOfChannels: ch,
+      length: len,
+      sampleRate: rate,
+      duration: len / rate,
+      getChannelData(index) { return channels[index]; },
+      copyToChannel(sourceData, index, offset = 0) { channels[index].set(sourceData, offset); },
+    };
+  };
+  ctx.decodeAudioData = async () => ctx.createBuffer(2, ctx.sampleRate, ctx.sampleRate);
   return ctx;
 }
 

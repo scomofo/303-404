@@ -225,6 +225,38 @@ test('Freeze pins the running order across a chord change, and releasing rebuild
   assert.deepEqual(rebuilt, inst.arpSequence(inst.chordMidis(3), 'up', 2));
 });
 
+test('switching to a shorter scale normalizes the held arp degree, not just the progression', () => {
+  const { inst } = loadComponent(MPK);
+  inst.setState({ scaleId: 'major', arpDegree: 6, progression: [0, 6, 3, 4] });
+
+  inst.setScale('pent');   // 7-note major -> 5-note pentatonic
+  const degrees = inst.SCALES.find(s => s.id === 'pent').steps.length;
+  assert.ok(inst.state.arpDegree < degrees,
+    `arpDegree ${inst.state.arpDegree} survived the switch to a ${degrees}-note scale`);
+  assert.ok(inst.state.progression.every(d => d < degrees),
+    'progression was left with a degree outside the new scale');
+
+  // The held-chord button state (Component.arpChordOptions) is built straight
+  // off arpDegree, so an out-of-range value would show no button selected even
+  // though chordMidis (which wraps) keeps sounding a chord.
+  const rendered = renderStep(inst, inst.STEPS.findIndex(s => (s.widgets || []).includes('arp')));
+  assert.ok(rendered.arpChordOptions.some(o => o.pressed === 'true'),
+    'no held-chord button reads as selected after the scale shrank');
+});
+
+test('loading a style normalizes arpDegree against that style\'s own scale', () => {
+  const { inst } = loadComponent(MPK);
+  inst.ensureAudio();
+  inst.setState({ arpDegree: 6 });
+  // None of the shipped presets use a scale shorter than 7 notes, so fabricate
+  // one rather than waiting for a future preset to reintroduce this bug.
+  const style = { ...inst.STYLES[0], scale: 'pent', progression: [0, 1, 2, 3] };
+  inst.loadStyle(style);
+  const degrees = inst.SCALES.find(s => s.id === 'pent').steps.length;
+  assert.ok(inst.state.arpDegree < degrees,
+    `loadStyle left arpDegree ${inst.state.arpDegree} outside its own ${degrees}-note scale`);
+});
+
 test('a knob drives the live graph, and an unassigned target falls back to its default', () => {
   const { inst } = loadComponent(MPK);
   inst.ensureAudio();
@@ -248,6 +280,49 @@ test('a knob drives the live graph, and an unassigned target falls back to its d
   assert.equal(inst.knobValue('cutoff'), def);
   assert.ok(Math.abs(inst.synthIn.frequency.value - 200 * Math.pow(60, def)) < 1e-6,
     'an unassigned cutoff did not fall back to its default');
+});
+
+test('two knobs on the same target: the one turned most recently wins, and neither goes dead', () => {
+  const { inst } = loadComponent(MPK);
+  inst.ensureAudio();
+  // Force knobs 1 and 2 onto the same target — legal, the same as MIDI-Learning
+  // two CCs onto one plugin control.
+  inst.setState({ knobTargets: ['cutoff', 'cutoff', ...inst.state.knobTargets.slice(2)] });
+
+  inst.stepKnob(1, 0.25);
+  assert.equal(inst.knobValue('cutoff'), inst.state.knobs[1],
+    'turning knob 2 did not take control of the shared target');
+  assert.ok(Math.abs(inst.synthIn.frequency.value - 200 * Math.pow(60, inst.state.knobs[1])) < 1e-6,
+    'knob 2 turned but never reached the audio graph — the dead-knob bug');
+
+  inst.stepKnob(0, 0.25);
+  assert.equal(inst.knobValue('cutoff'), inst.state.knobs[0],
+    'turning knob 1 afterward did not take control back');
+  assert.ok(Math.abs(inst.synthIn.frequency.value - 200 * Math.pow(60, inst.state.knobs[0])) < 1e-6,
+    'knob 1 turned but never reached the audio graph');
+});
+
+test('reassigning a knob is not turning it — it must not steal control on arrival', () => {
+  const { inst } = loadComponent(MPK);
+  inst.ensureAudio();
+  // Give knob 2 (resonance) a HIGHER moved count than knob 1 (cutoff) before
+  // either ever touches cutoff, so only the reset-on-reassign behaviour below
+  // can decide who controls cutoff once knob 2 arrives there.
+  inst.stepKnob(0, 0.1);   // knob 1 (cutoff):    knobMoved = [1, 0, ...]
+  inst.stepKnob(1, 0.1);   // knob 2 (resonance): knobMoved = [1, 2, ...]
+
+  // Cycle knob 2 all the way around KNOB_TARGETS to land back on cutoff
+  // without ever calling stepKnob — a pure reassignment.
+  const targetCount = inst.KNOB_TARGETS.length;
+  const startIdx = inst.KNOB_TARGETS.findIndex(t => t.id === 'resonance');
+  const cutoffIdx = inst.KNOB_TARGETS.findIndex(t => t.id === 'cutoff');
+  for (let i = 0; i < ((cutoffIdx - startIdx + targetCount) % targetCount || targetCount); i++) {
+    inst.cycleKnobTarget(1);
+  }
+  assert.equal(inst.state.knobTargets[1], 'cutoff', 'test needs knob 2 back on cutoff');
+
+  assert.equal(inst.knobValue('cutoff'), inst.state.knobs[0],
+    'reassigning knob 2 onto cutoff stole control from knob 1, which was actually turned there');
 });
 
 test('the beat grid stores velocities, and re-clicking at the same velocity erases', () => {

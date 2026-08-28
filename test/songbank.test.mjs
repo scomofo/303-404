@@ -51,7 +51,7 @@ test('card ids are unique and every card has a title and tag', () => {
 test('documentation matches the card schema and distinguishes all source types', () => {
   const { inst, html } = loadComponent(FILE);
   const readme = readGuide('README.md');
-  assert.match(readme, new RegExp(`${inst.SONG_CARDS.length} cards ship by default`),
+  assert.match(readme, new RegExp(`${inst.SONG_CARDS.length} cards by default`),
     'README card count drifted from SONG_CARDS');
   for (const field of ['sourceType', 'needsAccentSlideReview', 'homeOctave', 'overdrive', '`null` for a rest']) {
     assert.ok(readme.includes(field), `README omits ${field}`);

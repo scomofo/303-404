@@ -37,14 +37,14 @@
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
           <div>
-            <h1 style="margin:0;">Beginner Hardware &amp; Mixing Guide</h1>
+            <h1 style="margin:0;">DJ-404 Performance Guide</h1>
             <h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Pioneer DJ DDJ-FLX4</h3>
           </div>
           <div>
             <h4 style="margin:0 0 8px;">Course Overview</h4>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
               <li>Target Audience: Absolute Beginners</li>
-              <li>Duration: 7 weeks of hands-on lessons (2 hours / week), then a self-paced 6-week practice plan</li>
+              <li>Duration: 8 weeks, five applied sessions per week</li>
               <li>Equipment Needed:
                 <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
                   <li>Pioneer DJ DDJ-FLX4 controller</li>
@@ -57,8 +57,8 @@
               </li>
             </ul>
           </div>
-          <p style="margin:0;font-size:12.5px;opacity:.7;">The mixer/beatmatching/hot-cue/loop/FX practice widgets in this course run on two synthesized reference loops (a simple kick + hi-hat pattern), not real music — so you can practice the mechanics of mixing without needing licensed audio. Everything you learn transfers directly to mixing real tracks.</p>
-          <p style="margin:0;font-size:12.5px;opacity:.7;">Weeks 1–7 teach the controller. The <strong>Practice Plan</strong> that follows is a six-week, self-paced curriculum of watching, drilling and recording — built around free YouTube tutorials, with a milestone closing out each week — that takes you from working the controls to a set you'd send to a booker.</p>
+          <p style="margin:0;font-size:12.5px;opacity:.7;">The mixer, beatmatching, cue, loop, FX and recording labs use two original synthesized reference loops—not licensed music—so you can practise mechanics before importing your own tracks.</p>
+          <p style="margin:0;font-size:12.5px;opacity:.7;">DJing is storytelling. Every week ends with a recorded mini-mix, and Week 8 produces a polished 30-minute set recorded in rekordbox or Serato. The browser recorder is for short drills; it is deliberately capped to avoid allocating a 30-minute PCM file in a browser tab.</p>
           <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
         </div>
       </sc-if>
@@ -226,6 +226,7 @@
 
           <sc-if value="{{ currentStep.showSync }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:14px;">
+              <canvas data-dj-phase-meter="true" width="720" height="150" aria-label="Deck A and Deck B beatgrid phase meter" style="width:100%;height:150px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);"></canvas>
               <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;">
                 <div class="card" style="flex:1;min-width:140px;text-align:center;">
                   <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck A BPM</div>
@@ -288,6 +289,24 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ currentStep.showRecording }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:var(--radius-md);background:var(--color-accent-100);">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong>Practice recorder</strong><div style="font-size:12px;opacity:.7;">Short original-synth drills · 44.1 kHz / 16-bit WAV</div></div><button type="button" class="btn btn-primary" onclick="{{ recordToggle }}">{{ recordLabel }}</button></div>
+              <p style="margin:0;font-size:12px;opacity:.72;">Use rekordbox or Serato for the final 30-minute mix. This browser recorder is capped at three minutes to keep memory use predictable.</p>
+              <sc-if value="{{ hasRecording }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-secondary" onclick="{{ downloadRecording }}" style="align-self:flex-start;">Download practice WAV</button></sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showCamelot }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;">Deck A key<select value="{{ camelotA }}" onchange="{{ setCamelotA }}" aria-label="Deck A Camelot key" style="padding:9px;border-radius:var(--radius-sm);"><sc-for list="{{ camelotOptions }}" as="keyOpt" hint-placeholder-count="24"><option value="{{ keyOpt.value }}" selected="{{ keyOpt.selectedA }}">{{ keyOpt.label }}</option></sc-for></select></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;">Deck B key<select value="{{ camelotB }}" onchange="{{ setCamelotB }}" aria-label="Deck B Camelot key" style="padding:9px;border-radius:var(--radius-sm);"><sc-for list="{{ camelotOptions }}" as="keyOpt" hint-placeholder-count="24"><option value="{{ keyOpt.value }}" selected="{{ keyOpt.selectedB }}">{{ keyOpt.label }}</option></sc-for></select></label>
+              </div>
+              <div role="status" style="{{ camelotStatus.style }}"><strong>{{ camelotStatus.icon }} {{ camelotStatus.label }}</strong><div style="font-size:12px;margin-top:3px;opacity:.75;">{{ camelotStatus.note }}</div></div>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ currentStep.showPerfmap }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:12px;">
               <span class="tag tag-accent-2" style="align-self:flex-start;">Suggested arrangement — adjust to taste</span>
@@ -301,6 +320,20 @@
                 <p style="margin:6px 0 0;font-size:13.5px;opacity:.85;">{{ selectedSection.desc }}</p>
               </div>
             </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showTransitionBank }}" hint-placeholder-val="{{ false }}">
+            <section aria-label="Transition Bank" style="display:flex;flex-direction:column;gap:var(--space-4);">
+              <div><span class="tag tag-accent-2">Transition Bank</span><h3 style="margin:8px 0 0;">12 applied transition cards</h3></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;"><sc-for list="{{ transitionTypeFilters }}" as="filter" hint-placeholder-count="5"><button type="button" onclick="{{ filter.select }}" aria-pressed="{{ filter.pressed }}" style="{{ filter.style }}">{{ filter.label }}</button></sc-for></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;"><sc-for list="{{ transitionDifficultyFilters }}" as="filter" hint-placeholder-count="4"><button type="button" onclick="{{ filter.select }}" aria-pressed="{{ filter.pressed }}" style="{{ filter.style }}">{{ filter.label }}</button></sc-for></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;"><sc-for list="{{ transitionCards }}" as="card" hint-placeholder-count="12"><button type="button" onclick="{{ card.select }}" aria-pressed="{{ card.pressed }}" style="{{ card.style }}"><span style="font-size:11px;opacity:.65;">{{ card.id }} · {{ card.difficulty }}</span><span style="font-weight:700;">{{ card.title }}</span><span style="font-size:11px;opacity:.7;">{{ card.type }} · {{ card.bpmLabel }}</span></button></sc-for></div>
+              <div class="card" style="padding:var(--space-4);background:var(--color-accent-100);display:flex;flex-direction:column;gap:10px;">
+                <div><strong>{{ selectedTransition.title }}</strong><div style="font-size:12px;opacity:.7;">{{ selectedTransition.sourceAttribution }}</div></div>
+                <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:13px;"><sc-for list="{{ selectedTransition.steps }}" as="transitionStep" hint-placeholder-count="4"><li>{{ transitionStep }}</li></sc-for></ol>
+                <a href="{{ selectedTransition.videoUrl }}" target="_blank" rel="noopener noreferrer" style="font-size:12px;align-self:flex-start;">Search YouTube for this technique ↗</a>
+              </div>
+            </section>
           </sc-if>
 
           <sc-if value="{{ currentStep.showPlanMap }}" hint-placeholder-val="{{ false }}">
@@ -386,10 +419,8 @@
 
       <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
         <div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);">
-          <h2 style="margin:0;">You're ready to mix.</h2>
-          <p style="margin:0;max-width:48ch;opacity:.85;">You've wired up the controller and installed your software, learned gain staging, EQ, faders and the crossfader, beatmatched by ear and with SYNC, used hot cues and loops, thrown in Beat FX, and mapped a full three-minute mix. Run through the weeks again any time to tighten up a technique.</p>
-          <p style="margin:0;max-width:48ch;opacity:.85;">Knowing the controls isn't the same as being able to play. The <strong>Practice Plan</strong> is the six weeks that closes that gap — watch, drill, record, and tick off a milestone a week until you have a set worth sending out.</p>
-          <button type="button" class="btn btn-secondary" onclick="{{ goPracticePlan }}">Go to the Practice Plan</button>
+          <h2 style="margin:0;">Your set tells a story.</h2>
+          <p style="margin:0;max-width:54ch;opacity:.85;">You can route and gain-stage the FLX4, beatmatch without leaning on Sync, mix with EQ and phrasing, use cues, loops and FX intentionally, plan harmonically, and record a 30-minute energy arc. Keep the final WAV, tracklist and self-assessment together.</p>
           <button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button>
         </div>
       </sc-if>
@@ -439,12 +470,40 @@ class Component extends DCLogic {
       loopOn: false, loopLen: 16,
       fxOn: false, fxLevel: 0.2,
       perfmapSel: 0,
+      transitionType: 'All',
+      transitionDifficulty: 'All',
+      selectedTransitionId: 'TB-001',
+      camelotA: '5A',
+      camelotB: '5A',
+      recording: false,
+      recordedSeconds: 0,
+      recordingReady: false,
     };
   }
 
   state = this.initialState();
 
   DECK_A_BPM = 124;
+
+  DJ_TRACKS = [
+    { id:'DJ-A', title:'Reference Groove A', bpm:124, key:'5A', beatGridOffsets:Array.from({ length:128 }, (_, i) => i * (60000 / 124)) },
+    { id:'DJ-B', title:'Reference Groove B', bpm:124, key:'6A', beatGridOffsets:Array.from({ length:128 }, (_, i) => i * (60000 / 124)) },
+  ];
+
+  TRANSITION_CARDS = [
+    { id:'TB-001', title:'Echo Out', type:'FX', bpmRange:null, difficulty:'Beginner', sourceAttribution:'Standard tempo-synced DJ technique; curriculum adaptation.', videoSearch:'Echo Out DJ Transition', steps:['Set a quarter-note echo on Deck A.','Raise wet level on the final phrase.','Cut Deck A while the echo trails.','Bring Deck B in on the next downbeat.'] },
+    { id:'TB-002', title:'Backspin + Drop', type:'Scratch', bpmRange:[120,130], difficulty:'Intermediate', sourceAttribution:'Classic hip-hop and open-format transition; curriculum adaptation.', videoSearch:'Backspin drop DJ transition tutorial', steps:['Choose a clean phrase ending.','Shorten the backspin so it does not obscure the count.','Close Deck A during the spin.','Launch Deck B on beat one.'] },
+    { id:'TB-003', title:'HPF Swell', type:'Filter', bpmRange:null, difficulty:'Beginner', sourceAttribution:'Uses the FLX4 Sound Color FX filter workflow described by the manufacturer.', videoSearch:'DDJ FLX4 high pass filter transition', steps:['Start with the filter centred.','Turn toward high-pass over eight bars.','Reduce Deck A low EQ as the filter rises.','Reset the filter before the next track needs it.'] },
+    { id:'TB-004', title:'Loop Roll Stutter', type:'Looping', bpmRange:null, difficulty:'Intermediate', sourceAttribution:'Standard performance-pad loop-roll technique; curriculum adaptation.', videoSearch:'DJ loop roll stutter transition', steps:['Start a one-beat roll on a phrase ending.','Shorten to one-half beat.','Keep the roll quantised.','Release exactly on Deck B drop.'] },
+    { id:'TB-005', title:'Bass Swap', type:'EQ', bpmRange:null, difficulty:'Beginner', sourceAttribution:'Standard club-mixing EQ technique.', videoSearch:'DJ bass swap EQ transition', steps:['Cut the incoming track low EQ.','Blend Deck B over eight bars.','Swap both low EQ controls at a phrase boundary.','Fade Deck A after the hand-off.'] },
+    { id:'TB-006', title:'Fader Slam', type:'Fader', bpmRange:[128,180], difficulty:'Intermediate', sourceAttribution:'Hard-cut technique common in high-energy and breakbeat styles.', videoSearch:'DJ hard cut fader slam transition', steps:['Match phrase and gain first.','Choose a strong Deck B downbeat.','Cut Deck A fully.','Open Deck B cleanly without overlapping bass.'] },
+    { id:'TB-007', title:'Reverb Wash + Cut', type:'FX', bpmRange:null, difficulty:'Beginner', sourceAttribution:'Standard reverb-tail transition; curriculum adaptation.', videoSearch:'DJ reverb wash transition', steps:['Apply reverb near the end of Deck A phrase.','Raise wet level while reducing low EQ.','Cut the channel before the next downbeat.','Keep the tail below Deck B lead.'] },
+    { id:'TB-008', title:'Sync + Phase Repair', type:'Beatgrid', bpmRange:[120,130], difficulty:'Beginner', sourceAttribution:'Educational recovery drill based on beat-sync operation.', videoSearch:'DDJ FLX4 sync phase correction', steps:['Engage Sync to match tempo.','Listen for a misaligned downbeat.','Use a small jog nudge to repair phase.','Disable Sync and confirm the decks remain aligned.'] },
+    { id:'TB-009', title:'32-Bar Double Drop', type:'Phrasing', bpmRange:[124,180], difficulty:'Advanced', sourceAttribution:'Common high-energy phrase-alignment technique.', videoSearch:'DJ double drop phrasing tutorial', steps:['Mark both drops with hot cues.','Match BPM and phrase length.','Start Deck B 32 bars before its drop.','Swap or layer on the shared downbeat.'] },
+    { id:'TB-010', title:'Vocal Loop Layering', type:'Looping', bpmRange:null, difficulty:'Intermediate', sourceAttribution:'Common disco, house and open-format layering technique.', videoSearch:'DJ vocal loop layering transition', steps:['Set a clean four-beat vocal loop.','Remove its low EQ.','Blend it over an instrumental phrase.','Exit before the vocal conflicts with new lyrics.'] },
+    { id:'TB-011', title:'Brake + Reverse', type:'FX', bpmRange:null, difficulty:'Intermediate', sourceAttribution:'Vinyl-brake style software effect; availability depends on selected DJ software and mapping.', videoSearch:'DDJ FLX4 vinyl brake transition', steps:['Confirm the software effect is available.','Trigger brake at the phrase ending.','Cut the stopped deck.','Use reverse only as a short accent, not a timing crutch.'] },
+    { id:'TB-012', title:'Key Jump', type:'Harmonic', bpmRange:null, difficulty:'Advanced', sourceAttribution:'Advanced harmonic transition using intentional pitch or key movement.', videoSearch:'DJ key shift harmonic transition', steps:['Identify both Camelot keys.','Choose a deliberate compatible or energy-jump target.','Move pitch or key during a sparse phrase.','Listen for formant or vocal artifacts before using live.'] },
+  ];
 
   PERF_SECTIONS = [
     { title:'Deck A Solo', time:'0:00–0:45', dur:45, desc:"Deck A plays alone. Get Deck B cued up and beatmatched (tempo fader + nudge, or SYNC) while the crowd hears only A." },
@@ -475,8 +534,9 @@ class Component extends DCLogic {
 
   constructor(props) {
     super(props);
-    this.STEPS = this.buildSteps();
+    this.STEPS = this.buildIntensiveSteps();
     this.sequences = {};
+    this.lastRecording = null;
   }
 
   componentWillUnmount() {
@@ -484,253 +544,228 @@ class Component extends DCLogic {
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
   }
 
-  buildSteps() {
-    const W = n => `Week ${n}`;
-    const PP = 'Practice Plan';
+  buildIntensiveSteps() {
+    const W = n => 'Week ' + n;
+    const day = (id, week, number, title, items, options = {}) => ({
+      id, kind:'content', weekTag:W(week), title:'Day ' + number + ': ' + title,
+      items:items.map(text => ({ text })),
+      widget:options.widget || null,
+      milestone:options.milestone || null,
+      goal:options.goal || '',
+      watch:options.watch || null,
+      note:options.note || '',
+    });
     return [
       { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
 
-      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview',
-        title:'Week 1: Unboxing, Connections & Software Setup',
-        objective:"Wire up the controller, install your DJ software, and confirm sound is flowing before you touch a single control." },
-      { id:'w1-1', kind:'content', weekTag:W(1), title:'1. Physical Connections', widget:'cables',
-        cables:[ { from:'DDJ-FLX4 USB-C Port', to:'Laptop USB Port' }, { from:'Master Out (RCA)', to:'Speakers / Mixer Input' } ],
-        items:[
-          { text:"Power: The DDJ-FLX4 is bus-powered — no separate power adapter. Plugging in the USB cable powers it on." },
-          { text:"Audio: Connect Master Out (RCA, red/white) to your powered speakers or a mixer input. Set Master Level to 12 o'clock as a safe starting point." },
-        ],
-        knobs:[ { label:'Master Level', hour:12 } ],
-      },
-      { id:'w1-2', kind:'content', weekTag:W(1), title:'2. Software Setup',
-        items:[
-          { text:"Install Serato DJ Lite (bundled free with the FLX4) or rekordbox from Pioneer DJ / AlphaTheta's website — both work with this controller." },
-          { text:"Launch the software with the FLX4 connected. It's class-compliant USB audio/MIDI, so most systems detect it automatically with no separate driver install." },
-          { text:"Complete any one-time online activation the software asks for, then check its audio preferences show the DDJ-FLX4 as the active output device." },
-        ],
-      },
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview', title:'Week 1: Unbox, Wire & Speak the Language', objective:'Get clean audio, configure software and learn the controller without memorising buttons in isolation.' },
+      day('w1-d1',1,1,'Power, outputs and cueing',['Connect the FLX4 to a data-capable USB-C port.','Connect RCA Master Out to powered speakers with all levels down.','Connect headphones, raise Cue Level slowly and keep channel meters out of red.'],{widget:'cables'}),
+      day('w1-d2',1,2,'Software and latency',['Install the current rekordbox or Serato version supported by your system.','Select DDJ-FLX4 as the audio device and test master plus headphone outputs.','Reduce buffer size only until latency feels immediate without crackles; 5 ms is a target, not a universal requirement.']),
+      day('w1-d3',1,3,'Deck anatomy',['Identify jog wheel, tempo fader, performance pads, filter, EQ, trim, channel fader and crossfader.','Use Vinyl mode to stop the track from the platter top; use the rim for pitch bending.','Practise Play, Cue and headphone Cue without looking away from the controller.'],{widget:'jogSpin'}),
+      day('w1-d4',1,4,'Build a starter crate',['Import ten legally sourced tracks you know well.','Analyse BPM and key, then verify the first downbeat instead of trusting the grid blindly.','Tag energy, intro length and likely mix-out point.'],{widget:'transitionBank'}),
+      day('w1-d5',1,5,'Milestone: private cue',['Load and play Deck A through master while previewing Deck B only in headphones.','Set Deck B gain and first cue without leaking it to master.','Record a short phone video or software capture as evidence.'],{widget:'recording',milestone:'Cue Deck B privately while Deck A remains clean on the master output.'}),
 
-      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview',
-        title:'Week 2: Decks — Loading, Transport & Tempo',
-        objective:"Learn how tracks load and play, what the jog wheels actually do, and how the tempo fader changes a track's speed." },
-      { id:'w2-1', kind:'content', weekTag:W(2), title:'1. Loading & Transport', widget:'jogSpin',
-        items:[
-          { text:"Browse your library in the software and drag (or press Load) a track onto Deck 1 or Deck 2." },
-          { text:"PLAY/PAUSE starts and stops playback. CUE sets a temporary cue point when paused, and jumps back to it when pressed during playback." },
-          { text:"Jog wheels: in Vinyl mode, grabbing the top surface while playing scratches/stops the track like a record; releasing lets it resume. Out of Vinyl mode, the jog wheel only bends pitch — turning it nudges the track forward or back without a hard stop." },
-          { text:"Hit Start Decks below to hear two practice loops running — Deck A stays at a fixed reference tempo, Deck B is the one you'll adjust through the rest of this course." },
-        ],
-      },
-      { id:'w2-2', kind:'content', weekTag:W(2), title:'2. Tempo Fader', widget:'tempo',
-        items:[ { text:"The tempo fader speeds up or slows down a deck's playback rate, shown as a percentage. Move Deck B's tempo below and listen for it drifting in and out of time with Deck A." } ],
-      },
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview', title:'Week 2: Transport, Tempo & Nudging', objective:'Match tempo and phase by ear, then understand exactly what Sync automates.' },
+      day('w2-d1',2,1,'Jog nudging',['Run two reference grooves and listen for the double-hit that signals phase error.','Nudge Deck B forward and backward in small moves.','Keep hands off the platter top when you only want pitch bend.'],{widget:'jogSpin'}),
+      day('w2-d2',2,2,'Tempo ranges',['Use the narrowest software tempo range that covers both tracks.','Match Deck B BPM to Deck A while hiding or ignoring the displayed number.','Listen for drift over at least 32 beats.'],{widget:'tempo'}),
+      day('w2-d3',2,3,'Pitch riding',['Use the tempo fader for persistent drift and the jog for temporary phase error.','Make one small correction, listen, then correct again.','Avoid chasing the beat with continuous large platter movements.']),
+      day('w2-d4',2,4,'Sync as a diagnostic',['Beatmatch manually first, then press Sync and compare.','Inspect the beatgrid if Sync aligns the wrong beat.','Disable Sync and keep the match stable by ear.'],{widget:'sync'}),
+      day('w2-d5',2,5,'Milestone: phase lock',['Match the reference decks within 30 seconds.','Hold audible alignment for two minutes without Sync.','Keep drift below one beat per minute and record the drill.'],{widget:'sync',milestone:'Record a two-minute manual beatmatch with no obvious galloping or flanging.',watch:[{title:'How to BEATMATCH on Pioneer DDJ-FLX4 (Beginner DJ Tutorial)',creator:'DJ Blakey'}]}),
 
-      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview',
-        title:'Week 3: Mixer Fundamentals',
-        objective:"Understand gain staging, EQ, channel faders and the crossfader — the controls that shape what the audience actually hears." },
-      { id:'w3-1', kind:'content', weekTag:W(3), title:'1. Gain & EQ', widget:'mixerEQ',
-        items:[
-          { text:"Trim (Gain): sets a channel's input level before anything else. Too low and you lose signal in the mix noise floor; too high and you clip. Unity is a safe starting point for most tracks." },
-          { text:"3-band EQ (Low/Mid/High): cuts or boosts a frequency range per channel. The classic \"EQ swap\" — cutting one deck's Low while boosting the other's — is how DJs blend basslines without them clashing." },
-        ],
-      },
-      { id:'w3-2', kind:'content', weekTag:W(3), title:'2. Channel Faders & Crossfader', widget:'mixerFader',
-        items:[
-          { text:"Each channel fader controls that deck's level into the mix, independent of the crossfader." },
-          { text:"The crossfader blends between Deck A (left) and Deck B (right). Centered, both decks are audible; hard left or right isolates one deck completely." },
-        ],
-      },
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview', title:'Week 3: Mixer Fundamentals', objective:'Make transitions clear and controlled through gain, EQ, filters and faders.' },
+      day('w3-d1',3,1,'Fades and cuts',['Practise a smooth four-second channel fade.','Practise a hard cut exactly on beat one.','Compare channel faders with the crossfader and choose deliberately.'],{widget:'mixerFader'}),
+      day('w3-d2',3,2,'Bass swaps',['Cut Deck B low EQ before raising its fader.','Swap basslines at an eight-bar phrase boundary.','Never leave both full basslines competing unless the tracks are prepared for it.'],{widget:'mixerEQ'}),
+      day('w3-d3',3,3,'Filter movement',['Sweep high-pass to remove weight during a build.','Use low-pass to darken a track without boosting another band.','Return the filter to centre before the next transition.'],{widget:'mixerEQ'}),
+      day('w3-d4',3,4,'Gain staging',['Set trim from the loudest section, not a quiet intro.','Match perceived channel level before opening the fader.','Keep headroom; zero on a calibrated meter is a target, not permission to clip.'],{widget:'mixerEQ'}),
+      day('w3-d5',3,5,'Milestone: four-track EQ sequence',['Mix A → B → C → D using EQ and faders only.','Make every transition exactly eight bars.','Listen back for low-end overlap, dips and meter clipping.'],{widget:'recording',milestone:'Record four clean eight-bar transitions with no FX and no bass clash.',watch:[{title:'The Fastest Way To Sound Good On Your DDJ-FLX4',creator:'DJ Blakey'}]}),
 
-      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview',
-        title:'Week 4: Beatmatching & Sync',
-        objective:"Learn to match two tracks' tempo and phase by ear, then see what the SYNC button automates for you." },
-      { id:'w4-1', kind:'content', weekTag:W(4), title:'1. Manual Beatmatching & Sync', widget:'sync',
-        items:[
-          { text:"Manual beatmatching: use the tempo fader to bring Deck B's BPM close to Deck A's, then use small jog wheel nudges (Nudge − / Nudge + below) to correct any remaining drift in the beat's timing (phase)." },
-          { text:"SYNC instantly matches a deck's tempo and phase to the other deck's, using the software's beat analysis. It's a huge shortcut, but understanding the manual technique first is what lets you fix sync when it's imperfect, or mix without it." },
-        ],
-      },
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview', title:'Week 4: Hot Cues, Loops & Phrasing', objective:'Play sections rather than passively playing tracks from beginning to end.' },
+      day('w4-d1',4,1,'Hot-cue map',['Set Intro, Chorus or Drop, Breakdown and Outro cues.','Place cues on verified downbeats.','Use consistent pad meanings across every prepared track.'],{widget:'hotCues'}),
+      day('w4-d2',4,2,'Four, eight and sixteen-bar loops',['Extend a short intro without losing phrase count.','Exit loops on the next musical boundary.','Check the beatgrid before trusting quantised loops.'],{widget:'loop'}),
+      day('w4-d3',4,3,'Phrase counting',['Count groups of eight bars and mark structural changes.','Start the incoming phrase early enough that both drops or vocals make sense.','Use ears and waveform overview together; neither is infallible.'],{widget:'perfmap'}),
+      day('w4-d4',4,4,'Loop rolls',['Use one-beat and half-beat rolls as accents.','Avoid shrinking until the sound becomes painfully bright.','Release on a downbeat rather than whenever the button feels convenient.'],{widget:'transitionBank'}),
+      day('w4-d5',4,5,'Milestone: loop entry',['Use a sixteen-bar loop from Deck B as the entry point.','Mix out of Deck A on the planned 32nd bar.','Record and verify that no phrase is clipped.'],{widget:'recording',milestone:'Record a phrase-correct loop entry and 32-bar hand-off.'}),
 
-      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview',
-        title:'Week 5: Hot Cues & Loops',
-        objective:"Mark key moments in a track and repeat sections on the fly — two of the most-used performance features on any DJ controller." },
-      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Hot Cues', widget:'hotCues',
-        items:[ { text:"Press an unlit pad to set a hot cue at the track's current position. Press a lit pad to jump straight back to it — instantly, even mid-mix. Try setting a cue below, letting the loop play on, then jumping back." } ],
-      },
-      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Loops', widget:'loop',
-        items:[ { text:"Auto Loop instantly repeats a fixed number of beats from the current position — shorten it for a stutter/glitch effect, lengthen it to vamp on a section while you set up your next move. Try the loop lengths below." } ],
-      },
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview', title:'Week 5: Beat FX & Dramatic Transitions', objective:'Use effects to support a transition rather than cover weak timing.' },
+      day('w5-d1',5,1,'Echo out',['Set a quarter-note echo and use it on the final vocal or hit.','Cut the source fader while the wet tail continues.','Keep feedback low enough to decay before it masks the next phrase.'],{widget:'beatFx'}),
+      day('w5-d2',5,2,'Reverb and high-pass',['Remove low frequencies before adding a reverb wash.','Build the wash over a phrase, then cut before the drop.','Reset Color FX and wet level after the move.'],{widget:'beatFx'}),
+      day('w5-d3',5,3,'Software performance FX',['Use only effects your selected rekordbox or Serato mode actually exposes.','FLX4 has no physical FX paddles; use its Beat FX, Smart CFX, Smart Fader or software mapping.','Audition vinyl brake and jet-style effects before relying on them live.'],{widget:'transitionBank'}),
+      day('w5-d4',5,4,'Eight-bar build',['Combine one filter movement with one tempo-synced effect.','Automate with restraint so the drop still has headroom.','Rehearse the reset position of every control.'],{widget:'beatFx'}),
+      day('w5-d5',5,5,'Milestone: three FX transitions',['Use echo, reverb or delay as the main tool on each transition.','Keep every tail clear of the incoming downbeat.','Check the master for clipping during wet peaks.'],{widget:'recording',milestone:'Record a three-track mix with three controlled FX-led transitions.'}),
 
-      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview',
-        title:'Week 6: Beat FX & Your First Mix',
-        objective:"Add a tempo-synced effect, then put everything from this course together into a mapped three-minute mix." },
-      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. Beat FX', widget:'beatFx',
-        items:[ { text:"Beat FX apply a tempo-synced effect (this practice engine uses a synced echo) across the mix. Turn it on and try the level presets below — tasteful use is a quick flourish on a transition, not something left on for the whole track." } ],
-      },
-      { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Your First 3-Minute Mix', widget:'perfmap', items:[] },
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview', title:'Week 6: Harmonic Mixing', objective:'Use Camelot compatibility as a listening aid, never as a playback gate.' },
+      day('w6-d1',6,1,'Key analysis',['Analyse key, then spot-check results by ear.','Display Camelot notation if your software supports it.','Treat vocals and exposed melodies as the most sensitive transition points.'],{widget:'camelot'}),
+      day('w6-d2',6,2,'Compatible neighbours',['Compare same number opposite letter, same letter plus one, and same letter minus one.','Listen for tension even when the wheel says compatible.','Keep playback available when keys mismatch.'],{widget:'camelot'}),
+      day('w6-d3',6,3,'Relative-major energy move',['Move between A and B at the same Camelot number.','Place the emotional change at a phrase boundary.','Avoid assuming every relative-key move raises energy.'],{widget:'camelot'}),
+      day('w6-d4',6,4,'Train for clashes',['Intentionally compare a compatible pair and a distant pair.','Describe beating, dissonance or vocal conflict in your own words.','Use the warning as education, not a rule that blocks creative choices.'],{widget:'camelot'}),
+      day('w6-d5',6,5,'Milestone: harmonic journey',['Prepare five tracks such as 5A → 6A → 7A → 7B → 8B.','Use EQ and phrasing as well as key compatibility.','Record and ask a listener whether any change feels jarring.'],{widget:'recording',milestone:'Record a five-track harmonic journey with intentional energy movement.',watch:[{title:'Harmonic mixing Camelot wheel basics',creator:'Club Ready DJ School (Tribe Talk)'}]}),
 
-      { id:'w7-intro', kind:'weekintro', weekTag:W(7), navLabel:'Week Overview',
-        title:'Week 7: Care, Troubleshooting & Software Tips',
-        objective:"Keep the controller reliable and know how to solve the handful of problems every beginner runs into." },
-      { id:'w7-1', kind:'content', weekTag:W(7), title:'1. Troubleshooting Checklist',
-        items:[
-          { text:"No sound: check Master Level isn't at zero, the RCA cable is fully seated, and the software's audio preferences show the DDJ-FLX4 as the selected output." },
-          { text:"Controller not detected: try a different USB port or cable (some USB-C cables are charge-only and carry no data), and confirm no other program is holding the audio device." },
-          { text:"Headphone cue not audible: check the headphone volume knob and the cue/mix blend knob aren't turned all the way down, and that CUE is enabled on the channel you want to hear." },
-        ],
-      },
-      { id:'w7-2', kind:'content', weekTag:W(7), title:'2. Firmware, Drivers & Switching Software',
-        items:[
-          { text:"The FLX4 is class-compliant — no separate driver is required on most systems. Check Pioneer DJ / AlphaTheta's site occasionally for firmware updates, applied through their dedicated update utility." },
-          { text:"Switching between Serato DJ Lite and rekordbox just means opening the other program with the controller connected — both auto-map its controls, no reconfiguration needed." },
-        ],
-      },
-      { id:'w7-3', kind:'content', weekTag:W(7), title:'3. Physical Care',
-        items:[
-          { text:"Wipe the case and jog wheels with a dry or barely damp cloth — avoid liquid near the fader and knob gaps." },
-          { text:"Store and transport it in a padded case; faders and jog wheel bearings are the most failure-prone points if the controller is dropped or knocked around loose." },
-        ],
-      },
+      { id:'w7-intro', kind:'weekintro', weekTag:W(7), navLabel:'Week Overview', title:'Week 7: Record a Full Mix', objective:'Plan and critique a 30-minute energy arc rather than a string of unrelated transitions.' },
+      day('w7-d1',7,1,'Energy curve',['Sort tracks into warm-up, build, peak and cooldown roles.','Sketch a flexible curve instead of locking every choice.','Leave space for contrast before the peak.'],{widget:'perfmap'}),
+      day('w7-d2',7,2,'Intro and outro planning',['Choose tracks with sufficient mixable intro or outro material.','Reserve at least 32 bars for early blends where possible.','Plan an intentional final fade or ending.']),
+      day('w7-d3',7,3,'Prepare ten tracks',['Set consistent hot cues for all ten tracks.','Verify beatgrids, BPM, key, gain and explicit-content needs.','Keep a backup route if one transition fails.'],{widget:'hotCues'}),
+      day('w7-d4',7,4,'Dry run',['Play the whole set without recording pressure.','Time the run and adjust track order for energy.','Write one correction beside every weak transition.'],{widget:'transitionBank'}),
+      day('w7-d5',7,5,'Milestone: first 30 minutes',['Record with rekordbox or Serato rather than the short browser drill recorder.','Keep total length between 28 and 32 minutes.','Listen back and timestamp every mistake or dead-air gap.'],{widget:'recording',milestone:'Record a 28–32 minute set with no dead air longer than five seconds.',watch:[{title:'What a GOOD DDJ-FLX4 DJ Set Actually Looks Like',creator:'DJ Blakey'}]}),
 
-      { id:'pp-intro', kind:'weekintro', weekTag:PP, navLabel:'Plan Overview',
-        title:'The 6-Week Practice Plan',
-        objective:"The seven weeks above teach you what every control does. This is the part that makes you a DJ: a self-paced six-week plan of watching, drilling and recording, built entirely around free YouTube content — with a milestone at the end of each week that tells you whether you're ready to move on." },
-      { id:'pp-how', kind:'content', weekTag:PP, title:'1. How to Use This Plan', navLabel:'How to Use This Plan',
-        widget:'planMap',
-        items:[
-          { text:"A week is a unit of work, not a deadline. Move on when you hit the milestone, not when seven days are up — and go back a week whenever a milestone stops holding up." },
-          { text:"Watch first, then drill. The videos are minutes long; the practice is what fills the week. Watching more videos is the most common way to feel productive without getting better." },
-          { text:"Each week links back into this course, so you can rehearse the mechanic on the practice decks here before taking it to real tracks." },
-          { text:"Tick a milestone only when you can do it twice in a row on tracks you didn't rehearse. Ticks are held in memory for this session — reloading or Start Over clears them." },
-        ],
-        note:"This plan was written around DJ Blakey's free FLX4 tutorials, with gaps filled by other teachers. Video titles are reproduced as the plan lists them; channels rename and re-upload videos, so treat a title as a search term rather than a guarantee." },
-      { id:'pp-creators', kind:'content', weekTag:PP, title:'2. Creators & Channels', navLabel:'Creators & Channels',
-        widget:'creators',
-        items:[],
-        note:"Prices and course contents are as quoted in the plan this course was built from (Blakey's paid course was listed at about £109 / $147 for 30+ beginner lessons) — check the current offer before buying. Everything in the six weeks below is achievable from free content." },
+      { id:'w8-intro', kind:'weekintro', weekTag:W(8), navLabel:'Week Overview', title:'Week 8: Polish, Export & Reflect', objective:'Correct the weak transitions and package a final mix without destructive loudness chasing.' },
+      day('w8-d1',8,1,'Re-record with intent',['Use Week 7 timestamps as a punch list.','Correct gain and EQ before adding new tricks.','Record the same set again so the comparison is meaningful.'],{widget:'recording'}),
+      day('w8-d2',8,2,'Export safely',['Use 44.1 kHz / 16-bit WAV when that is the required delivery format.','Target a true peak no higher than -0.5 dB without clipping.','Listen to the rendered file from beginning to end.']),
+      day('w8-d3',8,3,'Artwork and metadata',['Use artwork you own or are licensed to use.','Add title, artist/DJ name, date and tracklist.','Do not claim rights to music you do not own.']),
+      day('w8-d4',8,4,'Publish or archive',['Check platform rules before uploading copyrighted tracks.','Keep a local master even if you publish to Mixcloud or SoundCloud.','Complete a rubric for phrasing, gain, EQ, FX, key and energy.'],{widget:'transitionBank'}),
+      day('w8-d5',8,5,'Final milestone',['Submit or archive the polished 30-minute WAV, artwork, tracklist and rubric.','Name one transition that improved and one skill for the next mix.','Back up the project and exported master.'],{widget:'recording',milestone:'Deliver a polished 30-minute mix with tracklist, artwork and self-assessment.'}),
 
-      { id:'pp-w1', kind:'content', weekTag:PP, practiceWeek:1,
-        title:'3. Practice Week 1 — Setup, Layout & Software', navLabel:'Week 1 — Setup & Layout',
-        goal:"Know your controller cold before touching a mix.",
-        items:[
-          { text:"Install rekordbox or Serato — whichever you'll actually use — plug in the FLX4, and import your first 20–30 tracks." },
-          { text:"Learn the physical layout: jog wheels, channel faders, EQ knobs (High/Mid/Low), gain/trim, crossfader, browse knob, cue and play buttons, the 8 performance pads, and Shift." },
-          { text:"Load a track to each deck and set gain with the channel meter — aim for the LEDs hitting orange, never red." },
-          { text:"Put headphones on and practise cueing: isolating one deck to preview it while the other plays." },
-        ],
-        watch:[
-          { title:'Getting Started With The DDJ-FLX4 – Beginner DJ Tutorial', creator:'DJ Blakey', note:'Layout and software setup.' },
-          { title:'The Fastest Way to Master the DDJ-FLX4 as a Beginner DJ', creator:'DJ Blakey', optional:true,
-            note:"Listed among the plan's recommended videos without a week of its own; it works as a fast-track overview here in Week 1." },
-          { title:'Rekordbox / Serato workflow walkthrough', creator:'DJ Carlo', optional:true,
-            note:'Broader software-level context if you want more than the FLX4-specific setup.' },
-        ],
-        lessons:['w1-1', 'w1-2', 'w2-1'],
-        milestone:"You can load, cue and play a track on each deck without looking at the screen." },
-
-      { id:'pp-w2', kind:'content', weekTag:PP, practiceWeek:2,
-        title:'4. Practice Week 2 — Beatmatching & Tempo', navLabel:'Week 2 — Beatmatching',
-        goal:"Understand why SYNC exists by learning to beatmatch manually first, then use SYNC properly.",
-        items:[
-          { text:"Learn beats, bars and BPM: 4/4 house and pop structure — four beats to a bar, phrases of 8 and 16 bars." },
-          { text:"Practise manual pitch adjustment with the tempo fader and jog wheel nudge. Even if you use SYNC live, doing this by ear is what builds your timing." },
-          { text:"Learn what SYNC actually locks — and what it doesn't fix. Phrasing and EQ clashes are still your job." },
-        ],
-        watch:[
-          { title:'How to BEATMATCH on Pioneer DDJ-FLX4 (Beginner DJ Tutorial)', creator:'DJ Blakey' },
-          { title:"How To Beatmatch (Complete Beginner's Guide)", creator:'Off The Rack Jack', optional:true,
-            note:'A slower, more literal walkthrough of the same skill, with free practice tracks. Hearing it explained twice speeds up the moment it clicks.' },
-        ],
-        lessons:['w2-2', 'w4-1'],
-        milestone:"You can mix two tracks in and out with the beats aligned, using either manual matching or SYNC." },
-
-      { id:'pp-w3', kind:'content', weekTag:PP, practiceWeek:3,
-        title:'5. Practice Week 3 — EQ, Gain & Clean Transitions', navLabel:'Week 3 — EQ & Clean Transitions',
-        goal:"Sound clean, not muddy — the single biggest thing separating hobbyists from club-ready DJs.",
-        items:[
-          { text:"Trim/gain staging: get both decks hitting a similar level before the fader, so a blend doesn't jump in volume." },
-          { text:"Bass swap: cut the incoming track's bass, bring it in, then hand the bass over from outgoing to incoming once the beats are locked." },
-          { text:"Use the High and Mid EQ to keep vocals and hi-hats from clashing through the blend." },
-        ],
-        watch:[
-          { title:'Beginner DJ Mistakes to Avoid on Your DDJ-FLX4', creator:'DJ Blakey' },
-          { title:'The Fastest Way To Sound Good On Your DDJ-FLX4', creator:'DJ Blakey' },
-          { title:'EQ theory deep-dive', creator:'Digital DJ Tips', optional:true,
-            note:'Go a level deeper on any single topic here once Blakey has introduced it.' },
-        ],
-        lessons:['w3-1', 'w3-2'],
-        milestone:"A two-track transition where nothing clips, clashes, or dips in volume." },
-
-      { id:'pp-w4', kind:'content', weekTag:PP, practiceWeek:4,
-        title:'6. Practice Week 4 — Phrasing, Hot Cues & Loops', navLabel:'Week 4 — Phrasing & Cues',
-        goal:"Mix on the right part of the track, not just anywhere the beats happen to line up.",
-        items:[
-          { text:"Count phrases: 8, 16 and 32-bar sections — intro, build, drop or chorus, breakdown." },
-          { text:"Set hot cues and use them to jump straight to your mix-in point instead of waiting for the track to reach it." },
-          { text:"Basic looping: build a 4 or 8-beat loop to extend an intro, or to patch a section that's too short to mix over." },
-        ],
-        watch:[
-          { title:'4 DDJ-FLX4 Tricks Every Beginner DJ Should Know', creator:'DJ Blakey' },
-          { title:'Your DDJ-FLX4 Can Do WAY More Than You Think', creator:'DJ Blakey' },
-        ],
-        lessons:['w5-1', 'w5-2'],
-        milestone:"You can hear where a track's phrase starts and mix in exactly there using a hot cue." },
-
-      { id:'pp-w5', kind:'content', weekTag:PP, practiceWeek:5,
-        title:'7. Practice Week 5 — FX, Genre Blending & Set Flow', navLabel:'Week 5 — FX & Set Flow',
-        goal:"Add texture, and start thinking like a set-builder rather than a track-mixer.",
-        items:[
-          { text:"Try the onboard Smart FX and Sound Color FX — filter, echo, reverb. Sparingly, and mostly on transitions." },
-          { text:"Practise mixing across adjacent genres and tempos (house into bass house, say) using tempo and a sense of key." },
-          { text:"Start thinking in energy arcs. A set should build; a flat string of bangers has nowhere to go." },
-          { text:"Start noticing the key numbers rekordbox shows beside each track, and pick your next track partly on key compatibility, not just genre and energy." },
-        ],
-        watch:[
-          { title:'How To Mix 6 Genres in 3 Minutes on Your DDJ-FLX4', creator:'DJ Blakey' },
-          { title:'Harmonic mixing / Camelot wheel basics', creator:'Club Ready DJ School (Tribe Talk)', optional:true,
-            note:"Their written and video breakdowns of harmonic mixing and where to mix in are the clearest starting point for key matching." },
-        ],
-        lessons:['w6-1'],
-        milestone:"A 15-minute mix that moves through at least two genres or energy levels without a jarring jump." },
-
-      { id:'pp-w6', kind:'content', weekTag:PP, practiceWeek:6,
-        title:'8. Practice Week 6 — Full Sets & Club-Readiness', navLabel:'Week 6 — Full Sets',
-        goal:"Record and critique a real set, and learn what club-ready actually sounds like.",
-        items:[
-          { text:"Build a 20–30 minute set: plan a rough tracklist by energy and key, but stay ready to improvise." },
-          { text:"Record it — rekordbox has recording built in — then listen back critically for EQ clashes, missed phrasing and dead air." },
-          { text:"Re-record until the transitions are clean from start to finish." },
-          { text:"Run one practice mix with your screen brightness right down, so you're mixing by ear. Club booths with badly placed monitors will demand exactly that." },
-        ],
-        watch:[
-          { title:'What a GOOD DDJ-FLX4 DJ Set Actually Looks Like', creator:'DJ Blakey', note:'Compare your instincts against his breakdown.' },
-          { title:'Learn to DJ the Real Way: Beat Matching, Phrasing & Mixing Without Visuals', creator:'Various — search the title', optional:true,
-            note:'A gut-check for this week: mixing without staring at the waveforms is what separates a confident club DJ from someone who needs the screen.' },
-        ],
-        lessons:['w6-2'],
-        milestone:"A recorded 20–30 minute set you'd be comfortable sending to a bar or small-club booker." },
-
-      { id:'pp-rhythm', kind:'content', weekTag:PP, title:'9. Practice Rhythm', navLabel:'Practice Rhythm',
-        goal:"How often you practise matters more than how long.",
-        items:[
-          { text:"20–30 minutes a day beats two hours once a week. Muscle memory and ear training both need repetition, not marathons." },
-          { text:"Re-mix the same two tracks five or more times in a session before moving on. Repetition is how beatmatching stops being a calculation and starts being a reflex." },
-          { text:"Record every practice session. You'll hear mistakes on playback that you miss completely while you're playing." },
-        ] },
-      { id:'pp-next', kind:'content', weekTag:PP, title:'10. After the Plan', navLabel:'After the Plan',
-        goal:"Where to go once all six milestones are ticked.",
-        widget:'planMap',
-        items:[
-          { text:"Beatmatch without SYNC at all — the fastest way to push your ear training further." },
-          { text:"Go deeper on harmonic mixing and the Camelot wheel (Club Ready DJ School)." },
-          { text:"Add basic scratching — baby scratch, stab, chirp, tear (DJ Shortkut) — if you're heading toward open-format or hip-hop sets. It isn't required for club blend-style DJing." },
-          { text:"Keep technique and gear knowledge current with Digital DJ Tips' weekly content." },
-          { text:"Learn to read a crowd and adjust a set live — the one skill no video can drill into you." },
-          { text:"If you want structure and feedback on your own mixes, that's what a paid course buys you. Everything above is achievable from free content across these creators." },
-        ] },
-
-      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready to mix." },
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:'Course complete' },
     ];
   }
+
+  phaseDriftMs(bpmA, bpmB, seconds) {
+    const beatsA = bpmA * seconds / 60;
+    const beatsB = bpmB * seconds / 60;
+    return Math.abs(beatsA - beatsB) * 60000 / bpmA;
+  }
+
+  eqGainDb(value, boost) {
+    return value === -1 ? -60 : value * boost;
+  }
+
+  echoTailDb(feedback, beats) {
+    if (feedback <= 0) return -Infinity;
+    return 20 * Math.log10(Math.pow(feedback, beats));
+  }
+
+  snapToZeroCrossing(samples, index, radius = 256) {
+    const start = Math.max(1, index - radius);
+    const end = Math.min(samples.length - 1, index + radius);
+    let best = Math.max(start, Math.min(end, index));
+    let amplitude = Math.abs(samples[best] || 0);
+    for (let i = start; i <= end; i += 1) {
+      const crosses = (samples[i - 1] <= 0 && samples[i] >= 0) || (samples[i - 1] >= 0 && samples[i] <= 0);
+      const candidate = crosses ? Math.min(Math.abs(samples[i - 1]), Math.abs(samples[i])) : Math.abs(samples[i]);
+      if (candidate < amplitude) { best = i; amplitude = candidate; }
+    }
+    return { index:best, amplitude };
+  }
+
+  camelotCompatibility(a, b) {
+    const parse = value => ({ number:Number(value.slice(0, -1)), letter:value.slice(-1) });
+    const left = parse(a), right = parse(b);
+    const wrappedDistance = Math.min((left.number - right.number + 12) % 12, (right.number - left.number + 12) % 12);
+    if (a === b) return { compatible:true, relation:'Same key', note:'Low harmonic risk; phrasing and energy still matter.' };
+    if (left.number === right.number && left.letter !== right.letter) return { compatible:true, relation:'Relative major/minor', note:'A common emotional shift between A and B at the same number.' };
+    if (left.letter === right.letter && wrappedDistance === 1) return { compatible:true, relation:'Adjacent key', note:'A conventional plus-one or minus-one Camelot move.' };
+    return { compatible:false, relation:'Intentional mismatch', note:'Listen before committing. Playback stays available because the wheel is guidance, not a rule.' };
+  }
+
+  transitionFilterButton(label, key) {
+    const selected = this.state[key] === label;
+    return {
+      label, pressed:selected ? 'true' : 'false',
+      select:() => {
+        const nextType = key === 'transitionType' ? label : this.state.transitionType;
+        const nextDifficulty = key === 'transitionDifficulty' ? label : this.state.transitionDifficulty;
+        const visible = this.TRANSITION_CARDS.filter(card =>
+          (nextType === 'All' || card.type === nextType) &&
+          (nextDifficulty === 'All' || card.difficulty === nextDifficulty)
+        );
+        const patch = { [key]:label };
+        if (!visible.some(card => card.id === this.state.selectedTransitionId) && visible[0]) patch.selectedTransitionId = visible[0].id;
+        this.setState(patch);
+      },
+      style:'padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:12px;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';',
+    };
+  }
+
+  filteredTransitionCards() {
+    return this.TRANSITION_CARDS.filter(card =>
+      (this.state.transitionType === 'All' || card.type === this.state.transitionType) &&
+      (this.state.transitionDifficulty === 'All' || card.difficulty === this.state.transitionDifficulty)
+    );
+  }
+
+  buildTransitionCards() {
+    const visible = this.filteredTransitionCards();
+    return visible.map(card => {
+      const selected = card.id === this.state.selectedTransitionId;
+      return {
+        ...card,
+        bpmLabel:card.bpmRange ? card.bpmRange[0] + '–' + card.bpmRange[1] + ' BPM' : 'Any BPM',
+        pressed:selected ? 'true' : 'false',
+        select:() => this.setState({ selectedTransitionId:card.id }),
+        style:'display:flex;flex-direction:column;text-align:left;gap:3px;padding:10px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:pointer;font:inherit;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';',
+      };
+    });
+  }
+
+  selectedTransition() {
+    const visible = this.filteredTransitionCards();
+    return visible.find(card => card.id === this.state.selectedTransitionId) || visible[0] || this.TRANSITION_CARDS[0];
+  }
+
+  buildPracticeWav(seconds) {
+    const duration = Math.max(0.1, Math.min(180, Number(seconds) || 1));
+    const sampleRate = 44100, bitDepth = 16, channels = 2;
+    const frames = Math.round(duration * sampleRate);
+    const bytesPerSample = bitDepth / 8;
+    const out = new ArrayBuffer(44 + frames * channels * bytesPerSample);
+    const view = new DataView(out);
+    const write = (offset, value) => { for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i)); };
+    write(0,'RIFF'); view.setUint32(4,36 + frames * channels * bytesPerSample,true); write(8,'WAVE'); write(12,'fmt ');
+    view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,channels,true); view.setUint32(24,sampleRate,true);
+    view.setUint32(28,sampleRate * channels * bytesPerSample,true); view.setUint16(32,channels * bytesPerSample,true); view.setUint16(34,bitDepth,true); write(36,'data'); view.setUint32(40,frames * channels * bytesPerSample,true);
+    const ceiling = Math.pow(10, -0.5 / 20);
+    let peak = 0, offset = 44;
+    for (let i = 0; i < frames; i += 1) {
+      const t = i / sampleRate;
+      const beatPhase = (t * this.DECK_A_BPM / 60) % 1;
+      const kick = Math.sin(2 * Math.PI * (52 + 70 * Math.exp(-beatPhase * 25)) * t) * Math.exp(-beatPhase * 18) * 0.68;
+      const hatPhase = (t * this.DECK_A_BPM / 30) % 1;
+      const hat = Math.sin(2 * Math.PI * 6800 * t) * Math.exp(-hatPhase * 35) * 0.08;
+      const sample = Math.max(-ceiling, Math.min(ceiling, kick + hat));
+      peak = Math.max(peak, Math.abs(sample));
+      const quantized = sample < 0 ? sample * 32768 : sample * 32767;
+      view.setInt16(offset, quantized, true); view.setInt16(offset + 2, quantized, true); offset += 4;
+    }
+    return { buffer:out, sampleRate, bitDepth, channels, duration:frames / sampleRate, peakDb:peak ? 20 * Math.log10(peak) : -Infinity, mimeType:'audio/wav' };
+  }
+
+  toggleRecording() {
+    if (!this.state.recording) {
+      this.recordStartedAt = performance.now();
+      this.lastRecording = null;
+      this.setState({ recording:true, recordingReady:false, recordedSeconds:0 });
+      return;
+    }
+    const seconds = Math.max(1, Math.min(180, (performance.now() - this.recordStartedAt) / 1000));
+    this.lastRecording = this.buildPracticeWav(seconds);
+    this.setState({ recording:false, recordingReady:true, recordedSeconds:this.lastRecording.duration });
+  }
+
+  downloadPracticeRecording() {
+    if (!this.lastRecording || typeof document === 'undefined' || typeof URL === 'undefined' || !URL.createObjectURL || !document.createElement) return this.lastRecording;
+    const blob = new Blob([this.lastRecording.buffer], { type:'audio/wav' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = 'dj-404-practice.wav'; link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+    return this.lastRecording;
+  }
+
+  drawPhaseMeter() {
+    if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
+    const canvas = document.querySelector('[data-dj-phase-meter="true"]');
+    if (!canvas || typeof canvas.getContext !== 'function') return;
+    const ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+    const centers = [w * 0.3, w * 0.7], cols = [Math.max(0, this.state.colA), Math.max(0, this.state.colB)];
+    ctx.clearRect(0,0,w,h); ctx.strokeStyle = 'currentColor'; ctx.fillStyle = 'currentColor';
+    centers.forEach((cx, i) => {
+      ctx.globalAlpha = i ? 0.55 : 0.85; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx,h / 2,48,0,Math.PI * 2); ctx.stroke();
+      const angle = cols[i] / 16 * Math.PI * 2 - Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(cx,h / 2); ctx.lineTo(cx + Math.cos(angle) * 42,h / 2 + Math.sin(angle) * 42); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(i ? 'Deck B' : 'Deck A',cx,h - 8);
+    });
+  }
+
+  componentDidMount() { this.drawPhaseMeter(); }
+  componentDidUpdate() { this.drawPhaseMeter(); }
 
   // ── navigation ──
   getDialogFocusables(dialog) {
@@ -1064,7 +1099,7 @@ class Component extends DCLogic {
 
     this.fxSend = ctx.createGain(); this.fxSend.gain.value = 1;
     this.fxDelay = ctx.createDelay(1.0); this.fxDelay.delayTime.value = 60 / this.DECK_A_BPM / 2; // eighth-note echo synced to the reference deck's tempo
-    this.fxFeedback = ctx.createGain(); this.fxFeedback.gain.value = 0.35;
+    this.fxFeedback = ctx.createGain(); this.fxFeedback.gain.value = 0.15;
     this.fxWet = ctx.createGain(); this.fxWet.gain.value = 0;
     this.fxSend.connect(this.fxDelay);
     this.fxDelay.connect(this.fxFeedback).connect(this.fxDelay);
@@ -1086,9 +1121,9 @@ class Component extends DCLogic {
     const chain = key === 'deckA' ? this.chainA : this.chainB;
     if (!chain) return;
     const d = this.state[key];
-    chain.low.gain.value = d.low * 15;
-    chain.mid.gain.value = d.mid * 12;
-    chain.high.gain.value = d.high * 15;
+    chain.low.gain.value = this.eqGainDb(d.low, 15);
+    chain.mid.gain.value = this.eqGainDb(d.mid, 12);
+    chain.high.gain.value = this.eqGainDb(d.high, 15);
     chain.trim.gain.value = d.trim;
     chain.fader.gain.value = d.fader;
   }
@@ -1273,6 +1308,9 @@ class Component extends DCLogic {
         showLoop: step.widget === 'loop',
         showBeatFx: step.widget === 'beatFx',
         showPerfmap: step.widget === 'perfmap',
+        showRecording: step.widget === 'recording',
+        showCamelot: step.widget === 'camelot',
+        showTransitionBank: step.widget === 'transitionBank',
         goal: step.goal || '',
         showGoal: !!step.goal,
         showPlanMap: step.widget === 'planMap',
@@ -1329,6 +1367,31 @@ class Component extends DCLogic {
       })),
       perfSections: step.widget === 'perfmap' ? this.buildPerfSections() : [],
       selectedSection: step.widget === 'perfmap' ? this.PERF_SECTIONS[this.state.perfmapSel] : null,
+      transitionTypeFilters: ['All', ...new Set(this.TRANSITION_CARDS.map(card => card.type))].map(label => this.transitionFilterButton(label, 'transitionType')),
+      transitionDifficultyFilters: ['All', 'Beginner', 'Intermediate', 'Advanced'].map(label => this.transitionFilterButton(label, 'transitionDifficulty')),
+      transitionCards: step.widget === 'transitionBank' ? this.buildTransitionCards() : [],
+      selectedTransition: (() => { const card = this.selectedTransition(); return { ...card, videoUrl:this.ytSearch(card.videoSearch) }; })(),
+      camelotA: this.state.camelotA,
+      camelotB: this.state.camelotB,
+      camelotOptions: Array.from({ length:12 }, (_, i) => i + 1).flatMap(number => ['A','B'].map(letter => {
+        const value = '' + number + letter;
+        return { value, label:value, selectedA:value === this.state.camelotA, selectedB:value === this.state.camelotB };
+      })),
+      setCamelotA: e => this.setState({ camelotA:e.target.value }),
+      setCamelotB: e => this.setState({ camelotB:e.target.value }),
+      camelotStatus: (() => {
+        const result = this.camelotCompatibility(this.state.camelotA, this.state.camelotB);
+        return {
+          icon:result.compatible ? '✓' : '⚠',
+          label:result.relation,
+          note:result.note,
+          style:'padding:12px 14px;border-radius:var(--radius-md);background:' + (result.compatible ? 'var(--color-accent-2-100)' : 'var(--color-neutral-300)') + ';',
+        };
+      })(),
+      recordLabel:this.state.recording ? 'Stop recording' : 'Record drill',
+      recordToggle:() => this.toggleRecording(),
+      hasRecording:this.state.recordingReady,
+      downloadRecording:() => this.downloadPracticeRecording(),
       navGroups: this.buildNavGroups(),
       dialogOpen: this.state.dialogOpen,
       openDialog: () => this.openCourseMap(),
@@ -1340,7 +1403,6 @@ class Component extends DCLogic {
       isFirst: this.state.step === 0,
       isLast: this.state.step === this.STEPS.length - 1,
       restart: () => this.restart(),
-      goPracticePlan: () => this.goToStep(this.STEPS.findIndex(t => t.id === 'pp-intro')),
     };
   }
 }

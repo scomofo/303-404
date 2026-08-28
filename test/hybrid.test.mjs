@@ -32,6 +32,39 @@ test('performance map exposes selectable RD-6, TD-3 and FLX4 roles for every sec
   assert.equal(selected.perfSections[3].pressed, 'true');
 });
 
+test('performance timeline is dual-pane, horizontally scrollable and keyboard operable', () => {
+  const { inst, html } = loadComponent(FILE);
+  const idx = inst.STEPS.findIndex(s => s.widget === 'perfmap');
+  let view = renderStep(inst, idx);
+  for (const section of view.perfSections) {
+    assert.match(section.hardware, /RD-6:.*TD-3:/);
+    assert.ok(section.flx4);
+    assert.match(section.ariaLabel, /Hardware:.*Controller:/);
+  }
+  assert.match(html, /data-performance-timeline="true"[^>]*tabIndex="0"[^>]*onkeydown=/,
+    'timeline is not keyboard-focusable');
+  assert.match(html, /data-performance-timeline="true"[^>]*style="[^"]*overflow-x:auto/,
+    'timeline does not scroll horizontally');
+
+  const key = value => ({
+    key:value,
+    prevented:false,
+    preventDefault() { this.prevented = true; },
+  });
+  const right = key('ArrowRight');
+  view.perfmapKeydown(right);
+  assert.equal(right.prevented, true);
+  assert.equal(inst.state.perfmapSel, 1);
+
+  view = renderStep(inst, idx);
+  const end = key('End');
+  view.perfmapKeydown(end);
+  assert.equal(inst.state.perfmapSel, inst.PERF_SECTIONS.length - 1);
+  const bounded = key('ArrowRight');
+  renderStep(inst, idx).perfmapKeydown(bounded);
+  assert.equal(inst.state.perfmapSel, inst.PERF_SECTIONS.length - 1);
+});
+
 test('hybrid checklists toggle independently and Start Over clears them', () => {
   const { inst } = loadComponent(FILE);
   const a = inst.STEPS.findIndex(s => s.id === 'w1-1');

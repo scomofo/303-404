@@ -57,9 +57,20 @@
 
           <sc-if value="{{ currentStep.showPerfmap }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:14px;">
-              <span class="tag tag-accent-2" style="align-self:flex-start;">Hybrid performance map — click any section</span>
-              <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:48px;" role="group" aria-label="Hybrid performance sections">
-                <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="5"><button type="button" onclick="{{ sec.select }}" style="{{ sec.barStyle }}" aria-pressed="{{ sec.pressed }}">{{ sec.title }}</button></sc-for>
+              <span class="tag tag-accent-2" style="align-self:flex-start;">Hybrid performance map — select a section or use ← →</span>
+              <div data-performance-timeline="true" tabIndex="0" onkeydown="{{ perfmapKeydown }}" role="region" aria-label="Horizontally scrollable hybrid performance timeline" style="overflow-x:auto;padding:2px 2px var(--space-3);scroll-snap-type:x proximity;">
+                <div style="display:flex;gap:var(--space-3);min-width:max-content;">
+                  <sc-for list="{{ perfSections }}" as="sec" hint-placeholder-count="5">
+                    <button type="button" data-perf-section-index="{{ sec.index }}" onclick="{{ sec.select }}" style="{{ sec.timelineStyle }}" aria-pressed="{{ sec.pressed }}" aria-label="{{ sec.ariaLabel }}">
+                      <span style="font-family:var(--font-heading);font-size:15px;">{{ sec.title }}</span>
+                      <span style="font-size:11px;opacity:.7;">{{ sec.time }}</span>
+                      <span style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;margin-top:6px;">
+                        <span style="padding:8px;border-radius:var(--radius-sm);background:color-mix(in srgb, var(--color-accent) 12%, var(--color-bg));"><strong style="display:block;font-size:11px;margin-bottom:4px;">Hardware</strong><span style="font-size:11px;line-height:1.35;">{{ sec.hardware }}</span></span>
+                        <span style="padding:8px;border-radius:var(--radius-sm);background:color-mix(in srgb, var(--color-accent-2-600) 12%, var(--color-bg));"><strong style="display:block;font-size:11px;margin-bottom:4px;">Controller</strong><span style="font-size:11px;line-height:1.35;">{{ sec.flx4 }}</span></span>
+                      </span>
+                    </button>
+                  </sc-for>
+                </div>
               </div>
               <div class="card" style="background:var(--color-accent-100);padding:var(--space-4);">
                 <div style="font-family:var(--font-heading);font-size:16px;margin-bottom:6px;">{{ selectedSection.title }} · {{ selectedSection.time }}</div>
@@ -89,7 +100,7 @@ class Component extends DCLogic {
 
   PERF_SECTIONS = [
     { title:'Intro', time:'0:00–1:30', dur:90, desc:'Set the mood. Keep energy low so the first hardware entry feels like an event.', rd6:'Kick + closed hats only, low volume', td3:'Filter fully closed, waiting', flx4:'Atmosphere / soft pad or distant vocal' },
-    { title:'Hardware In', time:'1:30–4:00', dur:150, desc:'Bring the full groove online. This is the core identity of the set.', rd6:'Full pattern (or Pattern 1 → fill chain)', td3:'Bassline enters, Cutoff slowly opens from 9 → 12 o’clock', flx4:'Optional light percussion or nothing — let the hardware speak' },
+    { title:'Hardware Groove', time:'1:30–4:00', dur:150, desc:'Bring the full groove online. This is the core identity of the set.', rd6:'Full pattern (or Pattern 1 → fill chain)', td3:'Bassline enters, Cutoff slowly opens from 9 → 12 o’clock', flx4:'Optional light percussion or nothing — let the hardware speak' },
     { title:'Breakdown', time:'4:00–5:30', dur:90, desc:'Strip back to create tension before the main drop.', rd6:'Mute or drop to hats only', td3:'Keep the line running, push Resonance, experiment with Soft Attack', flx4:'Pad, vocal phrase, or filtered track' },
     { title:'Drop', time:'5:30–8:30', dur:180, desc:'Maximum impact. Coordinate the TD-3 filter snap with the FLX4 action.', rd6:'Full pattern back in on the downbeat', td3:'Filter snap open + Overdrive MED/HIGH for the first 16–32 bars', flx4:'Main track or complementary groove, Beat FX on the transition' },
     { title:'Outro', time:'8:30–end', dur:120, desc:'Wind down cleanly so the next DJ (or the silence) feels intentional.', rd6:'Strip back to kick + hats, then stop on a downbeat', td3:'Close Cutoff gradually, then mute', flx4:'Fade remaining track or leave a tail of atmosphere' },
@@ -139,8 +150,26 @@ class Component extends DCLogic {
   buildPerfSections() {
     return this.PERF_SECTIONS.map((sec, i) => {
       const sel = this.state.perfmapSel === i;
-      return { ...sec, select:()=>this.setState({ perfmapSel:i }), pressed:sel ? 'true' : 'false', barStyle:`flex:${sec.dur} 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:4px;cursor:pointer;background:${sel ? 'var(--color-accent)' : 'var(--color-accent-2-200)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};border:none;border-right:1px solid var(--color-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;` };
+      return { ...sec, index:i, hardware:'RD-6: '+sec.rd6+' · TD-3: '+sec.td3, ariaLabel:sec.title+', '+sec.time+'. Hardware: '+sec.rd6+'; '+sec.td3+'. Controller: '+sec.flx4, select:()=>this.selectPerfSection(i), pressed:sel ? 'true' : 'false', timelineStyle:`width:280px;min-height:154px;scroll-snap-align:start;display:flex;flex-direction:column;gap:3px;text-align:left;padding:12px;border-radius:var(--radius-md);cursor:pointer;font:inherit;background:${sel ? 'var(--color-accent-100)' : 'var(--color-bg)'};color:var(--color-text);border:2px solid ${sel ? 'var(--color-accent)' : 'var(--color-divider)'};` };
     });
+  }
+  selectPerfSection(i) {
+    const index = Math.max(0, Math.min(this.PERF_SECTIONS.length - 1, i));
+    this.setState({ perfmapSel:index }, () => {
+      if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
+      const target = document.querySelector('[data-perf-section-index="'+index+'"]');
+      if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'nearest' });
+    });
+  }
+  onPerfmapKeydown(e) {
+    let next = this.state.perfmapSel;
+    if (e.key === 'ArrowRight') next += 1;
+    else if (e.key === 'ArrowLeft') next -= 1;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = this.PERF_SECTIONS.length - 1;
+    else return;
+    e.preventDefault();
+    this.selectPerfSection(next);
   }
 
   buildNavGroups() { const groups = []; this.STEPS.forEach((s, i) => { let g = groups.find(g => g.label === s.weekTag); if (!g) { g = { label:s.weekTag, items:[] }; groups.push(g); } g.items.push({ title:s.navLabel || s.title, go:() => this.goToStep(i), rowStyle:`display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);` }); }); return groups; }
@@ -155,6 +184,7 @@ class Component extends DCLogic {
       layerMutes:this.buildLayerMutes(),
       perfSections:step.widget==='perfmap' ? this.buildPerfSections() : [],
       selectedSection:step.widget==='perfmap' ? this.PERF_SECTIONS[this.state.perfmapSel] : null,
+      perfmapKeydown:e=>this.onPerfmapKeydown(e),
       navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen,
       openDialog:()=>this.openCourseMap(), closeDialog:()=>this.closeCourseMap(), dialogKeydown:e=>this.onCourseMapKeydown(e), stopProp:e=>e.stopPropagation(),
       goNext:()=>this.goNext(), goBack:()=>this.goBack(), isFirst:this.state.step===0, isLast:this.state.step===this.STEPS.length-1, restart:()=>this.restart(),

@@ -13,6 +13,7 @@ import { loadComponent, renderStep } from './harness.mjs';
 const BEHRINGER = 'Behringer Setup Guide.dc.html';
 const DDJ = 'DDJ-FLX4 Guide.dc.html';
 const MPK = 'MPK Mini MK4 Guide.dc.html';
+const SAMPLE = 'SampleCircuit Guide.dc.html';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -367,4 +368,31 @@ test('MPK arrangement keeps drums, chords and arp on one grid', async t => {
   const times = onsets(audioCtx);
   assert.ok(gridErrorMs(times, step) < 1e-6,
     `a layer landed off the 16th grid by ${gridErrorMs(times, step)}ms`);
+});
+
+test('Sample & Circuit tempo grid uses exact sixteenths and card tempo can restart it', () => {
+  const { inst } = loadComponent(SAMPLE);
+  const at120 = inst.tempoGrid(120, 16, 2);
+  assert.equal(at120.length, 16);
+  assert.ok(gridErrorMs(at120, 60 / 120 / 4) < 1e-9);
+
+  const card = inst.SLICE_CARDS.find(entry => entry.id === 'SL-001');
+  inst.setTempo(card.originalBpm);
+  const atCardTempo = inst.tempoGrid(inst.state.tempo, 16, 2);
+  assert.equal(inst.state.tempo, 82);
+  assert.ok(gridErrorMs(atCardTempo, 60 / 82 / 4) < 1e-9);
+  assert.ok(atCardTempo[1] - atCardTempo[0] > at120[1] - at120[0],
+    'the lower card tempo did not lengthen the grid');
+});
+
+test('Sample & Circuit pattern chains share exact bar boundaries at every tempo', () => {
+  const { inst } = loadComponent(SAMPLE);
+  for (const bpm of [82, 120, 140]) {
+    const chain = inst.patternChainTimeline(['P1', 'P2', 'P3'], bpm, 0.25);
+    for (let i = 1; i < chain.length; i++) {
+      assert.equal(chain[i].start, chain[i - 1].end,
+        bpm + ' BPM inserted a gap between patterns');
+    }
+    assert.ok(Math.abs((chain[0].end - chain[0].start) - 60 / bpm * 4) < 1e-12);
+  }
 });

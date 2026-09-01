@@ -229,15 +229,18 @@ test('the worked-example step shows the loaded pattern without the card stack', 
     'the live view does not show the loaded card');
 });
 
-test('the RD-6 worked example preserves hat chokes and independent clap steps', () => {
+test('the RD-6 worked example preserves hat chokes and explains shared CY/CP selection', () => {
   const { inst } = bank();
   const step = inst.STEPS.find(s => s.id === 'w9-2');
   const copy = step.items.map(item => item.text).join(' ');
   assert.match(copy, /keep both triggers to recreate the choke/);
   assert.match(copy, /CH cuts its decay short/);
-  assert.match(copy, /SD and CP are separate voice-selector positions/);
-  assert.match(copy, /both snare and clap steps independently/);
-  assert.doesNotMatch(copy, /drop the closed one|makes you pick one/);
+  assert.match(copy, /CY and CP share instrument position 6/);
+  assert.match(copy, /CY RD-6 \/ CP BR110 selector/);
+  assert.match(copy, /substitute or drop the other/);
+  assert.match(copy, /SD remains independent/);
+  assert.match(copy, /snare and clap steps can coexist when CP is selected/);
+  assert.doesNotMatch(copy, /drop the closed one|makes you pick one|CY and CP also map straight across/);
 });
 
 test('documentation matches the bank and keeps its provenance honest', () => {

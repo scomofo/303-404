@@ -4,11 +4,11 @@ import { loadComponent, renderStep } from './harness.mjs';
 
 const FILE = 'Hybrid Live Set.dc.html';
 
-test('hybrid course has five complete weeks plus overview and completion', () => {
+test('hybrid course has six complete weeks plus overview and completion', () => {
   const { inst } = loadComponent(FILE);
   const intros = inst.STEPS.filter(s => s.kind === 'weekintro');
-  assert.equal(intros.length, 5);
-  assert.deepEqual(intros.map(s => s.weekTag), ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5']);
+  assert.equal(intros.length, 6);
+  assert.deepEqual(intros.map(s => s.weekTag), ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6']);
   assert.equal(inst.STEPS[0].id, 'overview');
   assert.equal(inst.STEPS.at(-1).id, 'complete');
 });
@@ -81,7 +81,7 @@ test('hybrid checklists toggle independently and Start Over clears them', () => 
 test('hybrid course map groups every week and completion state', () => {
   const { inst } = loadComponent(FILE);
   const labels = renderStep(inst, 0).navGroups.map(g => g.label);
-  assert.deepEqual(labels, ['Overview', 'Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Complete']);
+  assert.deepEqual(labels, ['Overview', 'Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Complete']);
 });
 
 

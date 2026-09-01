@@ -194,6 +194,40 @@ test('Song Bank keeps long filter decays when later steps are queued', async t =
   assertEnvelopeSurvivesNextStep(filter.frequency, 'Song Bank', decayTime);
 });
 
+test('SOFT accent sweep reshapes accented notes without a restart', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
+  // Every step accented, so the next trigger after the switch is an accented one.
+  inst.state = { ...inst.state, accentSweep: 'FAST', td3Accent: Array.from({ length: 16 }, (_, i) => i), td3Slide: [] };
+  inst.playTd3();
+  const filter = audioCtx.__created.find(node => node.kind === 'biquad').node;
+  await until(() => filter.frequency.calls.some(call => call.op === 'set'), 'a step to schedule');
+  const fastCutoff = filter.frequency.calls.find(call => call.op === 'set').v;
+
+  inst.setState({ accentSweep: 'SOFT' });
+  await until(() => filter.frequency.calls.filter(call => call.op === 'set').length >= 2,
+    'another accented step after the switch');
+  // The MO switch is heard on the next accented trigger, not after Stop/Play.
+  const softCutoff = filter.frequency.calls.filter(call => call.op === 'set').at(-1).v;
+  assert.ok(softCutoff < fastCutoff,
+    `SOFT accent cutoff ${softCutoff} did not drop below FAST's ${fastCutoff}`);
+  inst.stopTd3();
+});
+
+test('Overdrive retunes the waveshaper while the bassline plays', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(BEHRINGER);
+  t.after(dispose);
+  inst.playTd3();
+  const shaper = audioCtx.__created.find(node => node.kind === 'waveShaper').node;
+  const before = shaper.curve;
+  inst.setState({ td3Overdrive: 1 });
+  // The curve is rebuilt at the next trigger (within a lookahead), which is the
+  // whole point of Week 10's live "FM + Overdrive" recipes.
+  await until(() => shaper.curve !== before, 'the curve to be rebuilt');
+  assert.ok(shaper.curve[100] !== before[100], 'the new curve was the same shape');
+  inst.stopTd3();
+});
+
 // The RD-6 grids are fixed at 125ms a step. Drum Bank cards are not: a 71 BPM break
 // and a 128 BPM techno pattern each have to run at the rate their own source names.
 test('the Drum Bank runs a card on its own tempo grid', async t => {
@@ -367,4 +401,50 @@ test('MPK arrangement keeps drums, chords and arp on one grid', async t => {
   const times = onsets(audioCtx);
   assert.ok(gridErrorMs(times, step) < 1e-6,
     `a layer landed off the 16th grid by ${gridErrorMs(times, step)}ms`);
+});
+
+test('SYNC phase-locks deck B to deck A in time, not just in column', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(DDJ);
+  t.after(dispose);
+  renderStep(inst, inst.STEPS.findIndex(s => s.widget === 'sync'));
+  inst.startEngine();
+  await until(() => onsets(audioCtx).length >= 8, 'both decks to get going');
+  inst.syncDecks();
+  const atSync = audioCtx.currentTime;
+  await until(() => onsets(audioCtx).length >= 16, 'post-sync onsets');
+  inst.stopEngine();
+
+  // After SYNC both decks run at the same tempo, so every kick from then on must
+  // sit on one shared grid. Matching column numbers alone left deck B up to a
+  // 16th away in time — an audible flam that never corrected.
+  const step = 60 / inst.DECK_A_BPM / 4;
+  const tail = audioCtx.__starts
+    .filter(s => s.when >= atSync && s.stopAt > s.when)   // post-sync and actually sounding
+    .map(s => s.when)
+    .sort((a, b) => a - b);
+  assert.ok(tail.length >= 6, `only ${tail.length} post-sync onsets to judge`);
+  const t0 = tail[0];
+  for (const x of tail) {
+    const n = (x - t0) / step;
+    assert.ok(Math.abs(n - Math.round(n)) < 0.05,
+      `post-sync onset ${x} is ${(Math.abs(n - Math.round(n)) * step * 1000).toFixed(1)}ms off deck A's grid`);
+  }
+});
+
+test('stopping the MPK progression truncates a chord that is already sounding', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(MPK);
+  t.after(dispose);
+  inst.state = { ...inst.state, tempo: 60, swing: 0 }; // a bar holds ~3.7s at 60 BPM
+  inst.playProgression();
+  // Let the bar-1 chord actually start, then stop while it must still be ringing.
+  await until(() => audioCtx.__starts.some(s => s.when <= audioCtx.currentTime), 'a chord to sound');
+  const started = audioCtx.__starts.find(s => s.when <= audioCtx.currentTime);
+  const at = audioCtx.currentTime;
+  inst.stopAll();
+
+  assert.ok(started.stopAt <= started.when + 0.2,
+    `a sounding chord was left to ring until ${started.stopAt.toFixed(2)}s past its start`);
+  const leaked = audioCtx.__starts.filter(s => s.when > at && s.stopAt > s.when);
+  assert.deepEqual(leaked.map(s => +s.when.toFixed(4)), [],
+    'hits queued past the stop were left to sound');
 });

@@ -82,7 +82,7 @@
 </x-dc>
 
 <script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
+class Component extends DCCourseLogic {
   initialState() { return { step:0, dialogOpen:false, checks:{}, muteRd6:false, muteTd3:false, muteFlx4:false, perfmapSel:0 }; }
   state = this.initialState();
   constructor(props) { super(props); this.STEPS = this.buildSteps(); }

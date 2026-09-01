@@ -839,15 +839,248 @@
       return {};
     }
   };
+  // ── shared course-logic base ──────────────────────────────────────────────
+  // The four guides repeat one skeleton — modal course map with focus trap,
+  // week navigation, progress checklists, cable diagrams and the audio-clock
+  // lookahead scheduler. This base carries it once; a guide overrides the
+  // engine hooks (stopEngines, onRestart) and keeps only what is genuinely its
+  // own. test/harness.mjs extracts the block between the markers below and
+  // runs its tests against this exact code, so the copies cannot drift.
+  /* __DC_COURSE_SHARED_START__ */
+  function makeCourseLogicBase(DCLogic) {
+    return class DCCourseLogic extends DCLogic {
+      // ── course-map dialog ──
+      getDialogFocusables(dialog) {
+        if (!dialog || typeof dialog.querySelectorAll !== "function") return [];
+        return Array.from(dialog.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ));
+      }
+      restoreDialogFocus(target) {
+        if (target && target.isConnected !== false && typeof target.focus === "function") target.focus();
+      }
+      openCourseMap() {
+        this.dialogReturnFocus = typeof document === "undefined" ? null : document.activeElement;
+        this.setState({ dialogOpen: true }, () => {
+          if (typeof document === "undefined" || typeof document.querySelector !== "function") return;
+          const dialog = document.querySelector('[data-course-map-dialog="true"]');
+          const target = this.getDialogFocusables(dialog)[0] || dialog;
+          if (target && typeof target.focus === "function") target.focus();
+        });
+      }
+      closeCourseMap() {
+        const target = this.dialogReturnFocus;
+        this.dialogReturnFocus = null;
+        this.setState({ dialogOpen: false }, () => this.restoreDialogFocus(target));
+      }
+      onCourseMapKeydown(e) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          this.closeCourseMap();
+          return;
+        }
+        if (e.key !== "Tab") return;
+        const focusables = this.getDialogFocusables(e.currentTarget);
+        if (!focusables.length) {
+          e.preventDefault();
+          if (e.currentTarget && typeof e.currentTarget.focus === "function") e.currentTarget.focus();
+          return;
+        }
+        const first = focusables[0], last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+
+      // ── navigation ──
+      // Hooks the guide overrides: silence whatever it plays when the reader
+      // leaves a step or starts over.
+      stopEngines() {
+      }
+      onRestart() {
+      }
+      goToStep(i) {
+        this.stopEngines();
+        const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
+        const target = this.state.dialogOpen ? this.dialogReturnFocus : null;
+        if (target) this.dialogReturnFocus = null;
+        this.setState({ step: idx, dialogOpen: false }, () => this.restoreDialogFocus(target));
+      }
+      goNext() {
+        this.goToStep(this.state.step + 1);
+      }
+      goBack() {
+        this.goToStep(this.state.step - 1);
+      }
+      restart() {
+        this.stopEngines();
+        this.onRestart();
+        this.setState(this.initialState());
+      }
+      buildNavGroups() {
+        const groups = [];
+        this.STEPS.forEach((s, i) => {
+          let g = groups.find((x) => x.label === s.weekTag);
+          if (!g) {
+            g = { label: s.weekTag, items: [] };
+            groups.push(g);
+          }
+          g.items.push({
+            title: s.navLabel || s.title,
+            go: () => this.goToStep(i),
+            rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
+          });
+        });
+        return groups;
+      }
+
+      // ── checklist & cables ──
+      toggleCheck(stepId, idx) {
+        this.setState((s) => {
+          const arr = (s.checks[stepId] || []).slice();
+          arr[idx] = !arr[idx];
+          return { checks: { ...s.checks, [stepId]: arr } };
+        });
+      }
+      buildItems(step) {
+        if (!step.items) return [];
+        const checks = this.state.checks[step.id] || [];
+        return step.items.map((it, i) => ({
+          text: it.text,
+          checked: !!checks[i],
+          toggle: () => this.toggleCheck(step.id, i),
+          textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
+          hasSub: !!(it.subitems && it.subitems.length),
+          subitems: it.subitems || [],
+        }));
+      }
+      buildKnobs(step) {
+        if (!step.knobs) return [];
+        return step.knobs.map((k) => ({ label: k.label, hourLabel: `${k.hour} o'clock`, rot: (k.hour % 12) * 30 }));
+      }
+      toggleCable(key) {
+        this.setState((s) => ({ cableToggles: { ...s.cableToggles, [key]: !s.cableToggles[key] } }));
+      }
+      buildCables(step) {
+        if (!step.cables) return [];
+        return step.cables.map((d, i) => {
+          const key = `${step.id}:${i}`;
+          const connected = !!this.state.cableToggles[key];
+          return { from: d.from, to: d.to, toggle: () => this.toggleCable(key), pressed: connected ? 'true' : 'false',
+            dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
+            lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
+            statusText: connected ? 'Connected' : 'Click to connect' };
+        });
+      }
+
+      // ── step scheduling ──
+      // Every engine queues its audio ahead of time against the AudioContext clock
+      // rather than firing each note from the timer callback. setInterval/setTimeout
+      // drift by several ms a tick, and browsers clamp background-tab timers to ~1s;
+      // either is plainly audible as a wobbling groove. Here the timer only decides
+      // *when to look ahead* — each note's start time is computed exactly on the
+      // audio clock.
+      SCHED_TICK_MS = 25;
+      // Queue only a little while the tab is visible, so edits to a playing pattern
+      // are heard almost immediately...
+      LOOKAHEAD_VISIBLE = 0.12;
+      // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in
+      // the audio. Nobody is editing a pattern they can't see.
+      LOOKAHEAD_HIDDEN = 1.6;
+
+      lookahead() {
+        return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE;
+      }
+
+      // spec.onStep(col, time) schedules one step's audio at the exact AudioContext
+      // time `time`, returning the source nodes it created (so a stop can silence
+      // ones that haven't sounded yet), optional `meta` carried through to the
+      // visual update, and optional `ring` — how long those nodes can sound, which
+      // is not one figure: a hat dies in 50ms while a chord holds for a whole bar.
+      // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col)
+      // advances it.
+      startSequence(key, spec) {
+        const ctx = this.audioCtx;
+        this.sequences = this.sequences || {};
+        const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
+          queue: [], pending: [], shown: null, timer: null };
+        this.sequences[key] = seq;
+        const tick = () => {
+          const horizon = ctx.currentTime + this.lookahead();
+          while (seq.nextTime < horizon) {
+            const at = seq.nextTime;
+            const r = spec.onStep(seq.col, at) || {};
+            const ring = r.ring || 1;
+            (r.nodes || []).forEach((node) => seq.pending.push({ node, time: at, ring }));
+            seq.queue.push({ col: seq.col, time: at, meta: r.meta });
+            seq.nextTime = at + spec.stepDur(seq.col);
+            seq.col = spec.nextCol(seq.col);
+          }
+          this.drainSequence(seq);
+          seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
+        };
+        tick();
+        return seq;
+      }
+
+      // Move the on-screen playhead to the step that is actually sounding now, not
+      // the one most recently *scheduled* — those are up to a lookahead apart.
+      // A pending voice is only dropped once its own ring has elapsed; a flat
+      // cutoff would lose bar-long chords while they can still be silenced.
+      drainSequence(seq) {
+        const now = this.audioCtx.currentTime;
+        let cur = null;
+        while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
+        seq.pending = seq.pending.filter((p) => p.time + p.ring > now);
+        if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
+          seq.shown = cur;
+          seq.spec.onVisual(cur.col, cur.meta);
+        }
+      }
+
+      // Silence everything the sequence booked: nodes still in the future never
+      // sound, and ones already sounding are truncated a moment later — without
+      // the second half, stopping mid-bar left a chord ringing on for seconds
+      // after Stop. Returns the earliest still-unsounded slot so a phase jump
+      // (seekSequence) can reuse it without disturbing the tempo grid.
+      flushPending(seq, from) {
+        let earliest = seq.nextTime;
+        seq.pending.forEach((p) => {
+          try {
+            p.node.stop(p.time > from ? from : from + 0.06);
+          } catch (e) {
+          }
+          if (p.time > from && p.time < earliest) earliest = p.time;
+        });
+        seq.pending = [];
+        seq.queue = seq.queue.filter((q) => q.time <= from);
+        return earliest;
+      }
+
+      stopSequence(key) {
+        const seq = this.sequences && this.sequences[key];
+        if (!seq) return;
+        clearTimeout(seq.timer);
+        if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
+        delete this.sequences[key];
+      }
+    };
+  }
+  /* __DC_COURSE_SHARED_END__ */
   function evalDcLogic(src) {
     //! nosemgrep: eval-and-function-constructor
     const fn = new Function(
       "DCLogic",
       "StreamableLogic",
       "React",
+      "DCCourseLogic",
       src + '\n;return (typeof Component!=="undefined"&&Component)||undefined;'
     );
-    return fn(StreamableLogic, StreamableLogic, getReact());
+    return fn(StreamableLogic, StreamableLogic, getReact(), makeCourseLogicBase(DCLogic));
   }
 
   // src/component.ts
@@ -1293,6 +1526,10 @@
           return;
         }
         if (Date.now() - started >= GLOBAL_POLL_TIMEOUT_MS) {
+          // Release the name as well as giving up, or the polling.has() guard above
+          // would shadow every future resolveGlobal() for it — a global appearing
+          // just past the timeout could never be picked up without a reload.
+          polling.delete(name);
           console.warn(
             "[dc-runtime] x-import: global",
             JSON.stringify(name),
@@ -1405,6 +1642,11 @@
       }
     }
     window.addEventListener("message", (e) => {
+      // The theme/probe protocol is with the embedding parent and nothing else.
+      // The payloads carry no secrets (a theme name, a mode echo), but there is no
+      // reason for any other window to drive them; when not embedded at all, a
+      // self-addressed message changes nothing anyway.
+      if (window.parent !== window && e.source !== window.parent) return;
       const type = e.data && e.data.type;
       if (type === "__dc_theme") {
         const t = e.data.theme;

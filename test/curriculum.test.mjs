@@ -5,14 +5,16 @@ import { loadComponent, readGuide, renderStep } from './harness.mjs';
 const GUIDE = 'DDJ-FLX4 Guide.dc.html';
 const SEARCH_PREFIX = 'https://www.youtube.com/results?search_query=';
 
-test('DJ-404 is one eight-week intensive with five applied days per week', () => {
+test('DJ-404 is an eight-week intensive plus an optional scratch week, five applied days each', () => {
   const { inst } = loadComponent(GUIDE);
   const intros = inst.STEPS.filter(step => step.kind === 'weekintro');
   assert.deepEqual(intros.map(step => step.weekTag), [
     'Week 1', 'Week 2', 'Week 3', 'Week 4',
-    'Week 5', 'Week 6', 'Week 7', 'Week 8',
+    'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9',
   ]);
-  for (let week = 1; week <= 8; week++) {
+  // Week 9 is optional vocabulary, not part of the core intensive — its intro must say so.
+  assert.match(intros[8].title, /Optional/, 'the scratch week no longer presents itself as optional');
+  for (let week = 1; week <= 9; week++) {
     const days = inst.STEPS.filter(step => step.kind === 'content' && step.weekTag === 'Week ' + week);
     assert.equal(days.length, 5, 'Week ' + week + ' does not have five days');
     assert.deepEqual(days.map(step => step.title.slice(0, 5)), ['Day 1','Day 2','Day 3','Day 4','Day 5']);
@@ -20,13 +22,13 @@ test('DJ-404 is one eight-week intensive with five applied days per week', () =>
   }
   assert.equal(inst.STEPS.filter(step => step.practiceWeek).length, 0,
     'the old six-week Practice Plan should not duplicate the intensive');
-  assert.equal(inst.STEPS.length, 50);
+  assert.equal(inst.STEPS.length, 56);
 });
 
 test('every weekly milestone is independently tracked and Start Over clears it', () => {
   const { inst } = loadComponent(GUIDE);
   const day5s = inst.STEPS.filter(step => step.kind === 'content' && step.milestone);
-  assert.equal(day5s.length, 8);
+  assert.equal(day5s.length, 9);
   day5s.forEach((step, index) => {
     const i = inst.STEPS.indexOf(step);
     renderStep(inst, i).milestone.toggle();

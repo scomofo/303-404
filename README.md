@@ -37,7 +37,7 @@ Add a card in `DRUM_CARDS` with fields such as `{ id, title, artist?, sourceType
 
 ## DDJ-FLX4 Guide
 
-The **DJ-404 performance curriculum** in `DDJ-FLX4 Guide.dc.html` is one eight-week intensive rather than separate beginner and practice plans. Each week contains five applied sessions and ends with a recorded milestone.
+The **DJ-404 performance curriculum** in `DDJ-FLX4 Guide.dc.html` is one eight-week intensive rather than separate beginner and practice plans. Each week contains five applied sessions and ends with a recorded milestone. An optional ninth week adds scratch technique in the same five-day shape.
 
 | Week | Covers |
 | --- | --- |
@@ -49,6 +49,7 @@ The **DJ-404 performance curriculum** in `DDJ-FLX4 Guide.dc.html` is one eight-w
 | 6 | Camelot guidance, harmonic listening and a five-track key journey |
 | 7 | A planned 28–32 minute energy arc and critical playback notes |
 | 8 | Re-recording, safe export, artwork, tracklist and self-assessment |
+| 9 | Optional: scratch technique — baby scratch, stab, chirp, tear and transform |
 
 The existing cable, jog, tempo, mixer, beatmatch, cue, loop, FX and performance-map widgets remain part of the course. New labs add a phase-meter canvas, harmonic-compatibility guidance and a short practice recorder. The browser recorder creates original-synth stereo WAV drills at **44.1 kHz / 16-bit**, with a three-minute memory cap. The final 30-minute set should be recorded in rekordbox or Serato.
 

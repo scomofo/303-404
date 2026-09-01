@@ -229,6 +229,17 @@ test('the worked-example step shows the loaded pattern without the card stack', 
     'the live view does not show the loaded card');
 });
 
+test('the RD-6 worked example preserves hat chokes and independent clap steps', () => {
+  const { inst } = bank();
+  const step = inst.STEPS.find(s => s.id === 'w9-2');
+  const copy = step.items.map(item => item.text).join(' ');
+  assert.match(copy, /keep both triggers to recreate the choke/);
+  assert.match(copy, /CH cuts its decay short/);
+  assert.match(copy, /SD and CP are separate voice-selector positions/);
+  assert.match(copy, /both snare and clap steps independently/);
+  assert.doesNotMatch(copy, /drop the closed one|makes you pick one/);
+});
+
 test('documentation matches the bank and keeps its provenance honest', () => {
   const { inst, html } = bank();
   const readme = readGuide('README.md');

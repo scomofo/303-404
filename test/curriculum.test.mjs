@@ -57,7 +57,7 @@ test('video resources remain searches rather than guessed upload IDs', () => {
 test('the stab lesson distinguishes its closed-fader start from a forward scratch', () => {
   const { inst } = loadComponent(GUIDE);
   const step = inst.STEPS.find(s => s.id === 'w9-d2');
-  const copy = step.items.join(' ');
+  const copy = step.items.map(item => item.text).join(' ');
   assert.match(copy, /Forward scratch: begin with the crossfader open/);
   assert.match(copy, /Stab: begin with the crossfader closed/);
   assert.match(copy, /close it again before the silent rewind/);

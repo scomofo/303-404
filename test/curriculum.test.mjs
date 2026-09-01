@@ -1,5 +1,5 @@
 // The DDJ-FLX4 guide's six-week practice plan: the study curriculum that sits after
-// the seven hands-on weeks. These guard the data (every week is complete, every
+// the eight hands-on weeks. These guard the data (every week is complete, every
 // cross-link resolves) and the two rules that are easy to break silently — that
 // progress ticks stay namespaced, and that no link claims to know a video's ID.
 

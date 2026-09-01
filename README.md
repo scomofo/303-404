@@ -21,7 +21,7 @@ The Behringer guide takes an absolute beginner from wiring and basic drum sequen
 
 ### Song Bank
 
-The Song Bank contains **27 cards ship by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
+The Song Bank contains **31 cards ship by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
 
 Each `SONG_CARDS` entry can include `sourceType`, `needsAccentSlideReview`, `homeOctave`, `overdrive`, tempo/provenance fields, filter settings, note names, accents and slides. Notes use names such as `C2` and `F#3`, with **`null` for a rest**. Unknown source details remain blank or explicitly estimated rather than being invented. Six legacy chart entries remain marked with `needsAccentSlideReview: true` until their original source rows can be revalidated.
 
@@ -37,7 +37,7 @@ Add a card in `DRUM_CARDS` with fields such as `{ id, title, artist?, sourceType
 
 ## DDJ-FLX4 Guide
 
-The DDJ-FLX4 guide covers seven weeks of hands-on controller lessons: setup, transport, tempo, mixer fundamentals, beatmatching, Sync, hot cues, loops, Beat FX and a mapped first mix. It then hands off to a self-paced **6-week Practice Plan**.
+The DDJ-FLX4 guide covers eight weeks of hands-on controller lessons: setup, transport, tempo, mixer fundamentals, beatmatching, Sync, hot cues, loops, Beat FX, a mapped first mix, and scratch technique (baby scratch, stab, chirp, tear, transform). It then hands off to a self-paced **6-week Practice Plan**.
 
 ### Practice Plan
 
@@ -49,7 +49,7 @@ Progress ticks for tasks, watch items and milestones share the in-memory checks 
 
 ## Hybrid Live Set Guide
 
-`Hybrid Live Set.dc.html` is a five-week follow-on course for learners who have completed both hardware guides. It combines the TD-3-MO / RD-6-BK and DDJ-FLX4 into one staged performance workflow.
+`Hybrid Live Set.dc.html` is a six-week follow-on course for learners who have completed both hardware guides. It combines the TD-3-MO / RD-6-BK and DDJ-FLX4 into one staged performance workflow.
 
 | Week | Covers |
 | --- | --- |

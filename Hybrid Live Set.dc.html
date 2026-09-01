@@ -29,7 +29,7 @@
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
           <div><h1 style="margin:0;">Hybrid Live Set</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">TD-3-MO + RD-6-BK + DDJ-FLX4</h3></div>
-          <div><h4 style="margin:0 0 8px;">Course Overview</h4><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;"><li>Target Audience: Graduates of the TD-3/RD-6 and DDJ-FLX4 guides</li><li>Duration: 5 Weeks (2–3 Hours / Week)</li><li>Equipment Needed:<ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;"><li>Behringer TD-3-MO + RD-6-BK (synced)</li><li>Pioneer DJ DDJ-FLX4 + Serato Lite or rekordbox</li><li>Mixer or interface with at least 4 channels</li><li>Headphones + monitors</li><li>3.5 mm TS sync cable + audio cables</li></ul></li></ul></div>
+          <div><h4 style="margin:0 0 8px;">Course Overview</h4><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;"><li>Target Audience: Graduates of the TD-3/RD-6 and DDJ-FLX4 guides</li><li>Duration: 6 Weeks (2–3 Hours / Week)</li><li>Equipment Needed:<ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;"><li>Behringer TD-3-MO + RD-6-BK (synced)</li><li>Pioneer DJ DDJ-FLX4 + Serato Lite or rekordbox</li><li>Mixer or interface with at least 4 channels</li><li>Headphones + monitors</li><li>3.5 mm TS sync cable + audio cables</li></ul></li></ul></div>
           <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
         </div>
       </sc-if>
@@ -113,6 +113,22 @@ class Component extends DCLogic {
       { id:'w5-intro' , kind:'weekintro', weekTag:W(5), navLabel:'Week Overview', title:'Week 5: Stage Readiness', objective:'Make the hybrid setup reliable and quick to recover from mistakes.' },
       { id:'w5-1', kind:'content', weekTag:W(5), title:'1. Go-Live Checklist', items:[{ text:'All cables labelled and tested.' },{ text:'Backup patterns loaded on both RD-6 and TD-3.' },{ text:'FLX4 USB stick organised with the tracks you actually need.' },{ text:'Headphones cue mix checked against master.' },{ text:'One-page “panic” sheet: how to re-sync, mute a layer, or restart a pattern.' }] },
       { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Recovery Drills', items:[{ text:'Practice muting the TD-3 instantly if it goes out of time.' },{ text:'Practice restarting the RD-6 pattern on the next downbeat without stopping the FLX4.' },{ text:'Time how long it takes you to go from “everything off” to “first bar playing”.' }] },
+      { id:'w6-intro', kind:'weekintro', weekTag:W(6), navLabel:'Week Overview', title:'Week 6: Genre Variants', objective:'Adapt the same three-layer hybrid setup to house, techno, and breaks, where each instrument carries a different job.' },
+      { id:'w6-1', kind:'content', weekTag:W(6), title:'1. House', items:[
+        { text:'RD-6: four-on-the-floor kick, offbeat open hat, light shaker-style closed hats — steady and unchanging for long stretches.' },
+        { text:'TD-3: a short, plucky bassline that mostly stays out of the kick’s way; save filter sweeps for breakdowns rather than every bar.' },
+        { text:'FLX4: carries the melodic and vocal interest — loop a vocal phrase or stab track over the hardware groove instead of adding more from the TD-3.' },
+      ] },
+      { id:'w6-2', kind:'content', weekTag:W(6), title:'2. Techno', items:[
+        { text:'RD-6: kick can sit slightly further forward in the mix; closed hats run denser (16th notes) for drive.' },
+        { text:'TD-3: this is the lead instrument — run it hot, use Overdrive and Filter FM more aggressively than in house, and treat the filter as the main storytelling tool over a long arrangement.' },
+        { text:'FLX4: mostly textures, risers, and impacts to punctuate TD-3 filter moves rather than competing melodic content.' },
+      ] },
+      { id:'w6-3', kind:'content', weekTag:W(6), title:'3. Breaks', items:[
+        { text:'RD-6: program the syncopated break pattern itself (borrow one from the Drum Bank in the Behringer guide) rather than a straight kick pattern — this is the part that defines the genre.' },
+        { text:'TD-3: a sparser, more melodic line that answers the break rather than filling every step — leave room for the drum pattern to be heard.' },
+        { text:'FLX4: sub-bass or a low, sustained track element can reinforce the low end the sparse TD-3 line leaves open.' },
+      ] },
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:"You're ready for a hybrid set." },
     ];
   }

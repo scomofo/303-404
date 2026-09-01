@@ -1028,7 +1028,8 @@ class Component extends DCCourseLogic {
     const seqA = this.sequences['A'];
     const seqB = this.sequences['B'];
     this.setState(s => ({ deckB: { ...s.deckB, tempoPct: 0 } }));
-    if (!seqB) return;
+    // Stopped decks have no clock to lock, so SYNC just mirrors the column state.
+    if (!seqB) { this.setState(s => ({ colB: s.colA })); return; }
     // Matching deck B's column number to deck A's is not enough: B would resume on
     // its own clock, up to a step away from A's, and with the tempos then equal
     // that offset never corrects — the two kicks flam forever. Real SYNC phase-locks

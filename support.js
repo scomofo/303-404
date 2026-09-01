@@ -1083,7 +1083,9 @@
       "DCCourseLogic",
       src + '\n;return (typeof Component!=="undefined"&&Component)||undefined;'
     );
-    return fn(StreamableLogic, StreamableLogic, getReact(), makeCourseLogicBase(DCLogic));
+    // StreamableLogic is what guides receive as their DCLogic binding (there is no
+    // separate DCLogic class in this bundle), so it is also the course base's parent.
+    return fn(StreamableLogic, StreamableLogic, getReact(), makeCourseLogicBase(StreamableLogic));
   }
 
   // src/component.ts

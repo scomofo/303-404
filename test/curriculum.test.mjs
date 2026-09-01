@@ -54,6 +54,16 @@ test('video resources remain searches rather than guessed upload IDs', () => {
   assert.doesNotMatch(html, /youtu\.be|youtube\.com\/watch|youtube\.com\/@/);
 });
 
+test('the stab lesson distinguishes its closed-fader start from a forward scratch', () => {
+  const { inst } = loadComponent(GUIDE);
+  const step = inst.STEPS.find(s => s.id === 'w9-d2');
+  const copy = step.items.join(' ');
+  assert.match(copy, /Forward scratch: begin with the crossfader open/);
+  assert.match(copy, /Stab: begin with the crossfader closed/);
+  assert.match(copy, /close it again before the silent rewind/);
+  assert.doesNotMatch(copy, /same stroke, faster and sharper/);
+});
+
 test('the intensive reuses every major existing practice widget', () => {
   const { inst } = loadComponent(GUIDE);
   const widgets = new Set(inst.STEPS.map(step => step.widget).filter(Boolean));

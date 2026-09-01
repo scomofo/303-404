@@ -616,10 +616,10 @@ class Component extends DCCourseLogic {
 
       { id:'w9-intro', kind:'weekintro', weekTag:W(9), navLabel:'Week Overview', title:'Week 9 (Optional): Scratch Technique', objective:'Optional for club blend-style sets but core vocabulary for hip-hop and open format: baby scratch, stab, chirp, tear and transform on the jog wheel.' },
       day('w9-d1',9,1,'Vinyl mode & hand position',['Confirm Vinyl mode so grabbing the platter top stops and reverses the track (Week 1, Day 3) instead of bending pitch.','Rest the scratch hand flat on the platter top, fingers relaxed — the rim stays for pitch bends.','Cue a sharp, clean transient on the downbeat; a smeared or sustained sound hides sloppy technique.'],{widget:'jogSpin'}),
-      day('w9-d2',9,2,'Baby scratch & forward stab',['Push the platter forward through the sound, then pull it back the same distance at an even speed.','Keep the motion in the wrist and forearm; a small controlled stroke beats a wide fast one.','Forward stab: push forward and release so the track plays on — the front half of the baby scratch.','Match each push, or push-and-pull, to the downbeat before trying to speed up.']),
-      day('w9-d3',9,3,'Chirp, tear & transform',['Chirp: crossfader open on the forward push, cut closed for the pull-back so only the push is heard.','Tear: split one baby scratch into two shorter uneven strokes for a stuttered, torn texture.','Transform: hold the platter still and chop a sustained sound with rapid crossfader cuts.','Drill each hand alone before combining fader cuts with platter moves.'],{widget:'jogSpin'}),
-      day('w9-d4',9,4,'Timing drills',['Four bars of baby scratch on every downbeat at constant tempo, with no drift.','Forward stabs on beats 2 and 4 only, leaving 1 and 3 silent.','Eight chirps in a row, each cut clean with no trailing tail of the backward motion.','Transform in steady eighth notes, then lock it to the hi-hat pattern instead of a fixed subdivision.'],{widget:'jogSpin'}),
-      day('w9-d5',9,5,'Milestone: recorded scratch drill',['Record a one-minute drill over a steady beat: baby scratches on the downbeats, then offbeat stabs, then chirp pairs.','Listen back for timing drift and uneven strokes — far easier to hear than to feel in the moment.','Re-record until every technique cuts cleanly on the beat.'],{widget:'recording',milestone:'Record a one-minute drill with even baby scratches, offbeat stabs and clean chirp cuts.',watch:[{title:'DJ Shortkut scratch tutorial baby scratch',creator:'DJ Shortkut'}]}),
+      day('w9-d2',9,2,'Baby scratch & forward stab',['Push the platter forward through the sound, then pull it back the same distance at an even speed.','Keep the motion in the wrist and forearm; a small controlled stroke beats a wide fast one.','Forward scratch: push forward with the fader open, then cut the fader closed and pull back silently so the same transient is ready to go again. A stab is the same stroke, faster and sharper.','Match each push, or push-and-pull, to the downbeat before trying to speed up.']),
+      day('w9-d3',9,3,'Chirp, tear & transform',['Chirp: close the crossfader exactly as the forward push ends, then reopen it through the pull-back — two short clipped sounds, one per stroke, with the silence landing on the direction change.','Tear: split one baby scratch into two shorter uneven strokes for a stuttered, torn texture.','Transform: keep the sound running — let the track play, or drag the platter steadily — while the other hand chops the crossfader open and closed in rhythm. A platter held still in Vinyl mode makes no sound to chop.','Drill each hand alone before combining fader cuts with platter moves.'],{widget:'jogSpin'}),
+      day('w9-d4',9,4,'Timing drills',['Four bars of baby scratch on every downbeat at constant tempo, with no drift.','Forward stabs on beats 2 and 4 only, leaving 1 and 3 silent.','Eight chirps in a row, with the fader closing right on each direction change — no smeared cuts.','Transform in steady eighth notes, then lock it to the hi-hat pattern instead of a fixed subdivision.'],{widget:'jogSpin'}),
+      day('w9-d5',9,5,'Milestone: recorded scratch drill',['Start the practice decks for a steady beat, and record yourself with a phone or a software audio capture — the browser drill recorder renders only its own synth loop and cannot hear your scratching.','Perform one minute: baby scratches on the downbeats, then offbeat stabs, then chirp pairs.','Listen back for timing drift and uneven strokes — far easier to hear than to feel — and re-record until every technique cuts cleanly on the beat.'],{widget:'jogSpin',milestone:'Capture a one-minute drill (phone or software recording) with even baby scratches, offbeat stabs and clean chirp cuts.',watch:[{title:'DJ Shortkut scratch tutorial baby scratch',creator:'DJ Shortkut'}]}),
 
       { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:'Course complete' },
     ];
@@ -1049,12 +1049,13 @@ class Component extends DCCourseLogic {
       this.seekSequence('B', next.col, next.time);
       return;
     }
-    // Between A's booking ticks its queue can be momentarily empty of future steps;
-    // A's grid still continues one stepDur past whatever is sounding.
-    if (seqA && seqA.shown) {
-      const col = (seqA.shown.col + 1) % 16;
-      this.setState({ colB: col });
-      this.seekSequence('B', col, seqA.shown.time + 60 / this.DECK_A_BPM / 4);
+    // Between A's booking ticks its queue can be momentarily empty of future steps.
+    // seq.col / seq.nextTime are the authoritative pending cursor: unlike `shown`,
+    // they are already updated when a nudge or hot cue has just flushed the queue,
+    // so SYNC pressed inside that window still lands B on A's real next slot.
+    if (seqA) {
+      this.setState({ colB: seqA.col });
+      this.seekSequence('B', seqA.col, seqA.nextTime);
       return;
     }
     const col = this.state.colA;

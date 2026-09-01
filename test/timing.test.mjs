@@ -459,6 +459,25 @@ test('SYNC phase-locks deck B to deck A in time, not just in column', async t =>
   }
 });
 
+test('SYNC right after a deck-A jump follows the pending cursor, not the stale playhead', async t => {
+  const { inst, audioCtx, dispose } = loadComponent(DDJ);
+  t.after(dispose);
+  renderStep(inst, inst.STEPS.findIndex(s => s.widget === 'sync'));
+  inst.startEngine();
+  await until(() => inst.sequences['A'].shown, 'deck A to show a step');
+
+  // A hot-cue style jump flushes A's future queue and moves seq.col/seq.nextTime,
+  // while `shown` keeps describing the pre-jump step until the next 25ms tick.
+  // Nothing may run between the seek and the SYNC, so both calls are synchronous.
+  inst.seekSequence('A', 9);
+  inst.syncDecks();
+
+  assert.equal(inst.state.colB, 9, 'SYNC aligned deck B to a stale column');
+  assert.ok(Math.abs(inst.sequences['B'].nextTime - inst.sequences['A'].nextTime) < 1e-9,
+    'SYNC did not land deck B on deck A\'s pending slot');
+  inst.stopEngine();
+});
+
 test('stopping the MPK progression truncates a chord that is already sounding', async t => {
   const { inst, audioCtx, dispose } = loadComponent(MPK);
   t.after(dispose);

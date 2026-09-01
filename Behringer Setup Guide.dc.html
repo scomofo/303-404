@@ -463,6 +463,36 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ currentStep.showDrumBankLive }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-if value="{{ dbHasCard }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
+                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}">{{ dbPlayLabel }}</button>
+                  </div>
+                  <div style="overflow-x:auto;">
+                    <div style="{{ dbGridStyle }}">
+                      <sc-for list="{{ dbRowsView }}" as="row" hint-placeholder-count="5">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <div style="width:30px;flex:none;font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.6;">{{ row.label }}</div>
+                          <div style="display:flex;gap:3px;">
+                            <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="16">
+                              <div style="{{ c.style }}"></div>
+                            </sc-for>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ dbNoCard }}" hint-placeholder-val="{{ false }}">
+                <p style="font-size:13px;opacity:.75;margin:0;padding:12px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);">No pattern sheet is loaded yet — go back one step and tap “Load into engine” on any card, then return here.</p>
+              </sc-if>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ currentStep.showTd3Play }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -769,8 +799,10 @@ class Component extends DCCourseLogic {
       notes:['C2','C2',null,'D#2','C2',null,'G2','C2','C2',null,'A#2','C2',null,'D2','C2',null],
       accent:[0,3,6,10,13], slide:[] },
 
-    { id:'practice-10', title:'Minor Third Zigzag', sourceType:'practice', tag:'Practice pattern · minor third zigzag technique', bpm:133, bpmConfirmed:true,
-      notes:['C2','D#2','C2','D#2','G2','D#2','G2','A#2','G2','A#2','C3','A#2','C3','D#3','C3','A#2'],
+    // Every consecutive interval is exactly three semitones — the pattern climbs the
+    // diminished ladder (C, D#, F#, A, C, D#) two steps up, one step back.
+    { id:'practice-10', title:'Minor Third Zigzag', sourceType:'practice', tag:'Practice pattern · minor third zigzag up the diminished ladder', bpm:133, bpmConfirmed:true,
+      notes:['C2','D#2','C2','D#2','F#2','D#2','F#2','A2','F#2','A2','C3','A2','C3','D#3','C3','A2'],
       accent:[0,4,8,12], slide:[1,3,5,7,9,11,13,15] },
 
     { id:'trance-rolling-arp', title:'Rolling Arp Sequence', artist:'Uplifting trance', sourceType:'table',
@@ -1142,18 +1174,19 @@ class Component extends DCCourseLogic {
         items:[
           { text:"Each card is a TR-808 rhythm pattern sheet: AC on top, then BD, SD, LT, MT, HT, RS, CP, CB, CY, OH and CH across 16 or 32 steps — the row set every drum-machine chart is drawn on, whatever machine you then program it into." },
           { text:"Tap Load into engine to hand a card to the drum engine below, then Play Pattern. Each card plays at its own tempo, so the breaks stay slow and the techno stays fast." },
-          { text:"On the RD-6, four of those rows exist as-is (BD, SD, CH, OH) and Accent is the AC row; play toms and cowbell parts on whatever voice you can spare, or leave them out. In an 808 emulator the rows map one-for-one. On an SP-404, assign one pad per row and enter the same steps in TR-REC." },
+          { text:"On the RD-6, most rows exist as-is — BD, SD, LT, HT, CY, OH and CH, with CP on the snare's SD/CP switch and Accent as the AC row; only rimshot, cowbell and the mid tom need substituting or dropping. In an 808 emulator the rows map one-for-one. On an SP-404, assign one pad per row and enter the same steps in TR-REC." },
           { text:"Where a source recorded nothing — no accents, no pattern number, no variation or pre-scale — the sheet prints that box blank instead of guessing, and a tempo the source never stated is labelled as an estimate." },
           { text:"Add your own by appending to DRUM_CARDS in the component script — see the README." },
         ],
       },
-      { id:'w9-2', kind:'content', weekTag:W(9), title:'2. Worked Example — Onto the RD-6',
+      { id:'w9-2', kind:'content', weekTag:W(9), title:'2. Worked Example — Onto the RD-6', widget:'drumbanklive',
         items:[
-          { text:"Load any pattern sheet with Load into engine and read across the AC row first — it tells you which steps in the whole pattern are meant to hit harder, independent of which drum is sounding." },
+          { text:"Start from the sheet you loaded on the previous step — it stays loaded here, with its rows and Play Pattern below. Nothing loaded yet? Go back one step and tap Load into engine; Four on the Floor is the best first pick." },
+          { text:"Read the AC row first where the sheet has one — it marks the steps that hit harder, independent of which drum is sounding. Only Four on the Floor records one: on every other card the blank AC row means the source never wrote accents down, not that there are none." },
           { text:"BD and SD map straight across to the RD-6's own BD and SD rows — copy the marked steps one-for-one." },
-          { text:"CH and OH both feed the RD-6's single hi-hat voice: where a sheet marks both closed and open hats on the same step, the open hat wins, since it is the longer, more audible event." },
-          { text:"RS, CP, CB, LT, MT, HT and CY have no RD-6 voice. Fold RS and CP into SD if the sheet leans on them for backbeat, drop the toms and cowbell entirely, or borrow a spare voice (many players use OH for CY) rather than programming nothing." },
-          { text:"Finish by overlaying the AC row onto whichever RD-6 steps you kept — those are the ones to nudge with the Accent knob once you're programming for real." },
+          { text:"CH and OH map across as-is. They share the RD-6's hi-hat channel, so where a sheet marks both on the same step, program the open hat and drop the closed one — triggered together, the closed hat chokes the open one." },
+          { text:"LT, HT and CY also map straight across (Lo Tom, Hi Tom, Cymbal), and CP is there on the snare's SD/CP switch — though it replaces the snare, so a sheet using both SD and CP makes you pick one. Only RS, CB and MT have no voice: fold RS into SD if the sheet leans on it for backbeat, drop the cowbell, and move MT onto whichever tom is free." },
+          { text:"Finish by overlaying the AC row, where the sheet has one, onto the RD-6 steps you kept — those are the ones to lift with the Accent knob. Where the source recorded no accents, choose your own; the downbeats are the usual place to start." },
         ],
       },
       { id:'w10-intro', kind:'weekintro', weekTag:W(10), navLabel:'Week Overview',
@@ -2023,6 +2056,9 @@ class Component extends DCCourseLogic {
         showAccentSweep: step.widget === 'moTweaks', showPerfmap: step.widget === 'perfmap',
         showSongBank: step.widget === 'songbank',
         showDrumBank: step.widget === 'drumbank',
+        // The worked example operates on whatever card is loaded, so it shows the
+        // live pattern and Play button without rebuilding the full stack of sheets.
+        showDrumBankLive: step.widget === 'drumbanklive',
       },
       rd6GridTitle: step.widget === 'rd6fill' ? 'RD-6 pattern — Bank A, Pattern 2 (Fill)' : 'RD-6 pattern — 4-on-the-floor',
       rd6Rows: step.widget === 'rd6fill' ? this.buildRd6Rows('rd6Fill')
@@ -2088,8 +2124,9 @@ class Component extends DCCourseLogic {
         };
       }) : [],
       dbHasCard: !!this.state.dbRows,
+      dbNoCard: !this.state.dbRows,
       dbTitle: this.state.dbSelected ? `${(this.DRUM_CARDS.find(c => c.id === this.state.dbSelected) || {}).title || ''} — loaded pattern` : '',
-      dbRowsView: step.widget === 'drumbank' ? this.buildDrumBankRows() : [],
+      dbRowsView: (step.widget === 'drumbank' || step.widget === 'drumbanklive') ? this.buildDrumBankRows() : [],
       // A row of fixed-width cells overflows its flex column unless the column itself
       // is at least as wide, in which case the wrapper scrolls instead of clipping.
       dbGridStyle: `display:flex;flex-direction:column;gap:4px;padding:2px;min-width:${38 + this.state.dbSteps * 25}px;`,

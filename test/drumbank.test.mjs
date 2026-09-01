@@ -207,6 +207,28 @@ test('the drum bank step renders a sheet per card and a live view only once load
     'without a floor the live rows overflow their column instead of scrolling');
 });
 
+// The worked example's instructions all act on the loaded card, so its step must
+// surface the live pattern view — without rebuilding the full stack of sheets —
+// and must tell the learner what to do when nothing is loaded yet.
+test('the worked-example step shows the loaded pattern without the card stack', () => {
+  const { inst } = bank();
+  const i = inst.STEPS.findIndex(s => s.widget === 'drumbanklive');
+  assert.ok(i > 0, 'no worked-example step carries the drumbanklive widget');
+
+  let view = renderStep(inst, i);
+  assert.equal(view.currentStep.showDrumBankLive, true);
+  assert.deepEqual(view.drumCards, [], 'the worked example should not rebuild every sheet');
+  assert.equal(view.dbHasCard, false);
+  assert.equal(view.dbNoCard, true, 'nothing signals that no card is loaded yet');
+
+  inst.loadDrumCard(inst.DRUM_CARDS[0]);
+  view = renderStep(inst, i);
+  assert.equal(view.dbHasCard, true);
+  assert.equal(view.dbNoCard, false);
+  assert.equal(view.dbRowsView.length, Object.keys(inst.DRUM_CARDS[0].rows).length,
+    'the live view does not show the loaded card');
+});
+
 test('documentation matches the bank and keeps its provenance honest', () => {
   const { inst, html } = bank();
   const readme = readGuide('README.md');

@@ -138,6 +138,15 @@ class StubLogic {
   renderVals() { return {}; }
 }
 
+// The four guides share one navigation/dialog/checklist/scheduler base class,
+// which lives in support.js between extraction markers so the browser runtime
+// and this harness run the same code. Pull it out and build it over StubLogic.
+const sharedMatch = readFileSync(join(ROOT, 'support.js'), 'utf8')
+  .match(/\/\* __DC_COURSE_SHARED_START__ \*\/([\s\S]*?)\/\* __DC_COURSE_SHARED_END__ \*\//);
+if (!sharedMatch) throw new Error('support.js: __DC_COURSE_SHARED markers missing');
+const makeCourseLogicBase = new Function('DCLogic',
+  `${sharedMatch[1]}\n;return makeCourseLogicBase;`)(StubLogic);
+
 /**
  * Instantiate a guide's Component. Returns the instance, plus the stub audio
  * context so tests can inspect what was scheduled.
@@ -155,9 +164,9 @@ export function loadComponent(file, { hidden = false } = {}) {
   globalThis.window = { AudioContext: function () { return audioCtx; } };
 
   // Same shape as the runtime's own evaluation of this block.
-  const factory = new Function('DCLogic', 'StreamableLogic', 'React',
+  const factory = new Function('DCLogic', 'StreamableLogic', 'React', 'DCCourseLogic',
     src + '\n;return typeof Component !== "undefined" ? Component : undefined;');
-  const Component = factory(StubLogic, StubLogic, {});
+  const Component = factory(StubLogic, StubLogic, {}, makeCourseLogicBase(StubLogic));
   if (!Component) throw new Error(`${file}: script block defined no Component`);
   const inst = new Component({});
   // ensureAudio() constructs via `new window.AudioContext()`; hand it ours directly

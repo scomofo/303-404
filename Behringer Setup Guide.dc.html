@@ -176,7 +176,7 @@
           <sc-if value="{{ currentStep.showShuffle }}" hint-placeholder-val="{{ false }}">
             <div>
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Shuffle amount</div>
-              <div class="seg" style="align-self:flex-start;">
+              <div class="seg" style="align-self:flex-start;" role="radiogroup" aria-label="Shuffle amount">
                 <sc-for list="{{ shuffleOptions }}" as="opt" hint-placeholder-count="4">
                   <label class="seg-opt">
                     <input type="radio" name="shuffle" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -235,7 +235,7 @@
             <div style="display:flex;flex-direction:column;gap:14px;">
               <div>
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Overdrive</div>
-                <div class="seg" style="align-self:flex-start;">
+                <div class="seg" style="align-self:flex-start;" role="radiogroup" aria-label="Overdrive">
                   <sc-for list="{{ overdriveOptions }}" as="opt" hint-placeholder-count="4">
                     <label class="seg-opt">
                       <input type="radio" name="overdrive" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -494,7 +494,7 @@
           <sc-if value="{{ currentStep.showAccentSweep }}" hint-placeholder-val="{{ false }}">
             <div>
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Accent sweep speed</div>
-              <div class="seg" style="align-self:flex-start;">
+              <div class="seg" style="align-self:flex-start;" role="radiogroup" aria-label="Accent sweep speed">
                 <sc-for list="{{ accentSweepOptions }}" as="opt" hint-placeholder-count="2">
                   <label class="seg-opt">
                     <input type="radio" name="accentsweep" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -561,7 +561,7 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
+class Component extends DCCourseLogic {
   // Every resettable field lives here so the initial state and restart() can't drift apart.
   initialState() {
     return {
@@ -1195,85 +1195,11 @@ class Component extends DCLogic {
   }
 
   // ── navigation ──
-  getDialogFocusables(dialog) {
-    if (!dialog || typeof dialog.querySelectorAll !== 'function') return [];
-    return Array.from(dialog.querySelectorAll(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    ));
-  }
-  restoreDialogFocus(target) {
-    if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus();
-  }
-  openCourseMap() {
-    this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement;
-    this.setState({ dialogOpen: true }, () => {
-      if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
-      const dialog = document.querySelector('[data-course-map-dialog="true"]');
-      const target = this.getDialogFocusables(dialog)[0] || dialog;
-      if (target && typeof target.focus === 'function') target.focus();
-    });
-  }
-  closeCourseMap() {
-    const target = this.dialogReturnFocus;
-    this.dialogReturnFocus = null;
-    this.setState({ dialogOpen: false }, () => this.restoreDialogFocus(target));
-  }
-  onCourseMapKeydown(e) {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      this.closeCourseMap();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const focusables = this.getDialogFocusables(e.currentTarget);
-    if (!focusables.length) {
-      e.preventDefault();
-      if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus();
-      return;
-    }
-    const first = focusables[0], last = focusables[focusables.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-  goToStep(i) {
+  // Dialog, step nav, checklist, knobs and the audio-clock scheduler are
+  // inherited from the shared DCCourseLogic base in support.js. This guide
+  // only names the engines a step change or Start Over must silence.
+  stopEngines() {
     this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.stopDrumBank();
-    const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
-    const target = this.state.dialogOpen ? this.dialogReturnFocus : null;
-    if (target) this.dialogReturnFocus = null;
-    this.setState({ step: idx, dialogOpen: false }, () => this.restoreDialogFocus(target));
-  }
-  goNext() { this.goToStep(this.state.step + 1); }
-  goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopRd6(); this.stopTd3(); this.stopSongBank(); this.stopDrumBank(); this.setState(this.initialState()); }
-
-  // ── checklist ──
-  toggleCheck(stepId, idx) {
-    this.setState(s => {
-      const arr = (s.checks[stepId] || []).slice();
-      arr[idx] = !arr[idx];
-      return { checks: { ...s.checks, [stepId]: arr } };
-    });
-  }
-  buildItems(step) {
-    if (!step.items) return [];
-    const checks = this.state.checks[step.id] || [];
-    return step.items.map((it, i) => ({
-      text: it.text,
-      checked: !!checks[i],
-      toggle: () => this.toggleCheck(step.id, i),
-      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
-      hasSub: !!(it.subitems && it.subitems.length),
-      subitems: it.subitems || [],
-    }));
-  }
-  buildKnobs(step) {
-    if (!step.knobs) return [];
-    return step.knobs.map(k => ({ label: k.label, hourLabel: `${k.hour} o'clock`, rot: (k.hour % 12) * 30 }));
   }
 
   // ── cables ──
@@ -1380,100 +1306,10 @@ class Component extends DCLogic {
     });
   }
 
-  // ── nav dialog ──
-  buildNavGroups() {
-    const groups = [];
-    this.STEPS.forEach((s, i) => {
-      let g = groups.find(g => g.label === s.weekTag);
-      if (!g) { g = { label: s.weekTag, items: [] }; groups.push(g); }
-      g.items.push({
-        title: s.navLabel || s.title,
-        go: () => this.goToStep(i),
-        rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
-      });
-    });
-    return groups;
-  }
-
-  // ── step scheduling ──
-  // Every engine below queues its audio ahead of time against the AudioContext clock
-  // rather than firing each note from the timer callback. setInterval/setTimeout drift
-  // by several ms a tick, and browsers clamp background-tab timers to ~1s; either is
-  // plainly audible as a wobbling groove. Here the timer only decides *when to look
-  // ahead* — each note's start time is computed exactly on the audio clock.
-  SCHED_TICK_MS = 25;
-  // Queue only a little while the tab is visible, so edits to a playing pattern are
-  // heard almost immediately...
-  LOOKAHEAD_VISIBLE = 0.12;
-  // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in the
-  // audio. Nobody is editing a pattern they can't see, so the latency costs nothing.
-  LOOKAHEAD_HIDDEN = 1.6;
-
-  lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
-
-  // spec.onStep(col, time) schedules one step's audio at the exact AudioContext time
-  // `time`, returning any source nodes it created (so a stop can silence ones that
-  // haven't sounded yet) plus optional `meta` carried through to the visual update.
-  // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col) advances it.
-  startSequence(key, spec) {
-    const ctx = this.audioCtx;
-    const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
-                  queue: [], pending: [], shown: null, timer: null };
-    this.sequences[key] = seq;
-    const tick = () => {
-      const horizon = ctx.currentTime + this.lookahead();
-      while (seq.nextTime < horizon) {
-        const at = seq.nextTime;
-        const r = spec.onStep(seq.col, at) || {};
-        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
-        seq.queue.push({ col: seq.col, time: at, meta: r.meta });
-        seq.nextTime = at + spec.stepDur(seq.col);
-        seq.col = spec.nextCol(seq.col);
-      }
-      this.drainSequence(seq);
-      seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
-    };
-    tick();
-    return seq;
-  }
-
-  // Move the on-screen playhead to the step that is actually sounding now, not the one
-  // most recently *scheduled* — those are up to a lookahead apart.
-  drainSequence(seq) {
-    const now = this.audioCtx.currentTime;
-    let cur = null;
-    while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
-    seq.pending = seq.pending.filter(p => p.time + 1 > now);
-    if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
-      seq.shown = cur;
-      seq.spec.onVisual(cur.col, cur.meta);
-    }
-  }
-
-  // Silence steps queued but not yet sounded. Without this, stopping would still let a
-  // lookahead's worth of already-scheduled notes through.
-  flushPending(seq, from) {
-    let earliest = seq.nextTime;
-    seq.pending.forEach(p => {
-      if (p.time > from) {
-        try { p.node.stop(from); } catch (e) {}
-        if (p.time < earliest) earliest = p.time;
-      }
-    });
-    seq.pending = seq.pending.filter(p => p.time <= from);
-    seq.queue = seq.queue.filter(q => q.time <= from);
-    return earliest;
-  }
-
-  stopSequence(key) {
-    const seq = this.sequences[key];
-    if (!seq) return;
-    clearTimeout(seq.timer);
-    if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
-    delete this.sequences[key];
-  }
-
   // ── audio ──
+  // Step scheduling (the audio-clock lookahead loop) is inherited from the
+  // shared DCCourseLogic base in support.js; the engines below only decide
+  // what one step sounds like and let startSequence book it.
   ensureAudio() {
     if (!this.audioCtx) {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1597,13 +1433,37 @@ class Component extends DCLogic {
     param.setValueAtTime(cutoff, t);
     param.exponentialRampToValueAtTime(endValue, end);
   }
+  // The Week 2 lesson player and the Week 8 Song Bank engine drive one oscillator
+  // through one filter with the same accent/slide vocabulary, so the pitch and VCA
+  // moves both triggers share live here rather than twice.
+  set303Pitch(osc, t, freq, slide) {
+    osc.frequency.cancelScheduledValues(t);
+    if (slide) osc.frequency.linearRampToValueAtTime(freq, t + 0.11);
+    else osc.frequency.setValueAtTime(freq, t);
+  }
+  // A slide legates over the previous note instead of re-attacking, so it joins the
+  // VCA at its peak; everything else attacks from silence and falls to a sustain.
+  set303Vca(gain, t, { slide, peak, attack, tail }) {
+    gain.gain.cancelScheduledValues(t);
+    if (slide) { gain.gain.setValueAtTime(peak, t); return; }
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(peak, t + attack);
+    gain.gain.exponentialRampToValueAtTime(0.08, t + attack + tail);
+  }
+  // Cutting a resonant filter voice dead clicks, so both engines stop with the same
+  // short fade rather than an abrupt one.
+  fadeStopVoice(osc, gain) {
+    try { gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
+    setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
+  }
   playTd3() {
     this.ensureAudio(); this.stopTd3();
     const ctx = this.audioCtx;
     const osc = ctx.createOscillator(); osc.type = 'sawtooth';
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
     const shaper = ctx.createWaveShaper();
-    shaper.curve = this.makeDistortionCurve(this.state.td3Overdrive || 0);
+    let bookedDrive = this.state.td3Overdrive || 0;
+    shaper.curve = this.makeDistortionCurve(bookedDrive);
     shaper.oversample = '2x';
     const gain = ctx.createGain(); gain.gain.value = 0.0001;
     osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
@@ -1611,24 +1471,23 @@ class Component extends DCLogic {
     this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
     const stepSec = 0.125;
     const trigger = (c, t) => {
+      // Overdrive is read at trigger time, so the Week 6 radio sweeps distortion in
+      // while the loop plays — the panel knob does not wait for a restart either.
+      const drive = this.state.td3Overdrive || 0;
+      if (drive !== bookedDrive) { shaper.curve = this.makeDistortionCurve(drive); bookedDrive = drive; }
       const freq = this.NOTES[c];
       const accent = this.state.td3Accent.includes(c);
       const prev = (c - 1 + 16) % 16;
       const slide = this.state.td3Slide.includes(prev);
-      if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
-      else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
+      this.set303Pitch(osc, t, freq, slide);
+      // The Week 3 MO switch: FAST is the stock sharp accent pop; SOFT trades cutoff
+      // peak for a longer, squelchier sweep — on accented notes only.
+      const soft = accent && this.state.accentSweep === 'SOFT';
       const peak = accent ? 0.5 : 0.32;
-      const cutoff = accent ? 1800 : 900;
-      this.scheduleFilterEnvelope(filter.frequency, cutoff, t, 0.18, stepSec);
-      const attackTime = this.state.td3SoftAttack ? 0.045 : 0.005;
-      gain.gain.cancelScheduledValues(t);
-      if (!slide) {
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(peak, t + attackTime);
-        gain.gain.exponentialRampToValueAtTime(0.08, t + attackTime + 0.085);
-      } else {
-        gain.gain.setValueAtTime(peak, t);
-      }
+      const cutoff = accent ? (soft ? 1250 : 1800) : 900;
+      const decay = soft ? 0.3 : 0.18;
+      this.scheduleFilterEnvelope(filter.frequency, cutoff, t, decay, stepSec);
+      this.set303Vca(gain, t, { slide, peak, attack: this.state.td3SoftAttack ? 0.045 : 0.005, tail: 0.085 });
     };
     this.setState({ td3Playing: true, td3Col: 0 });
     this.startSequence('td3', {
@@ -1641,9 +1500,7 @@ class Component extends DCLogic {
   stopTd3() {
     this.stopSequence('td3');
     if (this.td3Osc) {
-      const osc = this.td3Osc; const g = this.td3Gain;
-      try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
-      setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
+      this.fadeStopVoice(this.td3Osc, this.td3Gain);
       this.td3Osc = null;
     }
     if (this.state.td3Playing) this.setState({ td3Playing: false, td3Col: -1 });
@@ -1667,6 +1524,13 @@ class Component extends DCLogic {
     return m ? { pitch: m[1], octave: parseInt(m[2], 10), rest: false } : { pitch: name, octave: null, rest: false };
   }
 
+  // Every step cell is a ruled box in black ink on paper, and the four downbeat
+  // columns carry the chart's grey tint so beat 1 is findable without counting.
+  // The Song Bank sheets and the Drum Bank sheets print the same ruled box.
+  chartCell(i, extra) {
+    return `border-top:1px solid var(--color-text);border-left:1px solid var(--color-text);background:${i % 4 === 0 ? 'var(--color-neutral-300)' : 'transparent'};display:flex;align-items:center;justify-content:center;text-align:center;${extra}`;
+  }
+
   // Renders every source type in a consistent printed-sheet-inspired programming
   // view — Author/Title, the pattern-group x bank grid, the Note / Down-Up /
   // Accent-Slide / dot rows, the EFX notes block, the waveform pair and the five knobs.
@@ -1688,9 +1552,7 @@ class Component extends DCLogic {
     const derived = home === undefined ? null : parseInt(home, 10);
     const homeOct = card.homeOctave !== undefined ? card.homeOctave : derived;
 
-    // Every step cell is a ruled box in black ink on paper, and the four downbeat
-    // columns carry the chart's grey tint so beat 1 is findable without counting.
-    const cell = (i, extra) => `border-top:1px solid var(--color-text);border-left:1px solid var(--color-text);background:${i % 4 === 0 ? 'var(--color-neutral-300)' : 'transparent'};display:flex;align-items:center;justify-content:center;text-align:center;${extra}`;
+    const cell = (i, extra) => this.chartCell(i, extra);
 
     const steps = parts.map((p, i) => {
       const accent = card.accent.includes(i) && !p.rest;
@@ -1847,7 +1709,12 @@ class Component extends DCLogic {
     const counts = {};
     for (const p of parts) if (p.octave !== null) counts[p.octave] = (counts[p.octave] || 0) + 1;
     const home = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
-    const homeOct = home === undefined ? null : parseInt(home, 10);
+    // The same home-octave rule as the printed chart above it: a card that pins one
+    // measures its arrows against the pin, so the player's marks never disagree with
+    // the sheet's Down/Up row on the same pattern.
+    const card = this.SONG_CARDS.find(c => c.id === this.state.sbSelected);
+    const homeOct = card && card.homeOctave !== undefined ? card.homeOctave
+      : (home === undefined ? null : parseInt(home, 10));
     return parts.map((p, i) => {
       const note = this.state.sbNotes[i];
       const accent = this.state.sbAccent.includes(i);
@@ -1880,7 +1747,6 @@ class Component extends DCLogic {
       shaper.curve = this.makeDistortionCurve(drive);
       shaper.oversample = '2x';
       tail = tail.connect(shaper);
-      this.sbShaper = shaper;
     }
     tail.connect(gain).connect(ctx.destination);
     osc.start();
@@ -1902,8 +1768,7 @@ class Component extends DCLogic {
       const prev = (c - 1 + notes.length) % notes.length;
       // Sliding out of a rest would glide from silence, so a rest never carries one.
       const slide = slideArr.includes(prev) && notes[prev] !== null && notes[prev] !== undefined;
-      if (slide) { osc.frequency.cancelScheduledValues(t); osc.frequency.linearRampToValueAtTime(freq, t + 0.11); }
-      else { osc.frequency.cancelScheduledValues(t); osc.frequency.setValueAtTime(freq, t); }
+      this.set303Pitch(osc, t, freq, slide);
       const set = k => (fc && fc[k] !== undefined && fc[k] !== null ? fc[k] : null);
       const base = set('cutoff') === null ? 900 : 200 + set('cutoff') * 2600;
       const accentLift = set('accent') === null ? 2 : 1 + set('accent') * 1.5;
@@ -1912,14 +1777,7 @@ class Component extends DCLogic {
       const peak = accent ? (set('accent') === null ? 0.5 : 0.32 + set('accent') * 0.35) : 0.32;
       filter.Q.value = set('resonance') === null ? 8 : 1 + set('resonance') * 23;
       this.scheduleFilterEnvelope(filter.frequency, cutoff, t, decayTime, stepSec);
-      gain.gain.cancelScheduledValues(t);
-      if (!slide) {
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(peak, t + 0.005);
-        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.09);
-      } else {
-        gain.gain.setValueAtTime(peak, t);
-      }
+      this.set303Vca(gain, t, { slide, peak, attack: 0.005, tail: 0.09 });
     };
     this.setState({ sbPlaying: true, sbCol: 0 });
     this.startSequence('sb', {
@@ -1932,9 +1790,7 @@ class Component extends DCLogic {
   stopSongBank() {
     this.stopSequence('sb');
     if (this.sbOsc) {
-      const osc = this.sbOsc; const g = this.sbGain;
-      try { g.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.05); } catch (e) {}
-      setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
+      this.fadeStopVoice(this.sbOsc, this.sbGain);
       this.sbOsc = null;
     }
     if (this.state.sbPlaying) this.setState({ sbPlaying: false, sbCol: -1 });
@@ -2070,7 +1926,7 @@ class Component extends DCLogic {
   // blank rather than being filled in with a plausible value.
   buildDrumChart(card) {
     const n = card.steps;
-    const cell = (i, extra) => `border-top:1px solid var(--color-text);border-left:1px solid var(--color-text);background:${i % 4 === 0 ? 'var(--color-neutral-300)' : 'transparent'};display:flex;align-items:center;justify-content:center;text-align:center;${extra}`;
+    const cell = (i, extra) => this.chartCell(i, extra);
     const labelCell = 'border-top:1px solid var(--color-text);padding:4px 8px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;';
 
     const cells = [{ text: '', title: '', style: 'border-top:1px solid var(--color-text);padding:4px 8px;' }];

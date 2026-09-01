@@ -531,3 +531,25 @@ test("the masthead mark survives the runtime's inline-style parser", () => {
   assert.match(css, /background:var\(--color-text\)/, 'the mark should ink itself from the text token');
   assert.doesNotMatch(svg, /fill=(?!"none")|stop-color/, 'the mask should carry no fill of its own');
 });
+
+test('the player arrows measure against the same home octave the chart prints', () => {
+  // The printed sheet's Down/Up row and the playhead grid's ↑/↓ marks describe the
+  // same pattern, so they must share one home octave — including a card's pin.
+  const { inst } = loadComponent(FILE);
+  const pinned = inst.SONG_CARDS.filter(c => c.homeOctave !== undefined);
+  assert.ok(pinned.length > 0, 'no card pins a home octave, so the pin path is never exercised');
+  for (const c of inst.SONG_CARDS) {
+    inst.loadSongCard(c);
+    const chart = inst.buildSongChart(c);
+    const cells = inst.buildSongBankCells();
+    for (let i = 0; i < chart.steps.length; i++) {
+      const printed = chart.steps[i].shift;   // 'D'/'U' with optional size, '' for none
+      const arrow = cells[i].shift;           // '↓'/'↑', '' for none
+      assert.equal(!!printed, !!arrow,
+        `${c.id} step ${i + 1}: chart says "${printed || '—'}" but the player shows "${arrow || '—'}"`);
+      if (printed) {
+        assert.equal(arrow === '↓', printed.startsWith('D'), `${c.id} step ${i + 1}: direction disagrees`);
+      }
+    }
+  }
+});

@@ -4,7 +4,7 @@ Five single-page interactive courses share one runtime and design system: the **
 
 ## TD-3 & RD-6 Guide
 
-The Behringer guide takes an absolute beginner from wiring and basic drum sequencing through acid-bass programming, sync, pattern chaining, performance, troubleshooting, a TD-3 Song Bank, and a Drum Bank over **ten weeks**. A progress bar covers **37 steps** and the Course map can jump to any step.
+The Behringer guide takes an absolute beginner from wiring and basic drum sequencing through acid-bass programming, sync, pattern chaining, performance, troubleshooting, a TD-3 Song Bank, and a Drum Bank over **ten weeks**. A progress bar covers **39 steps** and the Course map can jump to any step.
 
 | Week | Covers |
 | --- | --- |
@@ -21,7 +21,7 @@ The Behringer guide takes an absolute beginner from wiring and basic drum sequen
 
 ### Song Bank
 
-The Song Bank contains **27 cards by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
+The Song Bank contains **31 cards by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
 
 Each `SONG_CARDS` entry can include `sourceType`, `needsAccentSlideReview`, `homeOctave`, `overdrive`, tempo/provenance fields, filter settings, note names, accents and slides. Notes use names such as `C2` and `F#3`, with **`null` for a rest**. Unknown source details remain blank or explicitly estimated rather than being invented. Six legacy chart entries remain marked with `needsAccentSlideReview: true` until their original source rows can be revalidated.
 
@@ -60,7 +60,7 @@ The practice engine uses two original synthesized reference grooves with millise
 
 ## Hybrid Live Set Guide
 
-`Hybrid Live Set.dc.html` is a five-week follow-on course for learners who have completed both hardware guides. It combines the TD-3-MO / RD-6-BK and DDJ-FLX4 into one staged performance workflow.
+`Hybrid Live Set.dc.html` is a six-week follow-on course for learners who have completed both hardware guides. It combines the TD-3-MO / RD-6-BK and DDJ-FLX4 into one staged performance workflow.
 
 | Week | Covers |
 | --- | --- |
@@ -69,6 +69,7 @@ The practice engine uses two original synthesized reference grooves with millise
 | 3 | Coordinated transitions, drops, hot cues and loops |
 | 4 | A 10–12 minute full hybrid arrangement |
 | 5 | Stage-readiness checklist and recovery drills |
+| 6 | Genre variants — the same rig in house, techno and breaks |
 
 Week 4 includes a dual-pane performance timeline that shows the **TD-3/RD-6 role and DDJ-FLX4 role side by side** across Intro, Hardware Groove, Breakdown, Drop and Outro. The timeline is horizontally scrollable and keyboard-focusable on narrow screens; Left/Right Arrow, Home and End select sections without requiring a pointer. Checklist state is kept in memory and Start Over restores the guide to its initial state.
 

@@ -156,7 +156,7 @@
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Deck B tempo fader</div>
               <div style="display:flex;align-items:center;gap:12px;">
                 <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}" aria-label="Decrease Deck B tempo">−</button>
-                <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
+                <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;" aria-live="polite">{{ tempoCtl.label }}</div>
                 <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}" aria-label="Increase Deck B tempo">+</button>
               </div>
             </div>
@@ -170,7 +170,7 @@
                   <sc-for list="{{ deck.controls }}" as="ctl" hint-placeholder-count="4">
                     <div>
                       <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;margin-bottom:4px;">{{ ctl.name }}</div>
-                      <div class="seg">
+                      <div class="seg" role="radiogroup" aria-label="{{ ctl.name }}">
                         <sc-for list="{{ ctl.options }}" as="opt" hint-placeholder-count="3">
                           <label class="seg-opt">
                             <input type="radio" name="{{ ctl.radioName }}" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -234,12 +234,12 @@
                 </div>
                 <div class="card" style="flex:1;min-width:140px;text-align:center;">
                   <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;opacity:.55;">Deck B BPM</div>
-                  <div style="font-family:var(--font-heading);font-size:22px;margin-top:4px;">{{ bpmBLabel }}</div>
+                  <div style="font-family:var(--font-heading);font-size:22px;margin-top:4px;" aria-live="polite">{{ bpmBLabel }}</div>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:12px;">
                 <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.dec }}" aria-label="Decrease Deck B tempo">−</button>
-                <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;">{{ tempoCtl.label }}</div>
+                <div style="min-width:150px;text-align:center;font-size:14px;font-weight:700;" aria-live="polite">{{ tempoCtl.label }}</div>
                 <button type="button" class="btn btn-secondary" onclick="{{ tempoCtl.inc }}" aria-label="Increase Deck B tempo">+</button>
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
@@ -261,7 +261,7 @@
           <sc-if value="{{ currentStep.showLoop }}" hint-placeholder-val="{{ false }}">
             <div>
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;margin-bottom:8px;">Loop length (Deck A, in steps)</div>
-              <div class="seg" style="align-self:flex-start;">
+              <div class="seg" style="align-self:flex-start;" role="radiogroup" aria-label="Loop length">
                 <sc-for list="{{ loopOptions }}" as="opt" hint-placeholder-count="4">
                   <label class="seg-opt">
                     <input type="radio" name="loopLen" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -454,7 +454,7 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
+class Component extends DCCourseLogic {
   // Every resettable field lives here so the initial state and restart() can't drift apart.
   initialState() {
     return {
@@ -768,100 +768,11 @@ class Component extends DCLogic {
   componentDidUpdate() { this.drawPhaseMeter(); }
 
   // ── navigation ──
-  getDialogFocusables(dialog) {
-    if (!dialog || typeof dialog.querySelectorAll !== 'function') return [];
-    return Array.from(dialog.querySelectorAll(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    ));
-  }
-  restoreDialogFocus(target) {
-    if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus();
-  }
-  openCourseMap() {
-    this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement;
-    this.setState({ dialogOpen: true }, () => {
-      if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
-      const dialog = document.querySelector('[data-course-map-dialog="true"]');
-      const target = this.getDialogFocusables(dialog)[0] || dialog;
-      if (target && typeof target.focus === 'function') target.focus();
-    });
-  }
-  closeCourseMap() {
-    const target = this.dialogReturnFocus;
-    this.dialogReturnFocus = null;
-    this.setState({ dialogOpen: false }, () => this.restoreDialogFocus(target));
-  }
-  onCourseMapKeydown(e) {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      this.closeCourseMap();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const focusables = this.getDialogFocusables(e.currentTarget);
-    if (!focusables.length) {
-      e.preventDefault();
-      if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus();
-      return;
-    }
-    const first = focusables[0], last = focusables[focusables.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-  goToStep(i) {
+  // Dialog, step nav, checklist, knobs, cables and the audio-clock scheduler
+  // are inherited from the shared DCCourseLogic base in support.js. This
+  // guide only names the engine a step change or Start Over must silence.
+  stopEngines() {
     this.stopEngine();
-    const idx = Math.max(0, Math.min(this.STEPS.length - 1, i));
-    const target = this.state.dialogOpen ? this.dialogReturnFocus : null;
-    if (target) this.dialogReturnFocus = null;
-    this.setState({ step: idx, dialogOpen: false }, () => this.restoreDialogFocus(target));
-  }
-  goNext() { this.goToStep(this.state.step + 1); }
-  goBack() { this.goToStep(this.state.step - 1); }
-  restart() {
-    this.stopEngine();
-    this.setState(this.initialState());
-  }
-
-  // ── checklist ──
-  toggleCheck(stepId, idx) {
-    this.setState(s => {
-      const arr = (s.checks[stepId] || []).slice();
-      arr[idx] = !arr[idx];
-      return { checks: { ...s.checks, [stepId]: arr } };
-    });
-  }
-  buildItems(step) {
-    if (!step.items) return [];
-    const checks = this.state.checks[step.id] || [];
-    return step.items.map((it, i) => ({
-      text: it.text,
-      checked: !!checks[i],
-      toggle: () => this.toggleCheck(step.id, i),
-      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
-    }));
-  }
-  buildKnobs(step) {
-    if (!step.knobs) return [];
-    return step.knobs.map(k => ({ label: k.label, hourLabel: `${k.hour} o'clock`, rot: (k.hour % 12) * 30 }));
-  }
-
-  // ── cables (generic, per-step) ──
-  toggleCable(key) { this.setState(s => ({ cableToggles: { ...s.cableToggles, [key]: !s.cableToggles[key] } })); }
-  buildCables(step) {
-    if (!step.cables) return [];
-    return step.cables.map((d, i) => {
-      const key = `${step.id}:${i}`;
-      const connected = !!this.state.cableToggles[key];
-      return { from: d.from, to: d.to, toggle: () => this.toggleCable(key), pressed: connected ? 'true' : 'false',
-        dotColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
-        lineColor: connected ? 'var(--color-accent-2-600)' : 'var(--color-divider)',
-        statusText: connected ? 'Connected' : 'Click to connect' };
-    });
   }
 
   // ── practice plan ──
@@ -952,97 +863,10 @@ class Component extends DCLogic {
   }
 
   // ── step scheduling ──
-  // Every engine below queues its audio ahead of time against the AudioContext clock
-  // rather than firing each note from the timer callback. setInterval/setTimeout drift
-  // by several ms a tick, and browsers clamp background-tab timers to ~1s; either is
-  // plainly audible as a wobbling groove. Here the timer only decides *when to look
-  // ahead* — each note's start time is computed exactly on the audio clock.
-  SCHED_TICK_MS = 25;
-  // Queue only a little while the tab is visible, so edits to a playing pattern are
-  // heard almost immediately...
-  LOOKAHEAD_VISIBLE = 0.12;
-  // ...and a lot while it's hidden, so ~1s timer clamping can't open a gap in the
-  // audio. Nobody is editing a pattern they can't see, so the latency costs nothing.
-  LOOKAHEAD_HIDDEN = 1.6;
-
-  lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
-
-  // spec.onStep(col, time) schedules one step's audio at the exact AudioContext time
-  // `time`, returning any source nodes it created (so a stop can silence ones that
-  // haven't sounded yet) plus optional `meta` carried through to the visual update.
-  // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col) advances it.
-  startSequence(key, spec) {
-    const ctx = this.audioCtx;
-    const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
-                  queue: [], pending: [], shown: null, timer: null };
-    this.sequences[key] = seq;
-    const tick = () => {
-      const horizon = ctx.currentTime + this.lookahead();
-      while (seq.nextTime < horizon) {
-        const at = seq.nextTime;
-        const r = spec.onStep(seq.col, at) || {};
-        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
-        seq.queue.push({ col: seq.col, time: at, meta: r.meta });
-        seq.nextTime = at + spec.stepDur(seq.col);
-        seq.col = spec.nextCol(seq.col);
-      }
-      this.drainSequence(seq);
-      seq.timer = setTimeout(tick, this.SCHED_TICK_MS);
-    };
-    tick();
-    return seq;
-  }
-
-  // Move the on-screen playhead to the step that is actually sounding now, not the one
-  // most recently *scheduled* — those are up to a lookahead apart.
-  drainSequence(seq) {
-    const now = this.audioCtx.currentTime;
-    let cur = null;
-    while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
-    seq.pending = seq.pending.filter(p => p.time + 1 > now);
-    if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
-      seq.shown = cur;
-      seq.spec.onVisual(cur.col, cur.meta);
-    }
-  }
-
-  // Silence steps queued but not yet sounded. Without this, stopping would still let a
-  // lookahead's worth of already-scheduled notes through.
-  flushPending(seq, from) {
-    let earliest = seq.nextTime;
-    seq.pending.forEach(p => {
-      if (p.time > from) {
-        try { p.node.stop(from); } catch (e) {}
-        if (p.time < earliest) earliest = p.time;
-      }
-    });
-    seq.pending = seq.pending.filter(p => p.time <= from);
-    seq.queue = seq.queue.filter(q => q.time <= from);
-    return earliest;
-  }
-
-  stopSequence(key) {
-    const seq = this.sequences[key];
-    if (!seq) return;
-    clearTimeout(seq.timer);
-    if (this.audioCtx) this.flushPending(seq, this.audioCtx.currentTime);
-    delete this.sequences[key];
-  }
-
-  // A phase jump (Nudge / SYNC / hot cue) has to undo work already done: up to a
-  // lookahead of steps are scheduled with the OLD column numbers. Silence those, roll
-  // the clock back to the first slot they occupied, and let the next tick refill it
-  // from the new column — the tempo grid itself is untouched, which is what a nudge
-  // on real gear does.
-  seekSequence(key, col) {
-    const seq = this.sequences[key];
-    if (!seq) return;
-    const from = this.audioCtx.currentTime;
-    seq.nextTime = this.flushPending(seq, from);
-    seq.col = col;
-  }
-
   // ── audio engine ──
+  // Step scheduling (the audio-clock lookahead loop, including the phase-jump
+  // seekSequence) is inherited from the shared DCCourseLogic base in support.js;
+  // the deck engines below only decide what one step sounds like.
   ensureAudio() {
     if (!this.audioCtx) {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1174,16 +998,60 @@ class Component extends DCLogic {
   stepTempo(delta) {
     this.setState(s => ({ deckB: { ...s.deckB, tempoPct: Math.max(-8, Math.min(8, s.deckB.tempoPct + delta)) } }));
   }
+  // A phase jump (Nudge / SYNC / hot cue) has to undo work already done: up to a
+  // lookahead of steps are scheduled with the OLD column numbers. Silence those, roll
+  // the clock back to the first slot they occupied, and let the next tick refill it
+  // from the new column — the tempo grid itself is untouched, which is what a nudge
+  // on real gear does. `at`, when given, books the next step on another deck's clock
+  // instead of this one's earliest freed slot — how SYNC phase-locks two decks.
+  seekSequence(key, col, at) {
+    const seq = this.sequences[key];
+    if (!seq) return;
+    const from = this.audioCtx.currentTime;
+    seq.nextTime = this.flushPending(seq, from);
+    if (at !== undefined && at !== null) seq.nextTime = Math.max(at, from);
+    seq.col = col;
+  }
+
   nudge(deckKey, delta) {
     if (!this.state.enginePlaying) return;
+    const seqKey = deckKey === 'deckB' ? 'B' : 'A';
+    // Wrap by the deck's own loop length, not a hard-coded 16: on a short loop the
+    // old %16 could pick a column the loop never reaches.
+    const wrap = deckKey === 'deckA' && this.state.loopOn ? this.state.loopLen : 16;
     const colKey = deckKey === 'deckB' ? 'colB' : 'colA';
-    const col = (this.state[colKey] + delta + 16) % 16;
+    const col = (this.state[colKey] + delta + wrap) % wrap;
     this.setState({ [colKey]: col });
-    this.seekSequence(deckKey === 'deckB' ? 'B' : 'A', col);
+    this.seekSequence(seqKey, col);
   }
   syncDecks() {
+    const seqA = this.sequences['A'];
+    const seqB = this.sequences['B'];
+    this.setState(s => ({ deckB: { ...s.deckB, tempoPct: 0 } }));
+    // Stopped decks have no clock to lock, so SYNC just mirrors the column state.
+    if (!seqB) { this.setState(s => ({ colB: s.colA })); return; }
+    // Matching deck B's column number to deck A's is not enough: B would resume on
+    // its own clock, up to a step away from A's, and with the tempos then equal
+    // that offset never corrects — the two kicks flam forever. Real SYNC phase-locks
+    // in time, so B is moved onto A's next already-booked step: same column at the
+    // same audio-clock moment.
+    const now = this.audioCtx.currentTime;
+    const next = seqA && seqA.queue.find(q => q.time > now);
+    if (next) {
+      this.setState({ colB: next.col });
+      this.seekSequence('B', next.col, next.time);
+      return;
+    }
+    // Between A's booking ticks its queue can be momentarily empty of future steps;
+    // A's grid still continues one stepDur past whatever is sounding.
+    if (seqA && seqA.shown) {
+      const col = (seqA.shown.col + 1) % 16;
+      this.setState({ colB: col });
+      this.seekSequence('B', col, seqA.shown.time + 60 / this.DECK_A_BPM / 4);
+      return;
+    }
     const col = this.state.colA;
-    this.setState(s => ({ deckB: { ...s.deckB, tempoPct: 0 }, colB: col }));
+    this.setState({ colB: col });
     this.seekSequence('B', col);
   }
 
@@ -1206,10 +1074,15 @@ class Component extends DCLogic {
   toggleHotCue(padIdx) {
     const cues = this.state.hotCues.slice();
     if (cues[padIdx] == null) {
+      // While the decks are stopped the playhead is at the start, so a cue set now
+      // points there.
       cues[padIdx] = Math.max(0, this.state.colA);
       this.setState({ hotCues: cues });
       return;
     }
+    // A jump only means something while the decks run: stopped, there is no
+    // playhead to move, and the engine resets its column on the next start.
+    if (!this.state.enginePlaying) return;
     this.setState({ colA: cues[padIdx] });
     this.seekSequence('A', cues[padIdx]);
   }

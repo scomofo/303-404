@@ -173,7 +173,7 @@
               </div>
               <div>
                 <div class="dc-kicker" style="margin-bottom:6px;">Swing</div>
-                <div class="seg">
+                <div class="seg" role="radiogroup" aria-label="Swing">
                   <sc-for list="{{ swingOptions }}" as="opt" hint-placeholder-count="4">
                     <label class="seg-opt">
                       <input type="radio" name="swing" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -189,7 +189,7 @@
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div class="dc-kicker">{{ padBankName }}</div>
-                <div class="seg">
+                <div class="seg" role="radiogroup" aria-label="Pad bank">
                   <sc-for list="{{ bankOptions }}" as="opt" hint-placeholder-count="4">
                     <label class="seg-opt">
                       <input type="radio" name="padBank" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -213,7 +213,7 @@
               <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;align-items:flex-end;">
                 <div>
                   <div class="dc-kicker" style="margin-bottom:6px;">Velocity</div>
-                  <div class="seg">
+                  <div class="seg" role="radiogroup" aria-label="Velocity">
                     <sc-for list="{{ velocityOptions }}" as="opt" hint-placeholder-count="3">
                       <label class="seg-opt">
                         <input type="radio" name="velocity" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -226,7 +226,7 @@
                   <div class="dc-kicker" style="margin-bottom:6px;">Note Repeat</div>
                   <div style="display:flex;gap:8px;align-items:center;">
                     <button type="button" class="btn btn-primary" onclick="{{ noteRepeatToggle }}">{{ noteRepeatLabel }}</button>
-                    <div class="seg">
+                    <div class="seg" role="radiogroup" aria-label="Note Repeat rate">
                       <sc-for list="{{ repeatRateOptions }}" as="opt" hint-placeholder-count="3">
                         <label class="seg-opt">
                           <input type="radio" name="repeatRate" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -315,7 +315,7 @@
                   </sc-for>
                 </div>
               </div>
-              <div style="min-height:22px;font-size:13.5px;font-weight:700;">{{ lastNoteLabel }}</div>
+              <div style="min-height:22px;font-size:13.5px;font-weight:700;" aria-live="polite">{{ lastNoteLabel }}</div>
             </div>
           </sc-if>
 
@@ -366,7 +366,7 @@
                 <sc-for list="{{ arpControls }}" as="ctl" hint-placeholder-count="4">
                   <div>
                     <div class="dc-kicker" style="margin-bottom:6px;">{{ ctl.name }}</div>
-                    <div class="seg">
+                    <div class="seg" role="radiogroup" aria-label="{{ ctl.name }}">
                       <sc-for list="{{ ctl.options }}" as="opt" hint-placeholder-count="4">
                         <label class="seg-opt">
                           <input type="radio" name="{{ ctl.radioName }}" checked="{{ opt.checked }}" onchange="{{ opt.select }}" />
@@ -381,7 +381,7 @@
                 <button type="button" class="btn btn-secondary" onclick="{{ arpFreezeToggle }}" aria-pressed="{{ arpFreezePressed }}">{{ arpFreezeLabel }}</button>
                 <button type="button" class="btn btn-secondary" onclick="{{ arpMutateToggle }}" aria-pressed="{{ arpMutatePressed }}">{{ arpMutateLabel }}</button>
               </div>
-              <div style="font-size:12.5px;">{{ arpSequenceLabel }}</div>
+              <div style="font-size:12.5px;" aria-live="polite">{{ arpSequenceLabel }}</div>
               <p class="dc-hint">Freeze locks the note order that is running now, so changing the held chord leaves the shape alone. Mutate nudges one step of that order every time the pattern comes round &mdash; always to another note of the same chord, so it wanders without going wrong. Both are simplified stand-ins for the hardware's own arp; use them to learn what to listen for, then find the same controls on the unit.</p>
             </div>
           </sc-if>
@@ -432,7 +432,7 @@
                   </sc-for>
                 </div>
               </div>
-              <div style="font-size:12.5px;font-weight:700;min-height:20px;">{{ songPositionLabel }}</div>
+              <div style="font-size:12.5px;font-weight:700;min-height:20px;" aria-live="polite">{{ songPositionLabel }}</div>
               <p class="dc-hint">The drums come from your Week 2 grid, the chords from your Week 3 progression, and the arp from your Week 4 settings &mdash; change any of them and this arrangement changes with it.</p>
             </div>
           </sc-if>
@@ -503,7 +503,7 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
+class Component extends DCCourseLogic {
 
   // ── reference data ───────────────────────────────────────────────────────
   // The MK4 makes no sound of its own, so everything below is a synthesized
@@ -1054,10 +1054,12 @@ class Component extends DCLogic {
   lookahead() { return document.hidden ? this.LOOKAHEAD_HIDDEN : this.LOOKAHEAD_VISIBLE; }
 
   // spec.onStep(col, time) schedules one step's audio at the exact AudioContext
-  // time `time`, returning the source nodes it created (so a stop can silence
-  // ones that haven't sounded yet) plus optional `meta` carried through to the
-  // visual update. spec.stepDur(col) is the seconds until the next step;
-  // spec.nextCol(col) advances it.
+  // time `time`, returning the source nodes it created (so a stop can silence ones
+  // that haven't sounded yet) plus optional `meta` carried through to the visual
+  // update, and optional `ring` — how long those nodes can sound, which here is
+  // not one figure: a hat dies in 50ms while a chord holds for a whole bar.
+  // spec.stepDur(col) is the seconds until the next step; spec.nextCol(col)
+  // advances it.
   startSequence(key, spec) {
     const ctx = this.audioCtx;
     const seq = { spec, col: spec.startCol || 0, nextTime: ctx.currentTime + 0.05,
@@ -1068,7 +1070,8 @@ class Component extends DCLogic {
       while (seq.nextTime < horizon) {
         const at = seq.nextTime;
         const r = spec.onStep(seq.col, at) || {};
-        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at }));
+        const ring = r.ring || 1;
+        (r.nodes || []).forEach(node => seq.pending.push({ node, time: at, ring }));
         seq.queue.push({ col: seq.col, time: at, meta: r.meta });
         seq.nextTime = at + spec.stepDur(seq.col);
         seq.col = spec.nextCol(seq.col);
@@ -1082,30 +1085,28 @@ class Component extends DCLogic {
 
   // Move the on-screen playhead to the step that is actually sounding now, not
   // the one most recently *scheduled* — those are up to a lookahead apart.
+  // A pending voice is only dropped once its own ring has elapsed; a flat cutoff
+  // would lose bar-long chords while they can still be silenced.
   drainSequence(seq) {
     const now = this.audioCtx.currentTime;
     let cur = null;
     while (seq.queue.length && seq.queue[0].time <= now) cur = seq.queue.shift();
-    seq.pending = seq.pending.filter(p => p.time + 1 > now);
+    seq.pending = seq.pending.filter(p => p.time + p.ring > now);
     if (cur && (!seq.shown || cur.col !== seq.shown.col || cur.meta !== seq.shown.meta)) {
       seq.shown = cur;
       seq.spec.onVisual(cur.col, cur.meta);
     }
   }
 
-  // Silence steps queued but not yet sounded. Without this, stopping would still
-  // let a lookahead's worth of already-scheduled notes through.
+  // Silence everything this sequence booked: nodes still in the future never
+  // sound, and ones already sounding are truncated a moment later — without the
+  // second half, stopping mid-bar left a chord ringing on for seconds after Stop.
   flushPending(seq, from) {
-    let earliest = seq.nextTime;
     seq.pending.forEach(p => {
-      if (p.time > from) {
-        try { p.node.stop(from); } catch (e) {}
-        if (p.time < earliest) earliest = p.time;
-      }
+      try { p.node.stop(p.time > from ? from : from + 0.06); } catch (e) {}
     });
-    seq.pending = seq.pending.filter(p => p.time <= from);
-    seq.queue = seq.queue.filter(q => q.time <= from);
-    return earliest;
+    seq.pending = [];
+    seq.queue = [];
   }
 
   stopSequence(key) {
@@ -1124,8 +1125,10 @@ class Component extends DCLogic {
     this.oneShots = this.oneShots.filter(o => o.time + 2 > now).concat(shots);
   }
   flushOneShots(from) {
-    this.oneShots.forEach(o => { if (o.time > from) { try { o.node.stop(from); } catch (e) {} } });
-    this.oneShots = this.oneShots.filter(o => o.time <= from);
+    // Same rule as the sequences: future hits never sound, ones already sounding
+    // get a moment's grace rather than ringing past a Stop.
+    this.oneShots.forEach(o => { try { o.node.stop(o.time > from ? from : from + 0.06); } catch (e) {} });
+    this.oneShots = [];
   }
 
   stopAll() {
@@ -1462,12 +1465,20 @@ class Component extends DCLogic {
     const dur = this.baseStepSeconds() * 16 * 0.92;
     return this.chordMidis(degree).map(m => this.synthNote(m, t, dur, 0.075));
   }
+  // How long each engine's voices can ring, so `pending` keeps them stoppable for
+  // their whole life instead of a flat second: the kit's longest voice is the
+  // crash's 1.1s decay, a chord holds for most of a bar, an arp note is gated
+  // short. synthNote books its own stop 0.03 past the hold; the extra slack is
+  // harmless and keeps the arithmetic honest.
+  drumRing() { return 1.15; }
+  chordRing() { return this.baseStepSeconds() * 16 * 0.92 + 0.06; }
+  arpRing() { return Math.max(0.06, Math.min(0.5, this.baseStepSeconds() * this.state.arpRate * 0.9)) + 0.06; }
   playBeat() {
     this.ensureAudio(); this.stopAll();
     this.setState({ beatPlaying: true, beatCol: 0 });
     this.startSequence('beat', {
       // The grid is read at schedule time, so edits land within a lookahead.
-      onStep: (col, t) => ({ nodes: this.scheduleDrums(col, t) }),
+      onStep: (col, t) => ({ nodes: this.scheduleDrums(col, t), ring: this.drumRing() }),
       stepDur: col => this.stepSeconds(col),
       nextCol: col => (col + 1) % 16,
       onVisual: col => this.setState({ beatCol: col }),
@@ -1481,7 +1492,7 @@ class Component extends DCLogic {
       onStep: (col, t) => {
         const bar = this.progBarRef;
         const nodes = col === 0 ? this.scheduleChord(this.state.progression[bar % this.state.progression.length], t) : [];
-        return { nodes, meta: bar };
+        return { nodes, meta: bar, ring: this.chordRing() };
       },
       stepDur: col => this.stepSeconds(col),
       nextCol: col => {
@@ -1497,7 +1508,7 @@ class Component extends DCLogic {
     this.arpIdx = 0;
     this.setState({ arpPlaying: true });
     this.startSequence('arp', {
-      onStep: (col, t) => ({ nodes: this.scheduleArpStep(col, t) }),
+      onStep: (col, t) => ({ nodes: this.scheduleArpStep(col, t), ring: this.arpRing() }),
       stepDur: col => this.stepSeconds(col),
       nextCol: col => (col + 1) % 16,
       onVisual: () => {},
@@ -1550,7 +1561,9 @@ class Component extends DCLogic {
           nodes.push(...this.scheduleChord(this.state.progression[bar % this.state.progression.length], t));
         }
         if (layers.includes('arp')) nodes.push(...this.scheduleSongArp(bar, col, t));
-        return { nodes, meta: bar };
+        // The arrangement layers all three engines' voices, so it must wait out
+        // whichever rings longest.
+        return { nodes, meta: bar, ring: Math.max(this.drumRing(), this.chordRing(), this.arpRing()) };
       },
       stepDur: col => this.stepSeconds(col),
       nextCol: col => {

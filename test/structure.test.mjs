@@ -187,3 +187,22 @@ test('every test file is wired into `npm test`', () => {
     assert.ok(script.includes(f), `test/${f} exists but \`npm test\` never runs it — add it to the script`);
   }
 });
+
+// The counts the README states as plain facts — the Behringer step total and the
+// hybrid week table — have each drifted from the built course before, past every
+// existing consistency test. Pin them the way the bank card counts are pinned.
+test('README step and week counts track the built courses', () => {
+  const readme = readGuide('README.md');
+
+  const { inst: beh } = loadComponent('Behringer Setup Guide.dc.html');
+  const claimed = readme.match(/covers \*\*(\d+) steps\*\*/);
+  assert.ok(claimed, 'README no longer states the Behringer step count');
+  assert.equal(Number(claimed[1]), beh.STEPS.length,
+    'README Behringer step count drifted from the built steps');
+
+  const { inst: hyb } = loadComponent('Hybrid Live Set.dc.html');
+  const weeks = new Set(hyb.STEPS.map(s => s.weekTag).filter(t => /^Week /.test(t))).size;
+  const section = readme.split('## Hybrid Live Set Guide')[1].split('\n## ')[0];
+  const rows = (section.match(/^\| \d+ \|/gm) || []).length;
+  assert.equal(rows, weeks, 'README hybrid week table does not list every built week');
+});

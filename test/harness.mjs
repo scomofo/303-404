@@ -17,6 +17,7 @@ export const GUIDES = [
   { name: 'Hybrid Live Set', file: 'Hybrid Live Set.dc.html' },
   { name: 'MPK Mini MK4', file: 'MPK Mini MK4 Guide.dc.html' },
   { name: 'Sample & Circuit', file: 'SampleCircuit Guide.dc.html' },
+  { name: 'TR-06', file: 'TR-06 Guide.dc.html' },
 ];
 
 export function readGuide(file) {

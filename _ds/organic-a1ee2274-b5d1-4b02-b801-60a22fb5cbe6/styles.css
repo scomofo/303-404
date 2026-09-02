@@ -173,10 +173,7 @@ header {
   text-transform: uppercase;
 }
 
-.hr {
-  height: 1px; border: 0; margin: var(--space-4) 0;
-  background: var(--color-divider);
-}
+.hr { height: 1px; border: 0; margin: var(--space-4) 0; background: var(--color-divider); }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -226,9 +223,7 @@ header {
 .input:focus-visible { border-color: var(--color-accent-2-600); outline-offset: 0; }
 textarea.input { min-height: 90px; resize: vertical; }
 .radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
-.radio input, .seg-opt input {
-  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
-}
+.radio input, .seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 .radio .dot {
   width: 16px; height: 16px; flex: none; border-radius: 50%;
   border: 1.5px solid var(--color-divider);
@@ -239,7 +234,6 @@ textarea.input { min-height: 90px; resize: vertical; }
   border-color: var(--color-accent); background: var(--color-accent);
   box-shadow: inset 0 0 0 4px var(--color-bg), 0 0 8px color-mix(in srgb, var(--color-accent) 70%, transparent);
 }
-.radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .seg {
   display: inline-flex; overflow: hidden;
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
@@ -254,10 +248,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .seg-opt:has(input:checked) {
   background: var(--color-accent);
   color: #140c08;
-  box-shadow: inset 0 0 10px color-mix(in srgb, var(--color-accent-800) 35%, transparent);
 }
 .seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
-.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
 .card {
   display: flex; flex-direction: column; gap: var(--space-2);
@@ -265,81 +257,34 @@ textarea.input { min-height: 90px; resize: vertical; }
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 88%, #fff) 0%, var(--color-surface) 28%, #16191e 100%);
   border: 1px solid color-mix(in srgb, #000 55%, var(--color-neutral-500));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.06),
-    0 1px 0 #000,
-    var(--shadow-md);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 0 #000, var(--shadow-md);
 }
-.card-kicker {
-  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--color-accent); font-family: var(--font-mono);
-}
-.card-title {
-  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
-  font-size: 17px; line-height: 1.2; letter-spacing: 0.04em; text-transform: uppercase;
-}
+.card-kicker { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-accent); font-family: var(--font-mono); }
+.card-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 17px; line-height: 1.2; letter-spacing: 0.04em; text-transform: uppercase; }
 .card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
-.card-meta {
-  display: flex; align-items: center; gap: 6px; font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 50%, transparent);
-  font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase;
-}
+.card-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: color-mix(in srgb, var(--color-text) 50%, transparent); font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .elev-sm { box-shadow: var(--shadow-sm); }
 .elev-md { box-shadow: var(--shadow-md); }
 .elev-lg { box-shadow: var(--shadow-lg); }
 
-.tag {
-  display: inline-flex; align-items: center; font-size: 10px;
-  letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-}
+.tag { display: inline-flex; align-items: center; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-sm); font-family: var(--font-mono); }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-700); }
 .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-700); }
 .tag-neutral { background: var(--color-neutral-800); color: var(--color-neutral-200); border: 1px solid var(--color-divider); }
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
 
-.nav {
-  display: flex; align-items: center; gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-divider);
-  background: var(--color-surface);
-}
-.nav-brand {
-  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
-  font-size: 18px; margin-right: auto; letter-spacing: 0.08em; text-transform: uppercase;
-}
+.nav { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); background: var(--color-surface); }
+.nav-brand { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; margin-right: auto; letter-spacing: 0.08em; text-transform: uppercase; }
 .nav a { color: inherit; text-decoration: none; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
 .nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
 
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.table th {
-  text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
-  font-family: var(--font-mono);
-}
-.table td {
-  padding: var(--space-2);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-}
-.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.table th { text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 60%, transparent); padding: var(--space-2); border-bottom: 1px solid var(--color-divider); font-family: var(--font-mono); }
+.table td { padding: var(--space-2); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
 
-.dialog-backdrop {
-  position: fixed; inset: 0; display: grid; place-items: center;
-  padding: var(--space-4);
-  background: color-mix(in srgb, #000 72%, transparent);
-}
-.dialog {
-  width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3);
-  padding: var(--space-4); border-radius: var(--radius-lg);
-  background: var(--color-surface); box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-divider);
-}
-.dialog-title {
-  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
-  font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase;
-}
+.dialog-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: var(--space-4); background: color-mix(in srgb, #000 72%, transparent); }
+.dialog { width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-lg); border: 1px solid var(--color-divider); }
+.dialog-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; }
 .dialog-body { font-size: 14px; opacity: 0.85; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
 
@@ -347,12 +292,18 @@ textarea.input { min-height: 90px; resize: vertical; }
 .btn, .tag, .seg, .input { border-radius: var(--radius-md); }
 .input { padding-inline: 12px; }
 
-.lcd {
-  font-family: var(--font-lcd);
+.card [style*="width:40px;height:36px"],
+.card [style*="width:40px;height:40px"],
+.card [style*="width:40px;height:28px"],
+.card [style*="width:40px;height:36px"] span,
+.card [style*="width:40px;height:40px"] span,
+.card [style*="width:40px;height:28px"] span {
+  font-family: var(--font-lcd) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-2) 40%, transparent);
 }
-.lcd,
-.lcd span,
-.lcd button {
+.lcd, .lcd span, .lcd button {
   font-family: var(--font-lcd);
   letter-spacing: 0.04em;
   text-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-2) 40%, transparent);

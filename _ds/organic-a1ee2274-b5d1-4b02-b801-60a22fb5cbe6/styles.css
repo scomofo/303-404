@@ -1,6 +1,6 @@
 /* Studio Rack — design-system tokens and component classes.
    Source of truth for the look. Retune tokens here; see readme.md. */
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Share+Tech+Mono&family=VT323&display=swap');
 
 :root {
   --color-bg: #121416;
@@ -10,9 +10,6 @@
   --color-accent-2: #8fd94a;
   --color-divider: color-mix(in srgb, #ece6d6 16%, transparent);
 
-  /* Neutral ramp is inverted vs. the old cream system: 100 is the deepest
-     rack well, 900 is silk-screen ivory. Pattern charts, step cells and
-     unused pads all key off 100–300, so they read as dark modules. */
   --color-neutral-100: #14171b;
   --color-neutral-200: #1c2128;
   --color-neutral-300: #2a313a;
@@ -47,6 +44,12 @@
   --font-heading-weight: 600;
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-lcd: "VT323", "Share Tech Mono", ui-monospace, monospace;
+
+  --color-chart-paper: #f3e6c8;
+  --color-chart-ink: #1c1814;
+  --color-chart-beat: #e4d4ae;
+  --color-chart-rule: #cbb892;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -68,22 +71,63 @@ body {
   background-color: var(--color-bg);
   background-image:
     radial-gradient(900px 420px at 50% -80px, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 60%),
-    linear-gradient(90deg, #0b0c0e 0, #0b0c0e 18px, transparent 18px, transparent calc(100% - 18px), #0b0c0e calc(100% - 18px)),
     repeating-linear-gradient(
       90deg,
       transparent 0 47px,
-      color-mix(in srgb, #000 28%, transparent) 48px
+      color-mix(in srgb, #000 22%, transparent) 48px
     );
   background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-body);
+  padding-left: 36px;
+  padding-right: 36px;
+}
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  z-index: 80;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18px 22px, #d7b17a 0 2.5px, #3a1c0a 3.5px, transparent 4.5px),
+    radial-gradient(circle at 18px calc(100% - 22px), #d7b17a 0 2.5px, #3a1c0a 3.5px, transparent 4.5px),
+    repeating-linear-gradient(
+      90deg,
+      #2c1608 0 2px,
+      #6a3a16 4px,
+      #8a5222 7px,
+      #4a2410 11px,
+      #7a441c 14px,
+      #3a1c0a 18px,
+      #5c3014 22px,
+      #2c1608 26px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 214, 150, 0.07) 0 2px,
+      transparent 6px,
+      rgba(0, 0, 0, 0.18) 13px,
+      transparent 20px
+    );
+  background-color: #4a2710;
+}
+body::before {
+  left: 0;
+  box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.55), 2px 0 0 rgba(0, 0, 0, 0.6);
+}
+body::after {
+  right: 0;
+  box-shadow: inset 5px 0 10px rgba(0, 0, 0, 0.55), -2px 0 0 rgba(0, 0, 0, 0.6);
+}
+@media (max-width: 720px) {
+  body { padding-left: 0; padding-right: 0; }
+  body::before, body::after { display: none; }
 }
 h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
 .washed { filter: saturate(0.85) contrast(1.08) brightness(0.92); }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Components — built with the tokens above.
-   ══════════════════════════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 400; }
@@ -134,7 +178,6 @@ header {
   background: var(--color-divider);
 }
 
-/* — buttons: rectangular faceplate keys, not pills — */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   cursor: pointer; text-decoration: none;
@@ -166,7 +209,6 @@ header {
 .btn-icon { width: 36px; height: 36px; padding: 0; }
 .btn-block { width: 100%; margin-top: var(--space-2); }
 
-/* — forms — */
 .field > label {
   display: block; font-size: 11px; margin-bottom: 5px;
   color: color-mix(in srgb, var(--color-text) 70%, transparent);
@@ -217,7 +259,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 .seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
-/* — cards: rack modules — */
 .card {
   display: flex; flex-direction: column; gap: var(--space-2);
   padding: var(--space-3); border-radius: var(--radius-lg);
@@ -247,7 +288,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 .elev-md { box-shadow: var(--shadow-md); }
 .elev-lg { box-shadow: var(--shadow-lg); }
 
-/* — tags: silkscreen labels — */
 .tag {
   display: inline-flex; align-items: center; font-size: 10px;
   letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px;
@@ -259,7 +299,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 .tag-neutral { background: var(--color-neutral-800); color: var(--color-neutral-200); border: 1px solid var(--color-divider); }
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
 
-/* — navigation — */
 .nav {
   display: flex; align-items: center; gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
@@ -273,7 +312,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 .nav a { color: inherit; text-decoration: none; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
 .nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
 
-/* — tables — */
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
   text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
@@ -287,7 +325,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 .table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 
-/* — dialog — */
 .dialog-backdrop {
   position: fixed; inset: 0; display: grid; place-items: center;
   padding: var(--space-4);
@@ -306,7 +343,42 @@ textarea.input { min-height: 90px; resize: vertical; }
 .dialog-body { font-size: 14px; opacity: 0.85; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
 
-/* Rack geometry: tight corners, no pills */
 .card, .dialog { border-radius: var(--radius-lg); }
 .btn, .tag, .seg, .input { border-radius: var(--radius-md); }
 .input { padding-inline: 12px; }
+
+.lcd {
+  font-family: var(--font-lcd);
+}
+.lcd,
+.lcd span,
+.lcd button {
+  font-family: var(--font-lcd);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-2) 40%, transparent);
+}
+
+.chart-sheet {
+  --color-text: var(--color-chart-ink);
+  --color-neutral-100: var(--color-chart-paper);
+  --color-neutral-200: #efe2c4;
+  --color-neutral-300: var(--color-chart-beat);
+  --color-neutral-600: #5c5346;
+  background: var(--color-chart-paper);
+  color: var(--color-chart-ink);
+  padding: 14px;
+  border-radius: 3px;
+  box-shadow: var(--shadow-lg);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+.chart-sheet .btn { color: #ece6d6; }
+.chart-sheet .btn-primary { color: #140c08; }
+
+[role="region"][aria-label$="pattern chart"],
+[role="region"][aria-label$="pattern sheet"] {
+  --color-text: var(--color-chart-ink);
+  --color-neutral-100: var(--color-chart-paper);
+  --color-neutral-200: #efe2c4;
+  --color-neutral-300: var(--color-chart-beat);
+  --color-neutral-600: #5c5346;
+}

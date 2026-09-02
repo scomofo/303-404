@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TR-06 Guide — Roland Boutique Drumatix</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent);} a:hover{color:var(--color-accent-700);}</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+  <header style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+    <div style="font-family:var(--font-heading);font-size:17px;white-space:nowrap;">TR-06 Guide</div>
+    <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent);"><span>{{ weekLabel }}</span><span>Step {{ stepNumber }} of {{ totalSteps }}</span></div>
+      <div role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="{{ totalSteps }}" aria-valuenow="{{ stepNumber }}" aria-valuetext="Step {{ stepNumber }} of {{ totalSteps }}" style="height:6px;border-radius:999px;background:var(--color-neutral-300);overflow:hidden;"><div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ progressPct }}%;"></div></div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
+          <div><h1 style="margin:0;">TR-06 Guide</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Roland Boutique Drumatix — drum companion to the TD-3</h3></div>
+          <p style="margin:0;line-height:1.6;">Five weeks on the Roland TR-06, the Boutique recreation of the TR-606. It is the drum path next to the TD-3-MO — not the analog RD-6 clone. Write a 16, use the sequencer the 606 never had, open the Inst locker, clock a 303 from the trigger row, then sit both machines in the same headphones.</p>
+          <div><h4 style="margin:0 0 8px;">Course Overview</h4><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;"><li>Target Audience: Owners of a Roland TR-06 (Boutique), ideally with a TD-3 / TB-03 / TB-303</li><li>Duration: 5 Weeks (2–3 Hours / Week)</li><li>Equipment Needed:<ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;"><li>Roland TR-06 + DK-01 dock (optional tilt)</li><li>Four AA batteries or a data-capable micro-USB cable</li><li>Headphones (3.5 mm)</li><li>Mono 3.5 mm TS cables for trigger I/O</li><li>Behringer TD-3-MO or Roland TB-03 for Weeks 4–5</li></ul></li></ul></div>
+          <div class="card" style="padding:var(--space-4);background:var(--color-accent-100);font-size:13.5px;line-height:1.5;"><strong>Videos are searches, not IDs.</strong> Each week names a public tutorial (Roland, BoBeats, Roland Canada). Links run a YouTube search for that title so a dead or swapped upload cannot silently teach the wrong box.</div>
+          <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Start Week 1 →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWeekIntro }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);"><span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span><h2 style="margin:0;">{{ currentStep.title }}</h2><p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p><button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button></div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);">
+          <div><span class="tag tag-neutral">{{ currentStep.weekTag }}</span><h2 style="margin:10px 0 0;">{{ currentStep.title }}</h2></div>
+          <sc-if value="{{ currentStep.hasBody }}" hint-placeholder-val="{{ false }}"><p style="margin:0;line-height:1.6;">{{ currentStep.body }}</p></sc-if>
+          <div style="display:flex;flex-direction:column;gap:12px;"><sc-for list="{{ currentStep.items }}" as="item" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:4px;"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;"><input type="checkbox" checked="{{ item.checked }}" onchange="{{ item.toggle }}" style="margin-top:4px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" /><span style="{{ item.textStyle }}font-size:14.5px;line-height:1.5;">{{ item.text }}</span></label><sc-if value="{{ item.hasSub }}" hint-placeholder-val="{{ false }}"><ul style="margin:0 0 0 30px;padding-left:18px;font-size:13.5px;opacity:.8;display:flex;flex-direction:column;gap:3px;"><sc-for list="{{ item.subitems }}" as="sub" hint-placeholder-count="3"><li>{{ sub }}</li></sc-for></ul></sc-if></div></sc-for></div>
+
+          <sc-if value="{{ currentStep.showWatch }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Watch — tick each off as you go</div>
+              <sc-for list="{{ watchList }}" as="v" hint-placeholder-count="2">
+                <div style="display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:var(--radius-md);background:var(--color-surface);">
+                  <input type="checkbox" checked="{{ v.checked }}" onchange="{{ v.toggle }}" aria-label="{{ v.ariaLabel }}" style="margin-top:3px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
+                    <div style="font-size:14px;font-weight:600;line-height:1.4;{{ v.textStyle }}">{{ v.title }}</div>
+                    <div style="font-size:12px;opacity:.7;">{{ v.byline }}</div>
+                    <sc-if value="{{ v.hasNote }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;opacity:.75;line-height:1.45;">{{ v.note }}</div></sc-if>
+                    <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer" style="font-size:12px;align-self:flex-start;">Search YouTube for this title ↗</a>
+                  </div>
+                </div>
+              </sc-for>
+              <p style="margin:0;font-size:11.5px;opacity:.6;line-height:1.5;">Titles name a public tutorial. Each link is a YouTube search, not an embedded upload ID.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showGrid }}" hint-placeholder-val="{{ false }}">
+            <section aria-label="TR-06 sixteen-step practice grid" style="display:flex;flex-direction:column;gap:var(--space-3);border-top:1px solid var(--color-divider);padding-top:var(--space-5);">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;">
+                <div><span class="tag tag-accent">Pattern paper</span><h3 style="margin:8px 0 0;">16-step TR-06 grid</h3></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button type="button" class="btn btn-secondary" onclick="{{ loadDefaultGrid }}">Load Week 1 pattern</button>
+                  <button type="button" class="btn btn-secondary" onclick="{{ clearGrid }}">Clear</button>
+                </div>
+              </div>
+              <p style="margin:0;font-size:13px;opacity:.8;">This is paper for your hands, not a speaker. Tap cells here, then copy the same 16 onto the TR-06 in Pattern Write while Run is on. Voices match the 606 kit: accent, kick, snare, toms, cymbal, hats. Clap lives in Inst, not on this grid.</p>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;"><sc-for list="{{ gridVoices }}" as="voice" hint-placeholder-count="8"><button type="button" onclick="{{ voice.select }}" aria-pressed="{{ voice.pressed }}" style="{{ voice.style }}">{{ voice.name }}</button></sc-for></div>
+              <div style="overflow-x:auto;">
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:520px;">
+                  <sc-for list="{{ gridRows }}" as="row" hint-placeholder-count="8">
+                    <div style="display:grid;grid-template-columns:72px repeat(16,minmax(24px,1fr));gap:4px;align-items:center;">
+                      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;">{{ row.name }}</div>
+                      <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="16">
+                        <button type="button" onclick="{{ cell.toggle }}" aria-label="{{ cell.label }}" aria-pressed="{{ cell.pressed }}" style="{{ cell.style }}">{{ cell.number }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ currentStep.showMilestone }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:14px;border-radius:var(--radius-md);background:var(--color-accent-100);display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Milestone</div>
+              <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                <input type="checkbox" checked="{{ milestone.checked }}" onchange="{{ milestone.toggle }}" style="margin-top:3px;width:18px;height:18px;accent-color:var(--color-accent);flex:none;" />
+                <span style="font-size:14.5px;line-height:1.5;{{ milestone.textStyle }}">{{ milestone.text }}</span>
+              </label>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}"><div class="card elev-sm" style="padding:var(--space-8);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);"><h2 style="margin:0;">The 606 is back in the 303’s room.</h2><p style="margin:0;max-width:52ch;opacity:.85;">You can write a 16 without a menu, ride probability and Step Loop, swap Inst, and clock a TD-3 from accent. Pair this guide with the TD-3 weeks in the Behringer course when you want the bassline written as carefully as the drums.</p><button type="button" class="btn btn-primary" onclick="{{ restart }}">Start Over</button></div></sc-if>
+    </div>
+  </main>
+
+  <footer style="display:flex;justify-content:space-between;padding:var(--space-4);border-top:1px solid var(--color-divider);"><button type="button" class="btn btn-secondary" onclick="{{ goBack }}" disabled="{{ isFirst }}">← Back</button><button type="button" class="btn btn-primary" onclick="{{ goNext }}" disabled="{{ isLast }}">Next →</button></footer>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}"><div class="dialog-backdrop" onclick="{{ closeDialog }}" style="position:fixed;inset:0;z-index:50;"><div class="dialog" data-course-map-dialog="true" tabIndex="-1" onclick="{{ stopProp }}" onkeydown="{{ dialogKeydown }}" role="dialog" aria-modal="true" aria-label="Course map" style="max-height:80vh;overflow:auto;"><div class="dialog-title">Course map</div><sc-for list="{{ navGroups }}" as="grp" hint-placeholder-count="5"><div><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin:12px 0 6px;">{{ grp.label }}</div><sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="2"><button type="button" onclick="{{ it.go }}" style="{{ it.rowStyle }}">{{ it.title }}</button></sc-for></div></sc-for><div class="dialog-actions"><button type="button" class="btn btn-secondary" onclick="{{ closeDialog }}">Close</button></div></div></div></sc-if>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script>
+class Component extends DCCourseLogic {
+  VOICES = [
+    { id:'AC', name:'Accent' },
+    { id:'BD', name:'Bass drum' },
+    { id:'SD', name:'Snare' },
+    { id:'LT', name:'Low tom' },
+    { id:'HT', name:'High tom' },
+    { id:'CY', name:'Cymbal' },
+    { id:'OH', name:'Open hat' },
+    { id:'CH', name:'Closed hat' },
+  ];
+
+  makeEmptyGrid() {
+    const grid = {};
+    this.VOICES.forEach(v => { grid[v.id] = Array(16).fill(false); });
+    return grid;
+  }
+  makeDefaultGrid() {
+    const grid = this.makeEmptyGrid();
+    [0, 4, 8, 12].forEach(i => { grid.BD[i] = true; });
+    [4, 12].forEach(i => { grid.SD[i] = true; });
+    [0, 2, 4, 6, 8, 10, 12, 14].forEach(i => { grid.CH[i] = true; });
+    [0, 4].forEach(i => { grid.AC[i] = true; });
+    return grid;
+  }
+  cloneGrid(grid) {
+    const next = {};
+    this.VOICES.forEach(v => { next[v.id] = (grid[v.id] || Array(16).fill(false)).slice(); });
+    return next;
+  }
+
+  initialState() {
+    return { step:0, dialogOpen:false, checks:{}, gridVoice:'BD', grid:this.makeDefaultGrid() };
+  }
+  state = this.initialState();
+  constructor(props) { super(props); this.STEPS = this.buildSteps(); }
+
+  ytSearch(query) {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+  }
+  watchKey(step) { return `${step.id}:watch`; }
+  milestoneKey(step) { return `${step.id}:milestone`; }
+
+  buildWatchList(step) {
+    if (!step.watch) return [];
+    const key = this.watchKey(step);
+    const checks = this.state.checks[key] || [];
+    return step.watch.map((v, i) => ({
+      title: v.title,
+      byline: v.creator,
+      note: v.note || '',
+      hasNote: !!v.note,
+      url: this.ytSearch(`${v.creator} ${v.title}`),
+      checked: !!checks[i],
+      toggle: () => this.toggleCheck(key, i),
+      ariaLabel: `Watched: ${v.title}`,
+      textStyle: checks[i] ? 'text-decoration:line-through;opacity:.5;' : '',
+    }));
+  }
+
+  buildSteps() {
+    const W = n => `Week ${n}`;
+    const watchBoBeatsBeat = [{
+      title:'Roland TR-06 in-depth review',
+      creator:'BoBeats',
+      note:'Look for the chapter titled how to make a beat. Pattern Write, pick a voice, Run, then tap the 16. The box will not take steps until the sequencer is running.',
+    }];
+    const watchRolandSeq = [{
+      title:'Roland Boutique TR-06 Drum Machine Overview Part 1',
+      creator:'RolandChannel',
+      note:'Peter Brown: velocity, mute, sub-step, probability, master probability, Step Loop, then a first look at trigger I/O into a TB-03.',
+    }];
+    const watchDustin = [{
+      title:'Roland TR-06 Drumatix Drum Machine In-Depth Demonstration',
+      creator:'Long & McQuade',
+      note:'Roland Canada. Menu for gain, tune, decay, pan; hold Menu + Step Loop until InSt for kit variations including clap.',
+    }];
+    const watchTriggers = [{
+      title:'Roland Boutique TR-06 Modular Overview Part 2',
+      creator:'RolandChannel',
+      note:'Five trigger outs, one in. Accent as a pulse. Tom hits advancing another sequencer. Mute a voice’s level if you only want the trigger.',
+    }];
+    const watchIo = [{
+      title:'Roland TR-06 in-depth review',
+      creator:'BoBeats',
+      note:'Second half: I/O, USB audio and MIDI, Mix In, battery vs USB, and an honest comparison with the analog RD-6 clone.',
+    }];
+
+    return [
+      { id:'overview', kind:'overview', weekTag:'Overview', title:'Course Overview', navLabel:'Course Overview' },
+
+      { id:'w1-intro', kind:'weekintro', weekTag:W(1), navLabel:'Week Overview', title:'Week 1: Write the first 16', objective:'Learn Pattern Write before any menu. Kick, snare, hats and accent on a 16 you can tap from memory.' },
+      { id:'w1-1', kind:'content', weekTag:W(1), title:'1. Hardware and Pattern Write', watch:watchBoBeatsBeat, items:[
+        { text:'Power the TR-06 from four AA cells or a data-capable micro-USB cable. Charge-only cables fail here.' },
+        { text:'Plug headphones into the phones jack, not Mix In.' },
+        { text:'Mode knob to Pattern Write. Instrument knob to BD. Press Run/Stop so the sequencer is actually running.' },
+        { text:'Tap step buttons 1, 5, 9 and 13. Switch the instrument knob to SD, then CH, then Accent. A pitch list with no Run is silence — same lesson as the 303, different box.' },
+      ] },
+      { id:'w1-2', kind:'content', weekTag:W(1), title:'2. Copy the Week 1 pattern onto the box', showGrid:true, items:[
+        { text:'Load the Week 1 pattern on the paper grid below (kick on 1/5/9/13, snare on 5/13, closed hats on eighths, accent on 1 and 5).' },
+        { text:'Copy it onto the TR-06. Play it for one minute with every FX send at zero.' },
+        { text:'Mute the hats with their level knob, then bring them back. Know the difference between a mute and a level of zero.' },
+      ] },
+      { id:'w1-3', kind:'content', weekTag:W(1), title:'3. Grow to 32 and write a fill', milestone:'Play the 32-step A–A′ pattern for one minute without opening a menu.', items:[
+        { text:'Hold Function and turn Value to set pattern length to 32 (the 16 is a choice, not a ceiling).' },
+        { text:'Copy the first 16, then drop the snare from bars 3–4. That is a fill, not a new song.' },
+        { text:'Do not open the sound menu yet. If the grid is not musical, extra parameters will only decorate it.' },
+      ] },
+
+      { id:'w2-intro', kind:'weekintro', weekTag:W(2), navLabel:'Week Overview', title:'Week 2: The sequencer the 606 never had', objective:'Add velocity, sub-steps, probability and Step Loop so a 16 can change while it runs.' },
+      { id:'w2-1', kind:'content', weekTag:W(2), title:'1. Accent is a lane, velocity is a value', watch:watchRolandSeq, items:[
+        { text:'Accent is its own sequencer track, like the original 606. Velocity is a per-step value on top of that.' },
+        { text:'On the Week 1 grid, drop three hat steps to a low velocity and leave the downbeat hats high. Listen for ghost notes, not a new sample.' },
+        { text:'Mute a voice from the menu while the pattern runs. Do not confuse that with turning a level knob to zero and forgetting.' },
+      ] },
+      { id:'w2-2', kind:'content', weekTag:W(2), title:'2. Sub-step and flam', items:[
+        { text:'Sub-step places extra hits inside one step — ratchets / 32nds — without doubling the pattern length.' },
+        { text:'Put a sub-step (double or triple) on one closed-hat step. Then a flam on the snare. One of each, not both on every step.' },
+      ] },
+      { id:'w2-3', kind:'content', weekTag:W(2), title:'3. Probability and Step Loop', milestone:'Ride master probability from 0 to 100 while a 303 or a click holds the downbeat, then fire one Step Loop fill that starts and ends on a 1.', items:[
+        { text:'Set four hat steps to 50% probability. Per-step chance moves in 10% increments.' },
+        { text:'Master probability shifts every probabilistic step at once — including 0% sleeper steps you parked as reserves.' },
+        { text:'Step Loop is a fill machine. Hold a slice of the running pattern and release on a downbeat.' },
+      ] },
+
+      { id:'w3-intro', kind:'weekintro', weekTag:W(3), navLabel:'Week Overview', title:'Week 3: ACB parameters and the Inst locker', objective:'Edit the model: tune, decay, pan, gain, then open Inst for clap and kit variants the 606 never shipped.' },
+      { id:'w3-1', kind:'content', weekTag:W(3), title:'1. Sound edit', watch:watchDustin, items:[
+        { text:'Open the menu. Per voice: gain (it saturates if you push it), tune, decay, pan.' },
+        { text:'Kick has attack. Snare has snappy. Toms have color / noise. Write one change, listen, then the next.' },
+        { text:'Open and closed hats share a level knob — you choke them with the sequencer, not a second fader.' },
+      ] },
+      { id:'w3-2', kind:'content', weekTag:W(3), title:'2. Inst variations', items:[
+        { text:'Hold Menu + Step Loop until the display reads InSt. That is the hidden kit locker.' },
+        { text:'Set BD to a punchier variant and CY to clap. Write the stock 606 setting down so you can get back.' },
+        { text:'A clap on the TR-06 is an Inst variation. The original 606 had seven voices and no clap; Boutique added it. That is a reason this path is not an RD-6.' },
+      ] },
+      { id:'w3-3', kind:'content', weekTag:W(3), title:'3. Drive and delay sends', milestone:'A delayed closed-hat against a dry kick and snare, with hat decay one click longer than dry.', items:[
+        { text:'Drive types include saturator, bit crusher, distortion and a filter. Delay types include delay, pan delay, tape echo, reverb and flanger.' },
+        { text:'Sends are per instrument. Send only CH to delay with tempo sync on. Keep BD and SD dry. If the kick is in the repeat, the send is wrong.' },
+        { text:'Lengthen hat decay until it eats the next step, then shorten it until the 16 is dry again. Leave it one click longer than dry.' },
+      ] },
+
+      { id:'w4-intro', kind:'weekintro', weekTag:W(4), navLabel:'Week Overview', title:'Week 4: Five outs, one in, a 303 on the other end', objective:'Use analog triggers so the TR-06 can clock and event-drive a TD-3 or TB-03 without a computer.' },
+      { id:'w4-1', kind:'content', weekTag:W(4), title:'1. The trigger row', watch:watchTriggers, items:[
+        { text:'Five outs: AC, BD, SD, LT, HT. One in. Mono 3.5 mm only — stereo cables will fail you.' },
+        { text:'Each out fires when that voice (or accent) plays. The sample still sounds unless you turn its level down.' },
+        { text:'Turn BD level to 0 and patch BD out to something that clicks. You should hear the click, not the kick. That is trigger without sample.' },
+      ] },
+      { id:'w4-2', kind:'content', weekTag:W(4), title:'2. Accent as a clock', items:[
+        { text:'Fill the accent lane with 16ths and take AC out as a pulse. AC source can also be pattern start, end, cymbal or hats (Value to tr.AC).' },
+        { text:'Patch AC out to a TD-3 or TB-03 clock / trigger in. Confirm the bassline runs only when the TR-06 runs.' },
+        { text:'A TD-3 wants this more than it wants USB. Analog sync is how the 606 was born next to a 303.' },
+      ] },
+      { id:'w4-3', kind:'content', weekTag:W(4), title:'3. Events and inherited chance', milestone:'LT out advances a second sequencer on steps 1 and 9 only, at 50% probability, so the other box skips with the drums.', items:[
+        { text:'LT or HT out into another sequencer: one tom hit = one step on the other box. Write toms you may not even hear.' },
+        { text:'Trigger in can clock, reset, randomize, or shift a part (the official demo shifts the snare).' },
+        { text:'A probabilistic tom still fires its trigger. The other sequencer inherits the chance. That is the trick.' },
+      ] },
+
+      { id:'w5-intro', kind:'weekintro', weekTag:W(5), navLabel:'Week Overview', title:'Week 5: USB, Mix In, and a session with the 303', objective:'Record the TR-06, sit a TD-3 in the same phones, and chain a song. The ride is the lesson, not another sample.' },
+      { id:'w5-1', kind:'content', weekTag:W(5), title:'1. USB and Mix In', watch:watchIo, items:[
+        { text:'USB on the TR-06 carries audio and MIDI, and can bus-power the unit. Install the Roland driver if the computer does not see audio.' },
+        { text:'Mix In is how a TD-3 shares the TR-06 phones and stereo out without a mixer.' },
+        { text:'The built-in speaker is a sketch. Mix on phones or the stereo out.' },
+      ] },
+      { id:'w5-2', kind:'content', weekTag:W(5), title:'2. Track mode with the 303', items:[
+        { text:'128 patterns (16 × 8 banks) and 8 tracks. Save a bank as “with the 303” so you do not overwrite tonight’s ride.' },
+        { text:'Chain A–B–A–C so bars 5–8 drop the snare. That is the 32-bar capstone under a 16-step acid line.' },
+        { text:'Ride the TR-06 delay send on hats only while the TD-3 filter does the talking. Week 10 of the Behringer guide is the same idea on the bass.' },
+      ] },
+      { id:'w5-3', kind:'content', weekTag:W(5), title:'3. Why this path, not the analog clone', milestone:'Record four bars of TR-06 + TD-3 through Mix In or USB, then play them back once without changing anything.', items:[
+        { text:'RD-6: analog circuit, individual outs, DS-1-style distortion, 32 patterns, cheaper plastic. TR-06: ACB, Inst, probability, USB audio, 128 patterns, battery.' },
+        { text:'You already picked Boutique. Do not spend Week 5 wishing for analog outs — spend it on a pattern you can perform.' },
+        { text:'When the 16 is boring, the next move is probability or a 303 ride, not another Inst swap.' },
+      ] },
+
+      { id:'complete', kind:'complete', weekTag:'Complete', navLabel:'Complete', title:'The 606 is back in the 303’s room.' },
+    ];
+  }
+
+  getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
+  restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }
+  openCourseMap() { this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement; this.setState({ dialogOpen:true }, () => { if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return; const dialog = document.querySelector('[data-course-map-dialog="true"]'); const target = this.getDialogFocusables(dialog)[0] || dialog; if (target && typeof target.focus === 'function') target.focus(); }); }
+  closeCourseMap() { const target = this.dialogReturnFocus; this.dialogReturnFocus = null; this.setState({ dialogOpen:false }, () => this.restoreDialogFocus(target)); }
+  onCourseMapKeydown(e) { if (e.key === 'Escape') { e.preventDefault(); this.closeCourseMap(); return; } if (e.key !== 'Tab') return; const focusables = this.getDialogFocusables(e.currentTarget); if (!focusables.length) { e.preventDefault(); if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus(); return; } const first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+  goToStep(i) { const idx = Math.max(0, Math.min(this.STEPS.length - 1, i)); const target = this.state.dialogOpen ? this.dialogReturnFocus : null; if (target) this.dialogReturnFocus = null; this.setState({ step:idx, dialogOpen:false }, () => this.restoreDialogFocus(target)); }
+  goNext() { this.goToStep(this.state.step + 1); }
+  goBack() { this.goToStep(this.state.step - 1); }
+  restart() { this.setState(this.initialState()); }
+  toggleCheck(stepId, idx) { this.setState(s => { const arr = (s.checks[stepId] || []).slice(); arr[idx] = !arr[idx]; return { checks:{ ...s.checks, [stepId]:arr } }; }); }
+  buildItems(step) { if (!step.items) return []; const checks = this.state.checks[step.id] || []; return step.items.map((it, i) => ({ text:it.text, checked:!!checks[i], toggle:() => this.toggleCheck(step.id, i), textStyle:checks[i] ? 'text-decoration:line-through;opacity:.5;' : '', hasSub:!!(it.subitems && it.subitems.length), subitems:it.subitems || [] })); }
+
+  setGridVoice(id) { this.setState({ gridVoice:id }); }
+  toggleGridCell(voiceId, index) {
+    this.setState(s => {
+      const grid = this.cloneGrid(s.grid);
+      grid[voiceId][index] = !grid[voiceId][index];
+      return { grid };
+    });
+  }
+  loadDefaultGrid() { this.setState({ grid:this.makeDefaultGrid(), gridVoice:'BD' }); }
+  clearGrid() { this.setState({ grid:this.makeEmptyGrid() }); }
+
+  buildGridVoices() {
+    return this.VOICES.map(v => {
+      const sel = this.state.gridVoice === v.id;
+      return {
+        name: v.name,
+        pressed: sel ? 'true' : 'false',
+        select: () => this.setGridVoice(v.id),
+        style: `padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:12px;font-weight:600;background:${sel ? 'var(--color-accent)' : 'var(--color-bg)'};color:${sel ? 'var(--color-bg)' : 'var(--color-text)'};`,
+      };
+    });
+  }
+  buildGridRows() {
+    const grid = this.state.grid;
+    return this.VOICES.map(v => ({
+      name: v.id,
+      cells: (grid[v.id] || Array(16).fill(false)).map((on, i) => {
+        const active = this.state.gridVoice === v.id;
+        return {
+          number: i + 1,
+          label: `${v.name} step ${i + 1}`,
+          pressed: on ? 'true' : 'false',
+          toggle: () => this.toggleGridCell(v.id, i),
+          style: `min-height:32px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:${on ? 'var(--color-accent)' : (active ? 'var(--color-accent-100)' : 'var(--color-bg)')};color:${on ? 'var(--color-bg)' : 'var(--color-text)'};`,
+        };
+      }),
+    }));
+  }
+
+  buildNavGroups() { const groups = []; this.STEPS.forEach((s, i) => { let g = groups.find(g => g.label === s.weekTag); if (!g) { g = { label:s.weekTag, items:[] }; groups.push(g); } g.items.push({ title:s.navLabel || s.title, go:() => this.goToStep(i), rowStyle:`display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);` }); }); return groups; }
+
+  renderVals() {
+    const step = this.STEPS[this.state.step];
+    const items = this.buildItems(step);
+    const milestoneKey = this.milestoneKey(step);
+    const milestoneOn = !!(this.state.checks[milestoneKey] || [])[0];
+    return {
+      weekLabel:step.weekTag, stepNumber:this.state.step+1, totalSteps:this.STEPS.length,
+      progressPct:Math.round((this.state.step)/(this.STEPS.length-1)*100),
+      isOverview:step.kind==='overview', isWeekIntro:step.kind==='weekintro', isContent:step.kind==='content', isComplete:step.kind==='complete',
+      currentStep:{
+        weekTag:step.weekTag, title:step.title, objective:step.objective, items,
+        hasBody:!!step.body, body:step.body || '',
+        showWatch:!!(step.watch && step.watch.length),
+        showGrid:step.showGrid===true,
+        showMilestone:!!step.milestone,
+      },
+      watchList:this.buildWatchList(step),
+      gridVoices:this.buildGridVoices(),
+      gridRows:this.buildGridRows(),
+      loadDefaultGrid:() => this.loadDefaultGrid(),
+      clearGrid:() => this.clearGrid(),
+      milestone:{
+        text:step.milestone || '',
+        checked:milestoneOn,
+        toggle:() => this.toggleCheck(milestoneKey, 0),
+        textStyle:milestoneOn ? 'text-decoration:line-through;opacity:.5;' : '',
+      },
+      navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen,
+      openDialog:()=>this.openCourseMap(), closeDialog:()=>this.closeCourseMap(), dialogKeydown:e=>this.onCourseMapKeydown(e), stopProp:e=>e.stopPropagation(),
+      goNext:()=>this.goNext(), goBack:()=>this.goBack(), isFirst:this.state.step===0, isLast:this.state.step===this.STEPS.length-1, restart:()=>this.restart(),
+    };
+  }
+}
+</script>
+</body>
+</html>

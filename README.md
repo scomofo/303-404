@@ -1,6 +1,6 @@
 # Hardware Music Guides
 
-Five single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide**, **DDJ-FLX4 Guide**, **MPK Mini MK4 Guide**, **Hybrid Live Set Guide**, and the eight-week **Sample & Circuit Guide** for grooveboxes and samplers.
+Six single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide**, the **TR-06 Guide**, **DDJ-FLX4 Guide**, **MPK Mini MK4 Guide**, **Hybrid Live Set Guide**, and the eight-week **Sample & Circuit Guide** for grooveboxes and samplers.
 
 ## TD-3 & RD-6 Guide
 
@@ -34,6 +34,22 @@ Three record transcriptions come from the MIT-licensed `tr808r` package: "Sexual
 The Drum Bank keeps provenance explicit. Outside sources that do not record accents, machine slots or tempos do not gain invented values; unknown tempos are labelled estimates. RS/CL and CP/MA are switch pairs and a card's `pair` field controls both the printed row and the voice that sounds.
 
 Add a card in `DRUM_CARDS` with fields such as `{ id, title, artist?, sourceType, steps, bpm, bpmConfirmed?, patternNo?, variation?, preScale?, pair?, voicing, tag, source, rows }`. `sourceType` is `record`, `literature` or `practice`; `bpmConfirmed` distinguishes a stated tempo from an estimate; `voicing` explains whether the source was written for this machine or mapped onto it; and `pair` selects CL or MA where applicable.
+
+## TR-06 Guide
+
+`TR-06 Guide.dc.html` is a five-week course for the **Roland TR-06** Boutique Drumatix — the drum companion to the TD-3, in place of the analog RD-6 clone. It takes an owner from Pattern Write through the sequencer the 606 never had (velocity, sub-step, probability, Step Loop), the Inst locker, analog trigger I/O into a 303, and a USB / Mix In session.
+
+Video titles are listed as YouTube **search** links, not upload IDs, matching the DJ-404 rule.
+
+| Week | Covers |
+| --- | --- |
+| 1 | Hardware, Pattern Write, a 16-step paper grid, length to 32 and a fill |
+| 2 | Accent vs velocity, sub-step / flam, probability, master probability, Step Loop |
+| 3 | ACB menu (tune, decay, pan, gain), Inst variations including clap, per-voice FX sends |
+| 4 | Five trigger outs and one in, accent as clock, TD-3 / TB-03 handshake |
+| 5 | USB audio/MIDI, Mix In, Track mode, and why this path is not an RD-6 |
+
+A visual **16-step paper grid** (AC, BD, SD, LT, HT, CY, OH, CH) ships with the Week 1 four-on-the-floor drill already loaded. It does not play audio; it is for copying onto the hardware. Start Over restores the default pattern.
 
 ## DDJ-FLX4 Guide
 
@@ -141,7 +157,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 
 | File | Guards |
 | --- | --- |
-| `test/structure.test.mjs` | Step rendering, unique ids/nav labels, Course Map behavior, restart state, accessibility and design-system rules across all five guides |
+| `test/structure.test.mjs` | Step rendering, unique ids/nav labels, Course Map behavior, restart state, accessibility and design-system rules across all six guides |
 | `test/songbank.test.mjs` | Song-card notes, rests, tempo provenance, schema, chart/engine agreement, source types and audio behavior |
 | `test/drumbank.test.mjs` | Drum-card row sets and lengths, provenance, source omissions, switch pairs, accent behavior, per-card tempo/length, navigation cleanup and sheet/engine agreement |
 | `test/mpk.test.mjs` | Scale snapping and its nearest-tone claim, scale-only chord stacks and interval-derived numerals, arp orderings, Mutate staying inside the held chord, knob assignment and default fallback, style-preset and arrangement integrity, and every widget a step names rendering (and only those) |
@@ -150,6 +166,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/timing.test.mjs` | Lookahead scheduling, exact grids, stop cleanup, shuffle and swing, filter envelopes, Note Repeat rolls and arrangement layers, Drum/Slice Bank tempo grids, pattern-chain boundaries and DDJ phase behavior |
 | `test/curriculum.test.mjs` | Eight five-day DJ-404 weeks, independent recorded milestones, search-only learning resources, widget coverage and README consistency |
 | `test/hybrid.test.mjs` | Five-week hybrid structure, dual-pane scrollable timeline and keyboard controls, independent checklists, reset behavior and Course Map grouping |
+| `test/tr06.test.mjs` | Five-week TR-06 structure, search-only watch links, 8×16 paper grid, default Week 1 pattern, Start Over, README week table |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
 
@@ -157,6 +174,7 @@ The test harness loads each guide's inline component logic against a stub runtim
 
 ```text
 Behringer Setup Guide.dc.html   TD-3/RD-6 course and audio engines
+TR-06 Guide.dc.html             Roland TR-06 Boutique drums course
 DDJ-FLX4 Guide.dc.html          DDJ-FLX4 course and Practice Plan
 MPK Mini MK4 Guide.dc.html      MPK Mini MK4 production course and its synth engines
 Hybrid Live Set.dc.html         Combined hardware/controller performance course
@@ -164,8 +182,8 @@ SampleCircuit Guide.dc.html     Groovebox/sampler course, Slice Bank and sampler
 support.js                      shared generated runtime
 _ds/                            shared Organic design system
 uploads/                        retained hardware reference images
-test/                           harness plus nine .test.mjs files
+test/                           harness plus ten .test.mjs files
 package.json                    test script and Node engine requirement
 ```
 
-The five guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values. Maintainer notes live in `docs/HANDOFF_MODULES_1_4.md`, `docs/HANDOFF_SAMPLE_CIRCUIT.md`, and `docs/HANDOFF_DJ_404.md`.
+The six guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values. Maintainer notes live in `docs/HANDOFF_MODULES_1_4.md`, `docs/HANDOFF_SAMPLE_CIRCUIT.md`, and `docs/HANDOFF_DJ_404.md`.

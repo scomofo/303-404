@@ -81,8 +81,8 @@ test('Tempo Provenance: confirmed tempos are plausible and one-shots do not inve
   }
 });
 
-test('Resampling Integrity: buffer shape is retained and RMS loss stays within 3 dB', async () => {
-  const { inst } = loadComponent(FILE);
+test('Resampling Integrity: offline rendering retains buffer shape and RMS within 3 dB', async () => {
+  const { inst, offlineRenders } = loadComponent(FILE, { offline: true });
   const card = inst.SLICE_CARDS.find(entry => entry.id === 'SL-005');
   inst.state.selectedCardId = card.id;
   const sampler = inst.ensureSampler();
@@ -91,8 +91,28 @@ test('Resampling Integrity: buffer shape is retained and RMS loss stays within 3
   assert.equal(result.length, source.length);
   assert.equal(result.sampleRate, source.sampleRate);
   assert.equal(result.numberOfChannels, source.numberOfChannels);
+  assert.deepEqual(offlineRenders, [{ channels:source.numberOfChannels, length:source.length, sampleRate:source.sampleRate }]);
   const loss = db(sampler.rms(result)) - db(sampler.rms(source));
   assert.ok(loss >= -3, 'RMS dropped by ' + loss.toFixed(2) + ' dB');
+});
+
+test('stopping the transport cancels samples already scheduled ahead of the clock', () => {
+  const { inst, audioCtx } = loadComponent(FILE);
+  inst.state.pattern[0][0] = true;
+  inst.startTransport();
+  assert.equal(audioCtx.__starts.length, 1);
+  inst.stopTransport();
+  assert.ok(audioCtx.__starts.every(source => source.stopAt <= source.when));
+});
+
+test('imported samples identify their user-provided provenance', async () => {
+  const { inst } = loadComponent(FILE);
+  await inst.importSample({ target:{ files:[{ name:'my-loop.wav', arrayBuffer:async () => new ArrayBuffer() }] } });
+  const card = inst.selectedCard();
+  assert.equal(card.sourceType, 'user_import');
+  assert.equal(card.license, 'User-provided; rights not verified');
+  assert.equal(card.originalBpm, null);
+  assert.equal(card.bpmConfirmed, false);
 });
 
 test('Export Sample Rate: generated WAV is stereo PCM at an allowed rate and depth', () => {
@@ -152,4 +172,12 @@ test('auto-slice records its algorithm and respects the 5 ms minimum', () => {
   assert.equal(card.sensitivity, 85);
   assert.ok(card.slices.length >= 2);
   assert.ok(card.slices.every(slice => slice.end - slice.start >= 0.005));
+});
+
+test('auto-slice refuses files too short for two valid slices', () => {
+  const { inst } = loadComponent(FILE);
+  const card = inst.selectedCard();
+  card.duration = 0.009;
+  inst.autoSliceSelected();
+  assert.match(inst.state.status, /at least 10 ms/);
 });

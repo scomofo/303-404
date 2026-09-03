@@ -86,7 +86,7 @@
 
 <script type="text/x-dc" data-dc-script>
 class SamplerEngine {
-  constructor(ctx) { this.ctx = ctx; this.buffers = new Map(); this.lastTrigger = null; }
+  constructor(ctx) { this.ctx = ctx; this.buffers = new Map(); this.activeSources = new Set(); this.lastTrigger = null; }
 
   async loadSample(file, id) {
     if (!file || typeof file.arrayBuffer !== 'function') throw new Error('Choose a WAV, AIFF or MP3 file.');
@@ -179,10 +179,20 @@ class SamplerEngine {
     var source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(this.ctx.destination);
+    this.activeSources.add(source);
+    source.onended = function () { this.activeSources.delete(source); }.bind(this);
     var startAt = when === undefined ? this.ctx.currentTime : when;
     source.start(startAt, slice.start, slice.end - slice.start);
     this.lastTrigger = { cardId:card.id, pad:index + 1, offset:slice.start, duration:slice.end - slice.start, when:startAt };
     return this.lastTrigger;
+  }
+
+  stopAll() {
+    var when = this.ctx.currentTime;
+    this.activeSources.forEach(function (source) {
+      try { source.stop(when); } catch (_) { /* Sources may already have ended. */ }
+    });
+    this.activeSources.clear();
   }
 
   async resample(card) {
@@ -373,9 +383,15 @@ class Component extends DCLogic {
     if (!file) return;
     var card = this.selectedCard();
     try {
-      var buffer = await this.ensureSampler().loadSample(file, card.id);
+      var sampler = this.ensureSampler();
+      var buffer = await sampler.loadSample(file, card.id);
+      if (buffer.length / buffer.sampleRate < 0.005) { sampler.buffers.delete(card.id); throw new Error('Imported audio must be at least 5 ms long.'); }
       card.duration = buffer.length / buffer.sampleRate;
       card.sampleRate = buffer.sampleRate;
+      card.sourceType = 'user_import';
+      card.originalBpm = null;
+      card.bpmConfirmed = false;
+      card.license = 'User-provided; rights not verified';
       card.waveform = this.waveformFromBuffer(buffer);
       card.slices = [{ index:0, start:0, end:card.duration, label:'Imported' }];
       card.autoSliced = false; card.algorithm = null; card.sensitivity = null;
@@ -392,9 +408,10 @@ class Component extends DCLogic {
 
   autoSliceSelected() {
     var card = this.selectedCard(), sampler = this.ensureSampler();
+    if (card.duration < 0.01) { this.setState({ status:'Need at least 10 ms to create two 5 ms slices.' }); return; }
     sampler.createGenerated(card);
     var slices = sampler.slice(card.id, this.state.sensitivity);
-    if (slices.length < 2) slices = this.makeSlices(Math.min(8, Math.max(2, card.slices.length)), card.duration);
+    if (slices.length < 2) slices = this.makeSlices(Math.min(8, Math.max(2, card.slices.length), Math.floor(card.duration / 0.005)), card.duration);
     card.slices = slices; card.autoSliced = true; card.algorithm = 'transient_detection'; card.sensitivity = this.state.sensitivity;
     this.setState({ status:'Created ' + slices.length + ' slices.' }, this.drawWaveform.bind(this));
   }
@@ -451,7 +468,7 @@ class Component extends DCLogic {
     this.transportTimer = setInterval(function () { if (self.nextBarTime - ctx.currentTime < 0.6) self.scheduleBar(self.nextBarTime); }, 100);
     this.sequences.sampler = true;
   }
-  stopTransport() { if (this.transportTimer) clearInterval(this.transportTimer); this.transportTimer = null; this.sequences = {}; this.setState({ playing:false }); }
+  stopTransport() { if (this.transportTimer) clearInterval(this.transportTimer); this.transportTimer = null; if (this.sampler) this.sampler.stopAll(); this.sequences = {}; this.setState({ playing:false }); }
   stopSequence() { this.stopTransport(); }
   toggleTransport() { if (this.state.playing) this.stopTransport(); else this.startTransport(); }
 

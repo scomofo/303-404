@@ -87,6 +87,7 @@ export function makeAudioContext() {
     stop(when) {
       const e = starts.find(s => s.node === this);
       if (e) e.stopAt = Math.min(e.stopAt, when ?? ctx.currentTime);
+      if (typeof this.onended === 'function') this.onended();
     },
     ...extra,
   });
@@ -115,6 +116,31 @@ export function makeAudioContext() {
     };
   };
   ctx.decodeAudioData = async () => ctx.createBuffer(2, ctx.sampleRate, ctx.sampleRate);
+  return ctx;
+}
+
+function makeOfflineAudioContext(channels, length, sampleRate, renders) {
+  const ctx = makeAudioContext();
+  let input = null;
+  ctx.createBuffer = (ch, len, rate = sampleRate) => {
+    const data = Array.from({ length: ch }, () => new Float32Array(len));
+    return { numberOfChannels:ch, length:len, sampleRate:rate, duration:len / rate,
+      getChannelData(index) { return data[index]; },
+      copyToChannel(sourceData, index, offset = 0) { data[index].set(sourceData, offset); } };
+  };
+  const createBufferSource = ctx.createBufferSource;
+  ctx.createBufferSource = () => {
+    const source = createBufferSource();
+    const start = source.start;
+    source.start = function (...args) { input = this.buffer; return start.apply(this, args); };
+    return source;
+  };
+  ctx.startRendering = async () => {
+    renders.push({ channels, length, sampleRate });
+    const rendered = ctx.createBuffer(channels, length, sampleRate);
+    if (input) for (let channel = 0; channel < channels; channel += 1) rendered.copyToChannel(input.getChannelData(channel), channel);
+    return rendered;
+  };
   return ctx;
 }
 
@@ -152,7 +178,7 @@ const makeCourseLogicBase = new Function('DCLogic',
  * Instantiate a guide's Component. Returns the instance, plus the stub audio
  * context so tests can inspect what was scheduled.
  */
-export function loadComponent(file, { hidden = false } = {}) {
+export function loadComponent(file, { hidden = false, offline = false } = {}) {
   const html = readGuide(file);
   const src = extractLogic(html, file);
   const audioCtx = makeAudioContext();
@@ -162,7 +188,11 @@ export function loadComponent(file, { hidden = false } = {}) {
   // immediately. Use the returned setHidden() to change visibility mid-test.
   globalThis.document = globalThis.document || {};
   globalThis.document.hidden = hidden;
+  const offlineRenders = [];
   globalThis.window = { AudioContext: function () { return audioCtx; } };
+  if (offline) globalThis.window.OfflineAudioContext = function (channels, length, sampleRate) {
+    return makeOfflineAudioContext(channels, length, sampleRate, offlineRenders);
+  };
 
   // Same shape as the runtime's own evaluation of this block.
   const factory = new Function('DCLogic', 'StreamableLogic', 'React', 'DCCourseLogic',
@@ -184,7 +214,7 @@ export function loadComponent(file, { hidden = false } = {}) {
     for (const key of Object.keys(inst.sequences || {})) inst.stopSequence(key);
   };
 
-  return { inst, audioCtx, html, Component, setHidden, dispose };
+  return { inst, audioCtx, html, Component, setHidden, dispose, offlineRenders };
 }
 
 /** Every step index of a loaded component. */

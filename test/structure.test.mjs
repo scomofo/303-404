@@ -159,6 +159,18 @@ test('every interactive control has an accessible name', () => {
   }
 });
 
+test('every guide loads the shared runtime, which keeps its React boot sequence', () => {
+  for (const guide of GUIDES) {
+    assert.match(readGuide(guide.file), /<script src="\.\/support\.js"><\/script>/,
+      `${guide.name}: missing shared runtime`);
+  }
+  const runtime = readFileSync(join(HERE, '..', 'support.js'), 'utf8');
+  assert.match(runtime, /loadReactUmd\(\)\.then\(init\)/,
+    'runtime must load React before booting components');
+  assert.match(runtime, /ReactDOM\.createRoot\(hostEl\)\.render/,
+    'runtime must mount the component through ReactDOM');
+});
+
 test('Behringer: RD-6 grid cells and TD-3 chips carry names and pressed state', () => {
   const { inst } = loadComponent('Behringer Setup Guide.dc.html');
   const rd6Step = inst.STEPS.findIndex(s => s.widget === 'rd6');
@@ -205,4 +217,18 @@ test('README step and week counts track the built courses', () => {
   const section = readme.split('## Hybrid Live Set Guide')[1].split('\n## ')[0];
   const rows = (section.match(/^\| \d+ \|/gm) || []).length;
   assert.equal(rows, weeks, 'README hybrid week table does not list every built week');
+});
+
+test('module handoff counts track the built courses', () => {
+  const handoff = readGuide('docs/HANDOFF_MODULES_1_4.md');
+  const { inst: beh } = loadComponent('Behringer Setup Guide.dc.html');
+  const { inst: hyb } = loadComponent('Hybrid Live Set.dc.html');
+  const behRow = handoff.match(/TD-3\/RD-6 Guide[^\n]*?(\d+) steps, (\d+) Song Bank cards/);
+  const hybridRow = handoff.match(/Hybrid Live Set[^\n]*?(\d+) weeks, (\d+) total steps/);
+  assert.ok(behRow, 'handoff no longer states Behringer counts');
+  assert.ok(hybridRow, 'handoff no longer states Hybrid counts');
+  assert.equal(Number(behRow[1]), beh.STEPS.length);
+  assert.equal(Number(behRow[2]), beh.SONG_CARDS.length);
+  assert.equal(Number(hybridRow[1]), new Set(hyb.STEPS.map(s => s.weekTag).filter(t => /^Week /.test(t))).size);
+  assert.equal(Number(hybridRow[2]), hyb.STEPS.length);
 });

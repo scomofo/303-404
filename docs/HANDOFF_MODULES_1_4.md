@@ -11,8 +11,8 @@ This handoff describes the code that is present on the branch containing it. It 
 
 | Module | File | Current scope | Primary interactive features |
 | --- | --- | --- | --- |
-| #1 — TD-3/RD-6 Guide | `Behringer Setup Guide.dc.html` | 10 weeks, 37 steps, 27 Song Bank cards, 11 Drum Bank sheets | Course Map, checklists, RD-6/TD-3 editors and audio, Song Bank, Drum Bank, performance exercises |
-| #4 — Hybrid Live Set | `Hybrid Live Set.dc.html` | 5 weeks, 16 total steps including overview and completion | Course Map, independent checklists, visual layer mutes, selectable dual-pane performance timeline |
+| #1 — TD-3/RD-6 Guide | `Behringer Setup Guide.dc.html` | 10 weeks, 39 steps, 31 Song Bank cards, 11 Drum Bank sheets | Course Map, checklists, RD-6/TD-3 editors and audio, Song Bank, Drum Bank, performance exercises |
+| #4 — Hybrid Live Set | `Hybrid Live Set.dc.html` | 6 weeks, 20 total steps including overview and completion | Course Map, independent checklists, visual layer mutes, selectable dual-pane performance timeline |
 
 ### Module #1: Behringer TD-3-MO / RD-6-BK Guide
 
@@ -22,7 +22,7 @@ The Course Map can jump directly to any step. Checklist state records what the l
 
 ### Module #4: Hybrid Live Set Guide
 
-The Hybrid guide is a follow-on course for learners who already know the TD-3/RD-6 and DDJ-FLX4 material. It combines those systems conceptually into a five-week performance workflow. It does not import progress or engines from the other guides and keeps its own independent in-memory state.
+The Hybrid guide is a follow-on course for learners who already know the TD-3/RD-6 and DDJ-FLX4 material. It combines those systems conceptually into a six-week performance workflow. It does not import progress or engines from the other guides and keeps its own independent in-memory state.
 
 Its performance map currently contains these sections:
 

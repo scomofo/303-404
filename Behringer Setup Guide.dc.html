@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>TD-3 &amp; RD-6 Guide</title>
 <script src="./support.js"></script>
 </head>
@@ -592,6 +594,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCCourseLogic {
+  persistenceKey = '303-404/behringer/v1';
   // Every resettable field lives here so the initial state and restart() can't drift apart.
   initialState() {
     return {
@@ -969,6 +972,7 @@ class Component extends DCCourseLogic {
     this.NOTES = this.NOTE_NAMES.map(n => this.noteToFreq(n));
     this.STEPS = this.buildSteps();
     this.sequences = {};
+    this.enablePersistence();
   }
 
   // Equal-temperament frequency for a note like 'C2', 'C#2', 'A2' (A4 = 440Hz).

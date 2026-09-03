@@ -980,6 +980,166 @@
         });
       }
 
+      // ── persistence ──
+      // Versioned, namespaced localStorage for serializable learner state.
+      // Guides set `persistenceKey = '303-404/<module>/v1'` and call
+      // `this.enablePersistence()` at the end of their constructor.
+      // Only initialState() keys outside PERSIST_OMIT are stored — never
+      // AudioContexts, nodes, timers, or playheads. Wrap-driven saves are
+      // debounced and skipped when the snapshot is unchanged, so 25ms
+      // scheduler ticks never touch storage.
+      persistenceKey = null;
+      persistenceVersion = 1;
+      PERSIST_OMIT = new Set([
+        'dialogOpen',
+        'rd6Playing', 'rd6Col', 'td3Playing', 'td3Col',
+        'sbPlaying', 'sbCol', 'dbPlaying', 'dbCol',
+        'enginePlaying', 'colA', 'colB',
+        'beatPlaying', 'beatCol', 'progPlaying', 'progBar',
+        'arpPlaying', 'songPlaying', 'songBar', 'songCol',
+        'recording', 'recordedSeconds', 'recordingReady',
+        'playing', 'status',
+      ]);
+      storageAvailable() {
+        try {
+          if (typeof localStorage === 'undefined') return false;
+          const k = '__dc_persist_probe__';
+          localStorage.setItem(k, '1');
+          localStorage.removeItem(k);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+      snapshotForPersist(source) {
+        const s = source || this.state || {};
+        const out = {};
+        const omit = this.PERSIST_OMIT;
+        for (const k of Object.keys(s)) {
+          if (omit && omit.has(k)) continue;
+          const v = s[k];
+          if (typeof v === 'function') continue;
+          try {
+            out[k] = JSON.parse(JSON.stringify(v));
+          } catch (e) {
+            // Non-serializable value (node, buffer, timer) — never persist.
+          }
+        }
+        return out;
+      }
+      saveProgress() {
+        if (!this.persistenceKey || !this.storageAvailable()) return;
+        try {
+          localStorage.setItem(this.persistenceKey, JSON.stringify({
+            version: this.persistenceVersion,
+            savedAt: Date.now(),
+            state: this.snapshotForPersist(),
+          }));
+        } catch (e) {
+        }
+      }
+      saveProgressSoon() {
+        if (!this.persistenceKey) return;
+        if (this.__persistTimer) clearTimeout(this.__persistTimer);
+        this.__persistTimer = setTimeout(() => {
+          this.__persistTimer = null;
+          this.saveProgress();
+        }, 250);
+      }
+      loadProgress() {
+        if (!this.persistenceKey || !this.storageAvailable()) return {};
+        let raw = null;
+        try {
+          raw = localStorage.getItem(this.persistenceKey);
+        } catch (e) {
+          return {};
+        }
+        if (!raw) return {};
+        let parsed = null;
+        try {
+          parsed = JSON.parse(raw);
+        } catch (e) {
+          return {};
+        }
+        if (!parsed || parsed.version !== this.persistenceVersion) return {};
+        if (!parsed.state || typeof parsed.state !== 'object') return {};
+        let allowed = {};
+        try {
+          allowed = this.initialState ? this.initialState() : {};
+        } catch (e) {
+          allowed = {};
+        }
+        const out = {};
+        for (const k of Object.keys(parsed.state)) {
+          if (!(k in allowed)) continue;
+          if (this.PERSIST_OMIT && this.PERSIST_OMIT.has(k)) continue;
+          out[k] = parsed.state[k];
+        }
+        if (typeof out.step === 'number' && this.STEPS && this.STEPS.length) {
+          out.step = Math.max(0, Math.min(this.STEPS.length - 1, out.step));
+        } else {
+          delete out.step;
+        }
+        if (out.checks && typeof out.checks !== 'object') delete out.checks;
+        out.dialogOpen = false;
+        return out;
+      }
+      clearProgress() {
+        if (!this.persistenceKey) return;
+        try {
+          if (typeof localStorage !== 'undefined') localStorage.removeItem(this.persistenceKey);
+        } catch (e) {
+        }
+      }
+      enablePersistence() {
+        if (!this.persistenceKey) return;
+        try {
+          const patch = this.loadProgress();
+          if (patch && Object.keys(patch).length) {
+            this.state = { ...this.state, ...patch };
+          }
+        } catch (e) {
+        }
+        if (this.__persistWrapped) return;
+        this.__persistWrapped = true;
+        const orig = this.setState.bind(this);
+        this.__persistSnapshot = JSON.stringify(this.snapshotForPersist());
+        this.setState = (patch, cb) => {
+          orig(patch, () => {
+            try {
+              const next = JSON.stringify(this.snapshotForPersist());
+              if (next !== this.__persistSnapshot) {
+                this.__persistSnapshot = next;
+                this.saveProgressSoon();
+              }
+            } catch (e) {
+            }
+            if (cb) cb();
+          });
+        };
+        try {
+          if (typeof window !== 'undefined' && window.addEventListener && !this.__persistHideHook) {
+            this.__persistHideHook = () => {
+              try {
+                if (this.__persistTimer) {
+                  clearTimeout(this.__persistTimer);
+                  this.__persistTimer = null;
+                }
+                this.saveProgress();
+              } catch (e) {
+              }
+            };
+            window.addEventListener('pagehide', this.__persistHideHook);
+            if (typeof document !== 'undefined' && document.addEventListener) {
+              document.addEventListener('visibilitychange', () => {
+                if (document.hidden) this.saveProgress();
+              });
+            }
+          }
+        } catch (e) {
+        }
+      }
+
       // ── step scheduling ──
       // Every engine queues its audio ahead of time against the AudioContext clock
       // rather than firing each note from the timer callback. setInterval/setTimeout

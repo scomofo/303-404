@@ -102,7 +102,16 @@ A 30-minute stereo 16-bit PCM buffer would consume substantial memory. Do not re
 
 ## Persistence
 
-No localStorage adapter was added. The browser lab has fixed generated reference tracks rather than imported, analysed track metadata, so persisting BPM/key records would create state without a real ingestion workflow.
+Shipped 2026-09-03: versioned localStorage via the shared `DCCourseLogic`
+adapter, key `303-404/ddj-flx4/v1` (`{ version: 1, savedAt, state }`).
+Persisted: step, checks, cable toggles, deck trims/EQ/faders, crossfader,
+hot cues, loop, FX, `perfmapSel`, transition filters/selection, Camelot
+choices. Never persisted: `dialogOpen`, `enginePlaying`, `colA`/`colB`,
+`recording`, `recordedSeconds`, `recordingReady`, audio nodes/timers.
+Debounced 250ms and flushed on `pagehide`; version mismatch ignored.
+
+The browser lab has fixed generated reference tracks rather than imported,
+analysed track metadata, so BPM/key records stay at their drill defaults.
 
 If user-track analysis is added later:
 

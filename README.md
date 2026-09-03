@@ -145,6 +145,20 @@ python -m http.server 8000
 
 The guides load React 18, ReactDOM, Babel Standalone and fonts at runtime. Audio starts only after a user gesture, as required by browsers.
 
+## Persistence contract
+
+Stateless by design (current): step, checklist, pattern, mute, and playhead
+state live in memory only. Reload resets via `initialState()`; nothing is
+written to `localStorage`/`IndexedDB`, and no audio nodes, timers, or object
+URLs are persisted. `test/structure.test.mjs` guards the `restart()` reset
+contract.
+
+If persistence is added later: namespace by module (`303-404/behringer/…`,
+`303-404/hybrid/…`, `303-404/ddj-flx4/…`, `303-404/sample-circuit/…`), store
+serializable learner state only (audio blobs in IndexedDB, never
+localStorage), version the schema, and document quota/deletion/migration.
+See `docs/HANDOFF_*.md` per-module plans and `THIRD-PARTY-NOTICES.md`.
+
 ## Tests
 
 Run:
@@ -167,6 +181,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/curriculum.test.mjs` | Eight five-day DJ-404 weeks, independent recorded milestones, search-only learning resources, widget coverage and README consistency |
 | `test/hybrid.test.mjs` | Five-week hybrid structure, dual-pane scrollable timeline and keyboard controls, independent checklists, reset behavior and Course Map grouping |
 | `test/tr06.test.mjs` | Five-week TR-06 structure, search-only watch links, 8×16 paper grid, default Week 1 pattern, Start Over, README week table |
+| `test/regression.test.mjs` | Handoff count sync, CSP/SRI presence, noise-buffer duration, shared-runtime markers, license/attribution files |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
 
@@ -181,8 +196,10 @@ Hybrid Live Set.dc.html         Combined hardware/controller performance course
 SampleCircuit Guide.dc.html     Groovebox/sampler course, Slice Bank and sampler engine
 support.js                      shared generated runtime
 _ds/                            shared Organic design system
-uploads/                        retained hardware reference images
+uploads/                        retained hardware reference images (not embedded; keeps guides light/offline-friendly)
 test/                           harness plus ten .test.mjs files
+LICENSE                         MIT license for original course code
+THIRD-PARTY-NOTICES.md          dataset/CDN attributions (not re-licensed)
 package.json                    test script and Node engine requirement
 ```
 

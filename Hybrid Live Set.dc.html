@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>Hybrid Live Set — TD-3/RD-6 + DDJ-FLX4</title>
 <script src="./support.js"></script>
 </head>
@@ -94,9 +96,10 @@
 
 <script type="text/x-dc" data-dc-script>
 class Component extends DCCourseLogic {
+  persistenceKey = '303-404/hybrid/v1';
   initialState() { return { step:0, dialogOpen:false, checks:{}, muteRd6:false, muteTd3:false, muteFlx4:false, perfmapSel:0 }; }
   state = this.initialState();
-  constructor(props) { super(props); this.STEPS = this.buildSteps(); }
+  constructor(props) { super(props); this.STEPS = this.buildSteps(); this.enablePersistence(); }
 
   PERF_SECTIONS = [
     { title:'Intro', time:'0:00–1:30', dur:90, desc:'Set the mood. Keep energy low so the first hardware entry feels like an event.', rd6:'Kick + closed hats only, low volume', td3:'Filter fully closed, waiting', flx4:'Atmosphere / soft pad or distant vocal' },

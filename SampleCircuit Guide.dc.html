@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>Sample &amp; Circuit Guide — Groovebox / Sampler Curriculum</title>
 <script src="./support.js"></script>
 </head>
@@ -252,6 +254,8 @@ class SamplerEngine {
 }
 
 class Component extends DCLogic {
+  persistenceKey = '303-404/sample-circuit/v1';
+  persistenceVersion = 1;
   makePattern() { return Array.from({ length:8 }, function () { return Array(16).fill(false); }); }
   initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, status:'' }; }
   state = this.initialState();
@@ -266,7 +270,14 @@ class Component extends DCLogic {
     this.nextBarTime = 0;
     this.dragSliceIndex = null;
     this.sequences = {};
+    this.enablePersistence();
   }
+  storageAvailable() { try { if (typeof localStorage === 'undefined') return false; localStorage.setItem('__dc_persist_probe__', '1'); localStorage.removeItem('__dc_persist_probe__'); return true; } catch (e) { return false; } }
+  snapshotForPersist(source) { var s = source || this.state || {}; var out = {}; var omit = { dialogOpen:1, playing:1, status:1 }; for (var k of Object.keys(s)) { if (omit[k]) continue; try { out[k] = JSON.parse(JSON.stringify(s[k])); } catch (e) {} } return out; }
+  saveProgress() { if (!this.persistenceKey || !this.storageAvailable()) return; try { localStorage.setItem(this.persistenceKey, JSON.stringify({ version:this.persistenceVersion, savedAt:Date.now(), state:this.snapshotForPersist() })); } catch (e) {} }
+  saveProgressSoon() { if (!this.persistenceKey) return; if (this.__persistTimer) clearTimeout(this.__persistTimer); var self = this; this.__persistTimer = setTimeout(function () { self.__persistTimer = null; self.saveProgress(); }, 250); }
+  loadProgress() { if (!this.persistenceKey || !this.storageAvailable()) return {}; var raw = null; try { raw = localStorage.getItem(this.persistenceKey); } catch (e) { return {}; } if (!raw) return {}; var parsed = null; try { parsed = JSON.parse(raw); } catch (e) { return {}; } if (!parsed || parsed.version !== this.persistenceVersion || !parsed.state) return {}; var allowed = {}; try { allowed = this.initialState(); } catch (e) {} var out = {}; for (var k of Object.keys(parsed.state)) { if (!(k in allowed) || k === 'dialogOpen' || k === 'playing' || k === 'status') continue; out[k] = parsed.state[k]; } if (typeof out.step === 'number' && this.STEPS && this.STEPS.length) out.step = Math.max(0, Math.min(this.STEPS.length - 1, out.step)); else delete out.step; if (out.checks && typeof out.checks !== 'object') delete out.checks; out.dialogOpen = false; return out; }
+  enablePersistence() { if (!this.persistenceKey || this.__persistWrapped) return; try { var patch = this.loadProgress(); if (patch && Object.keys(patch).length) this.state = Object.assign({}, this.state, patch); } catch (e) {} this.__persistWrapped = true; var orig = this.setState.bind(this); var self = this; self.__persistSnapshot = JSON.stringify(self.snapshotForPersist()); this.setState = function (p, cb) { orig(p, function () { try { var next = JSON.stringify(self.snapshotForPersist()); if (next !== self.__persistSnapshot) { self.__persistSnapshot = next; self.saveProgressSoon(); } } catch (e) {} if (cb) cb(); }); }; }
 
   makeSlices(count, duration, labels) {
     var width = duration / count;

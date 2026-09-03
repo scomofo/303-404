@@ -1,8 +1,8 @@
 # Handoff: Modules #1 and #4 — 303-404 Curriculum
 
-**Verified:** August 26, 2026  
+**Verified:** September 3, 2026  
 **Repository:** `scomofo/303-404`  
-**Reference:** The branch containing this document, based on `main` at `1c2c8d609f1cfb91756baf7aac64210b299a4531`  
+**Reference:** The branch containing this document, based on `main` at `6929f2f7e8542ac97d4cb76c2cdbf5483b753244`  
 **Scope:** `Behringer Setup Guide.dc.html` and `Hybrid Live Set.dc.html`
 
 This handoff describes the code that is present on the branch containing it. It separates current behavior from intended or proposed work. If `main` has moved, re-check the counts, tests, and known gaps before relying on this document.
@@ -13,6 +13,8 @@ This handoff describes the code that is present on the branch containing it. It 
 | --- | --- | --- | --- |
 | #1 — TD-3/RD-6 Guide | `Behringer Setup Guide.dc.html` | 10 weeks, 39 steps, 31 Song Bank cards, 11 Drum Bank sheets | Course Map, checklists, RD-6/TD-3 editors and audio, Song Bank, Drum Bank, performance exercises |
 | #4 — Hybrid Live Set | `Hybrid Live Set.dc.html` | 6 weeks, 20 total steps including overview and completion | Course Map, independent checklists, visual layer mutes, selectable dual-pane performance timeline |
+
+> Counts verified 2026-09-03 via `test/harness.mjs` (`Behringer: 39 steps / 31 songs / 11 drums; Hybrid: 20 steps / 6 week-intro steps`). `test/structure.test.mjs` pins the README step/week counts; keep this table in sync when bank data changes.
 
 ### Module #1: Behringer TD-3-MO / RD-6-BK Guide
 
@@ -60,19 +62,24 @@ Refactoring `support.js` can still affect every guide's rendering and state life
 
 ## 3. State Management and Persistence
 
-### Current behavior: memory only
+### Current behavior: versioned localStorage (added 2026-09-03)
 
-Both modules keep state in memory. Neither file uses `localStorage` or IndexedDB.
+Both modules persist serializable learner state via the shared
+`DCCourseLogic` adapter in `support.js` (`persistenceKey`,
+`snapshotForPersist`, `saveProgress`, `loadProgress`,
+`enablePersistence`). Keys are `303-404/behringer/v1` and
+`303-404/hybrid/v1` with `{ version, savedAt, state }` envelopes.
+Saves are debounced 250ms, skipped when the snapshot is unchanged
+(scheduler playheads never touch storage), and flushed on `pagehide`.
 
-A hard reload resets:
+Persisted: step, checks, patterns/grids, bank selections, mutes,
+`perfmapSel`, mixer-relevant settings. Never persisted: `dialogOpen`,
+`*Playing`, `*Col`/`*Bar`, `recording*`, `playing`, `status`,
+AudioContexts, nodes, timers, object URLs.
 
-- the current step;
-- checklist progress;
-- loaded Song or Drum Bank selection;
-- current play state and playhead;
-- editor changes;
-- Hybrid layer-mute state;
-- the selected Hybrid performance section.
+A hard reload restores step/checks/edits; Start Over writes the fresh
+`initialState()` back to storage. Version mismatch or unknown keys are
+ignored; step is clamped to the built `STEPS` range.
 
 The Song Bank does not currently have a favorites feature.
 
@@ -86,16 +93,14 @@ When adding state:
 2. Confirm Start Over restores it.
 3. Add a focused test when the field controls nontrivial behavior.
 
-### Future persistence
-
-If persistent learner progress is added, namespace stored records by module, for example:
+### Persistence keys (shipped)
 
 ```text
-303-404/behringer/progress
-303-404/hybrid/progress
+303-404/behringer/v1
+303-404/hybrid/v1
 ```
 
-The Hybrid checklist currently uses local step ids such as `w1-1` and `w5-1`. Those ids cannot collide today because each guide has its own component state. They would need a module-level namespace if multiple guides begin sharing one persistent store.
+The Hybrid checklist currently uses local step ids such as `w1-1` and `w5-1`. Those ids cannot collide today because each guide has its own component state **and** its own storage key. Keep the key namespace if persistence is ever unified.
 
 Do not persist transient audio objects, timers, oscillators, or Web Audio nodes. Persist serializable learner state only, and version the stored schema so future migrations are possible.
 
@@ -103,15 +108,15 @@ Do not persist transient audio objects, timers, oscillators, or Web Audio nodes.
 
 ### Song Bank: `SONG_CARDS`
 
-Current card count: **27**.
+Current card count: **31** (verified 2026-09-03; was 27 before Week 8+10 additions).
 
 The actual `sourceType` values are:
 
 | Value | Meaning | Current count |
 | --- | --- | ---: |
-| `practice` | Original practice material | 8 |
+| `practice` | Original practice material | 10 |
 | `chart` | Chart transcription | 11 |
-| `table` | Written step-table source | 8 |
+| `table` | Written step-table source | 10 |
 
 Do not rename these values casually; tests and rendering copy depend on them.
 
@@ -266,7 +271,7 @@ node --test \
 
 `test/hybrid.test.mjs` currently verifies:
 
-- five week-intro steps plus overview and completion;
+- six week-intro steps plus overview and completion (20 steps total);
 - five performance-section data records and selection state;
 - dual Hardware/Controller pane data and accessible section labels;
 - focusable timeline markup and horizontal overflow;
@@ -337,11 +342,11 @@ http://localhost:8000/Hybrid%20Live%20Set.dc.html
 
 | Issue | Module | Priority | Current status |
 | --- | --- | --- | --- |
-| No persisted learner progress | #1 and #4 | High if shipping as a retained course | Reload resets all state; no storage adapter exists |
+| Learner progress persistence | #1 and #4 | Shipped 2026-09-03 | Versioned localStorage (`303-404/behringer/v1`, `303-404/hybrid/v1`); transients excluded, guarded by `test/regression.test.mjs` |
 | Six legacy Song Bank charts need accent/slide source revalidation | #1 | Medium | `needsAccentSlideReview: true` remains on the six named cards |
-| No real-browser regression coverage for responsive layout, focus, scrolling, or CDN/runtime boot | #1 and #4 | Medium | Node tests inspect logic and limited markup only |
-| Cymbal buffer fix lacks a direct duration regression test | #1 | Low | Current 1.1-second buffer safely covers the one-second cymbal |
-| CDN dependencies limit offline use | #1 and #4 | Low unless offline use is required | React/ReactDOM/Babel and fonts are loaded at runtime |
+| No real-browser regression coverage for responsive layout, focus, scrolling, or CDN/runtime boot | #1 and #4 | Medium | Node tests inspect logic and limited markup only (static smoke only, per 2026-09-03 decision; no Playwright) |
+| Cymbal buffer fix lacks a direct duration regression test | #1 | Shipped 2026-09-03 | `test/regression.test.mjs` asserts 1.1s buffer ≥ longest voice + tail |
+| CDN dependencies limit offline use | #1 and #4 | Low (keep-CDN decision 2026-09-03) | Pinned unpkg + SRI + CSP; no vendoring |
 
 YouTube search links belong to the DDJ-FLX4 Practice Plan and are outside this two-module handoff. MPK synth and Mutate behavior are also outside scope and should not appear as Module #4 issues.
 

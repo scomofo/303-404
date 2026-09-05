@@ -69,8 +69,9 @@ rest/slide behavior, switch pairs, hat choking, source cleanup, PCM samples,
 offline/live event parity and recording-stream identity/error cleanup.
 
 These are dependency-free Node tests with an audio graph stub. They do not
-measure browser DSP, sound quality or codec support. Browser/listening QA has
-not been performed. The optional Playwright boot list includes the studio and
+measure browser DSP, sound quality or codec support. Chrome interaction and responsive QA was completed on 2026-09-05; see
+`GROOVE_STUDIO_BROWSER_QA.md` for measured export results and coverage. Human
+listening and physical-device checks remain outstanding. The optional Playwright boot list includes the studio and
 is skipped when Playwright is absent. Before release, audition scene transitions
 and exports, listen back to a take, and check keyboard/mobile use in target
 browsers. Serve the repository on one origin so project/course storage is shared.

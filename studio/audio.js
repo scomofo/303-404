@@ -148,7 +148,7 @@
   }
 
   class Transport {
-    constructor(ctx, getProject, { onVisual = () => {}, onStop = () => {}, onError = () => {}, timer = setTimeout, cancel = clearTimeout } = {}) {
+    constructor(ctx, getProject, { onVisual = () => {}, onStop = () => {}, onError = () => {}, timer = (fn, delay) => globalThis.setTimeout(fn, delay), cancel = handle => globalThis.clearTimeout(handle) } = {}) {
       this.ctx = ctx; this.getProject = getProject; this.onVisual = onVisual; this.onStop = onStop; this.onError = onError;
       this.timer = timer; this.cancel = cancel; this.running = false; this.handle = null; this.pending = null;
     }

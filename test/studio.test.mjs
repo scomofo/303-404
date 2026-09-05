@@ -371,3 +371,16 @@ test('recording failure and unsupported APIs surface errors without leaving a co
   const empty = new A.TakeRecorder(ctx, engine.output, EmptyRecorder); const emptyResult = empty.start(); empty.stop();
   await assert.rejects(emptyResult, /empty/); engine.stop();
 });
+
+
+test('default transport timers retain their browser receiver', () => {
+  const previousTimer = scope.setTimeout, previousCancel = scope.clearTimeout;
+  let scheduled = false, cancelled = false;
+  scope.setTimeout = function () { assert.equal(this.DCStudioAudio, A); scheduled = true; return 99; };
+  scope.clearTimeout = function (handle) { assert.equal(this.DCStudioAudio, A); assert.equal(handle, 99); cancelled = true; };
+  try {
+    const project = fresh(), transport = new A.Transport(audioContext(), () => project);
+    transport.start(); assert.equal(transport.running, true); assert.equal(scheduled, true);
+    transport.stop(); assert.equal(cancelled, true);
+  } finally { scope.setTimeout = previousTimer; scope.clearTimeout = previousCancel; }
+});

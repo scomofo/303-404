@@ -213,6 +213,13 @@ not see saves made in other local files.
 
 The interactive guides load React 18, ReactDOM, Babel Standalone and fonts at runtime. Audio starts only after a user gesture, as required by browsers.
 
+For an optional auto-refresh development preview, run `npm ci` and `npm run dev`.
+This uses the pinned Vite development dependency and requires Node 20.19+ or
+22.12+. Production remains plain static files, and `npm test` still needs no
+install step. `test/manual-viewport.html` embeds the actual studio at 390 px and
+320 px for repeatable responsive checks; it is not a mobile-device emulator.
+
+
 ## Persistence contract
 
 Every guide persists serializable learner state to versioned, namespaced

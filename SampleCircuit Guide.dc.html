@@ -520,6 +520,10 @@ class Component extends DCCourseLogic {
     if (this.sequences && this.sequences.sampler) return;
     if (!this.ensureAudio()) return;
     var self = this;
+    // Render the card's buffer before booking the first step. Generation is
+    // synchronous and can take tens of milliseconds for a multi-second loop;
+    // done inside onStep it would land after the step's own scheduled time.
+    this.ensureSampler().createGenerated(this.selectedCard());
     this.setState({ playing:true, playCol:-1 });
     this.startSequence('sampler', {
       onStep:function (col, at) {

@@ -47,7 +47,7 @@ Each guide is a standalone `.dc.html` file containing:
 
 Shared dependencies:
 
-- `support.js` — generated DC runtime. It loads and hosts the component/template system and supplies state integration. It does **not** contain the TD-3, RD-6, Drum Bank, or Hybrid audio engines. Do not hand-edit it unless the generated runtime itself is intentionally being replaced.
+- `support.js` — generated DC runtime. It loads and hosts the component/template system and supplies state integration. It does **not** contain the TD-3, RD-6, Drum Bank, or Hybrid audio engines. The `DCCourseLogic` block between `__DC_COURSE_SHARED_START__` and `__DC_COURSE_SHARED_END__` is explicitly hand-maintained in this repo; preserve it when regenerating the surrounding runtime.
 - `_ds/` — Organic design-system assets and CSS variables. Use its color, spacing, radius, typography, and shadow tokens instead of hardcoded visual values.
 - React 18 and ReactDOM — loaded from a CDN by `support.js`.
 - Babel Standalone — also loaded by the runtime when required.
@@ -79,7 +79,15 @@ AudioContexts, nodes, timers, object URLs.
 
 A hard reload restores step/checks/edits; Start Over writes the fresh
 `initialState()` back to storage. Version mismatch or unknown keys are
-ignored; step is clamped to the built `STEPS` range.
+ignored; step is normalized to an integer in the built `STEPS` range. Malformed
+checklists fall back to empty state, and only valid boolean checks for existing
+lesson items hydrate. Reading a save does not require writable storage.
+
+The practice home (`index.dc.html`) reads the same v1 envelopes to show checklist
+completion separately from lesson position. Both guides link back through
+**All courses**. The Behringer restored-session notice has a non-destructive
+**Dismiss** action; use Start Over to reset a course. After changing lesson
+titles, IDs or checklist lengths, run `npm run catalog` to update the home data.
 
 The Song Bank does not currently have a favorites feature.
 

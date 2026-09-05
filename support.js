@@ -1016,7 +1016,9 @@
         const s = source || this.state || {};
         const out = {};
         const omit = this.PERSIST_OMIT;
-        for (const k of Object.keys(s)) {
+        const allowed = this.initialState ? this.initialState() : {};
+        for (const k of Object.keys(allowed)) {
+          if (!Object.prototype.hasOwnProperty.call(s, k)) continue;
           if (omit && omit.has(k)) continue;
           const v = s[k];
           if (typeof v === 'function') continue;
@@ -1029,7 +1031,7 @@
         return out;
       }
       saveProgress() {
-        if (!this.persistenceKey || !this.storageAvailable()) return;
+        if (!this.persistenceKey) return;
         try {
           localStorage.setItem(this.persistenceKey, JSON.stringify({
             version: this.persistenceVersion,
@@ -1048,7 +1050,7 @@
         }, 250);
       }
       loadProgress() {
-        if (!this.persistenceKey || !this.storageAvailable()) return {};
+        if (!this.persistenceKey) return {};
         let raw = null;
         try {
           raw = localStorage.getItem(this.persistenceKey);
@@ -1063,7 +1065,7 @@
           return {};
         }
         if (!parsed || parsed.version !== this.persistenceVersion) return {};
-        if (!parsed.state || typeof parsed.state !== 'object') return {};
+        if (!parsed.state || typeof parsed.state !== 'object' || Array.isArray(parsed.state)) return {};
         let allowed = {};
         try {
           allowed = this.initialState ? this.initialState() : {};
@@ -1072,16 +1074,26 @@
         }
         const out = {};
         for (const k of Object.keys(parsed.state)) {
-          if (!(k in allowed)) continue;
+          if (!Object.prototype.hasOwnProperty.call(allowed, k)) continue;
           if (this.PERSIST_OMIT && this.PERSIST_OMIT.has(k)) continue;
           out[k] = parsed.state[k];
         }
-        if (typeof out.step === 'number' && this.STEPS && this.STEPS.length) {
-          out.step = Math.max(0, Math.min(this.STEPS.length - 1, out.step));
+        if (Number.isFinite(out.step) && this.STEPS && this.STEPS.length) {
+          out.step = Math.max(0, Math.min(this.STEPS.length - 1, Math.floor(out.step)));
         } else {
           delete out.step;
         }
-        if (out.checks && typeof out.checks !== 'object') delete out.checks;
+        if (Object.prototype.hasOwnProperty.call(out, 'checks')) {
+          const checks = {};
+          if (out.checks && typeof out.checks === 'object' && !Array.isArray(out.checks)) {
+            for (const step of this.STEPS || []) {
+              if (!step.items || !Object.prototype.hasOwnProperty.call(out.checks, step.id)) continue;
+              const values = out.checks[step.id];
+              if (Array.isArray(values)) checks[step.id] = values.slice(0, step.items.length).map(value => value === true);
+            }
+          }
+          out.checks = checks;
+        }
         out.dialogOpen = false;
         return out;
       }
@@ -1093,13 +1105,12 @@
         }
       }
       clearResumeNotice() {
-        this.clearProgress();
         this.setState({ resumeAvailable: false });
       }
       enablePersistence() {
         if (!this.persistenceKey) return;
         try {
-          if (this.persistenceKey && this.storageAvailable()) {
+          if (typeof localStorage !== 'undefined') {
             const raw = localStorage.getItem(this.persistenceKey);
             if (raw) {
               try {

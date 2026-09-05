@@ -2,6 +2,26 @@
 
 Six single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide**, the **TR-06 Guide**, **DDJ-FLX4 Guide**, **MPK Mini MK4 Guide**, **Hybrid Live Set Guide**, and the eight-week **Sample & Circuit Guide** for grooveboxes and samplers.
 
+## Your practice home
+
+`index.dc.html` brings all six courses together with accurate course lengths,
+saved checklist counts and a **Continue lesson** link for the most recently
+saved active course. Every course has an **All courses** link back home.
+`index.html` directs a static server's root URL to the same home page.
+
+The home reads existing v1 saves without changing them. Progress meters count
+checked items in the current curriculum; the last opened lesson is shown
+separately, so jumping to the last page does not imply completion. Cards refresh
+when you return to the tab or another course tab saves. Missing, incompatible
+or malformed saves cannot block the course links.
+
+The home uses plain HTML and two local scripts. Its course links remain usable
+without React, Babel or JavaScript. The individual interactive guides retain
+their shared runtime. Lesson titles and checklist sizes come from
+`course-catalog.js`, generated from the actual course logic. After changing
+course steps, run `npm run catalog` and commit the updated catalog; `npm test`
+detects drift.
+
 ## TD-3 & RD-6 Guide
 
 The Behringer guide takes an absolute beginner from wiring and basic drum sequencing through acid-bass programming, sync, pattern chaining, performance, troubleshooting, a TD-3 Song Bank, and a Drum Bank over **ten weeks**. A progress bar covers **39 steps** and the Course map can jump to any step.
@@ -88,7 +108,7 @@ The practice engine uses two original synthesized reference grooves with millise
 | 5 | Stage-readiness checklist and recovery drills |
 | 6 | Genre variants — the same rig in house, techno and breaks |
 
-Week 4 includes a dual-pane performance timeline that shows the **TD-3/RD-6 role and DDJ-FLX4 role side by side** across Intro, Hardware Groove, Breakdown, Drop and Outro. The timeline is horizontally scrollable and keyboard-focusable on narrow screens; Left/Right Arrow, Home and End select sections without requiring a pointer. Checklist state is kept in memory and Start Over restores the guide to its initial state.
+Week 4 includes a dual-pane performance timeline that shows the **TD-3/RD-6 role and DDJ-FLX4 role side by side** across Intro, Hardware Groove, Breakdown, Drop and Outro. The timeline is horizontally scrollable and keyboard-focusable on narrow screens; Left/Right Arrow, Home and End select sections without requiring a pointer. Checklist state is saved in this browser and Start Over restores the guide to its initial state.
 
 ## MPK Mini MK4 Guide
 
@@ -137,13 +157,18 @@ A symbolic rhythm chart and an audio sample are not the same asset. A properly s
 
 ## Running the guides
 
-Open any `.dc.html` file directly in a browser or serve the repository, for example:
+Serve the repository to use the practice home and courses on the same origin:
 
 ```bash
 python -m http.server 8000
 ```
 
-The guides load React 18, ReactDOM, Babel Standalone and fonts at runtime. Audio starts only after a user gesture, as required by browsers.
+Then open `http://localhost:8000/`. Keep the same hostname and port to keep
+using the same browser saves. Individual `.dc.html` files can still be opened
+directly, but browsers may isolate or block `file:` storage, so the home may
+not see saves made in other local files.
+
+The interactive guides load React 18, ReactDOM, Babel Standalone and fonts at runtime. Audio starts only after a user gesture, as required by browsers.
 
 ## Persistence contract
 
@@ -161,8 +186,12 @@ playheads, recorder state, transient labels, the audio-unavailable notice,
 audio nodes, contexts, timers, imported audio or object URLs. Saves are
 debounced, skipped when the snapshot is unchanged, flushed on
 `pagehide`/`visibilitychange`, and the listeners are removed on unmount. A
-version mismatch is ignored and `step` is clamped to the course length. Start
-Over resets in-memory state via `initialState()`. `test/regression.test.mjs`
+version mismatch is ignored and `step` is normalized to an integer within the
+course length. Checklist hydration keeps only existing lesson IDs, valid item
+positions and boolean checks. Saved sessions can still be read when storage is
+full; reading never depends on a successful probe write. Start Over resets
+in-memory state via `initialState()`. Dismissing a restored-session notice does
+not delete saved work. `test/regression.test.mjs` and `test/home.test.mjs`
 guards the key names, the transient exclusions and the round trip.
 
 If audio blobs are ever persisted, use IndexedDB rather than `localStorage`,
@@ -188,15 +217,22 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/transitionbank.test.mjs` | Twelve-card transition schema and filters, phase lock, EQ kill depth, echo decay, recording WAV format and peak, hot-cue zero crossing, Camelot warnings and beat-grid offsets |
 | `test/timing.test.mjs` | Lookahead scheduling, exact grids, stop cleanup, shuffle and swing, filter envelopes, Note Repeat rolls and arrangement layers, Drum/Slice Bank tempo grids, pattern-chain boundaries and DDJ phase behavior |
 | `test/curriculum.test.mjs` | Eight five-day DJ-404 weeks, independent recorded milestones, search-only learning resources, widget coverage and README consistency |
-| `test/hybrid.test.mjs` | Five-week hybrid structure, dual-pane scrollable timeline and keyboard controls, independent checklists, reset behavior and Course Map grouping |
+| `test/hybrid.test.mjs` | Six-week hybrid structure, dual-pane scrollable timeline and keyboard controls, independent checklists, reset behavior and Course Map grouping |
 | `test/tr06.test.mjs` | Five-week TR-06 structure, search-only watch links, 8×16 paper grid, default Week 1 pattern, Start Over, README week table |
 | `test/regression.test.mjs` | Handoff count sync, CSP/SRI presence, noise-buffer duration, shared-runtime markers, license/attribution files |
+| `test/home.test.mjs` | Course discovery and return links, generated catalog consistency, honest checklist progress, latest-session selection, existing-save round trips across all six guides, corrupt checklists, fractional steps, full storage quota and non-destructive notice dismissal |
+| `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
 
 ## Layout
 
 ```text
+index.html                     static-server root entrypoint
+index.dc.html                  practice home with all six courses
+practice-home.css / .js         home styling and read-only progress summary
+course-catalog.js               generated lesson labels and checklist sizes
+scripts/build-course-catalog.mjs catalog generator (npm run catalog)
 Behringer Setup Guide.dc.html   TD-3/RD-6 course and audio engines
 TR-06 Guide.dc.html             Roland TR-06 Boutique drums course
 DDJ-FLX4 Guide.dc.html          DDJ-FLX4 course and Practice Plan
@@ -206,7 +242,7 @@ SampleCircuit Guide.dc.html     Groovebox/sampler course, Slice Bank and sampler
 support.js                      shared generated runtime
 _ds/                            shared Organic design system
 uploads/                        retained hardware reference images (not embedded; keeps guides light/offline-friendly)
-test/                           harness plus ten .test.mjs files
+test/                           dependency-free harness and regression suites
 LICENSE                         MIT license for original course code
 THIRD-PARTY-NOTICES.md          dataset/CDN attributions (not re-licensed)
 package.json                    test script and Node engine requirement

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
+<title>Hardware Music Education Guides</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+<script src="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/_ds_bundle.js"></script>
+<style>
+  a { color: var(--color-accent); }
+  a:hover { color: var(--color-accent-700); }
+  .guide-card { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); border-radius: 6px; border: 1px solid var(--color-divider); transition: all 0.2s; }
+  .guide-card:hover { border-color: var(--color-accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .guide-card h3 { margin: 0; font-size: 18px; }
+  .guide-card p { margin: 0; opacity: 0.85; font-size: 14px; }
+  .guides-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-4); }
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);display:flex;flex-direction:column;">
+
+  <header style="padding:var(--space-6) var(--space-4);border-bottom:1px solid var(--color-divider);">
+    <h1 style="margin:0;font-family:var(--font-heading);font-size:32px;margin-bottom:var(--space-3);">Hardware Music Education</h1>
+    <p style="margin:0;opacity:0.85;max-width:60ch;line-height:1.6;">Structured guides for learning synthesis, sampling, beat-making and live performance on Behringer, Roland, Elektron and Novation hardware. Each guide is eight weeks of lessons with interactive demos and persistent progress tracking.</p>
+  </header>
+
+  <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
+    <div style="width:100%;max-width:1200px;">
+      <div class="guides-grid">
+
+        <a href="./Behringer Setup Guide.dc.html" style="text-decoration:none;color:inherit;">
+          <div class="guide-card">
+            <h3>TD-3 &amp; RD-6 Guide</h3>
+            <p>Beginner Hardware Setup &amp; Performance. Learn synthesis, sequencing and live performance on Behringer's acid bassline and drum synthesizers. Eight weeks covering sound design, pattern programming, sync and hardware integration.</p>
+            <span style="font-size:12px;opacity:0.6;">Behringer TD-3-MO &amp; RD-6-BK</span>
+          </div>
+        </a>
+
+        <a href="./SampleCircuit Guide.dc.html" style="text-decoration:none;color:inherit;">
+          <div class="guide-card">
+            <h3>Sample &amp; Circuit Guide</h3>
+            <p>Groovebox / Sampler Curriculum. Learn sampling, slicing, sequencing and arrangement on hardware or in the browser. Hands-on with a seven-sample groovebox, covering import, resampling, live performance and WAV export.</p>
+            <span style="font-size:12px;opacity:0.6;">Circuit Tracks / Rhythm, Model:Samples, SP-404MKII</span>
+          </div>
+        </a>
+
+        <a href="./DDJ-FLX4 Guide.dc.html" style="text-decoration:none;color:inherit;">
+          <div class="guide-card">
+            <h3>DDJ-FLX4 Guide</h3>
+            <p>DJ &amp; Beat Production. Beatmatching, mixing, sampling and production on a modern four-channel controller. Eight weeks progressing from basic mixing through advanced beat production and live sampling techniques.</p>
+            <span style="font-size:12px;opacity:0.6;">Pioneer DDJ-FLX4 Controller</span>
+          </div>
+        </a>
+
+        <a href="./MPK Mini MK4 Guide.dc.html" style="text-decoration:none;color:inherit;">
+          <div class="guide-card">
+            <h3>MPK Mini MK4 Guide</h3>
+            <p>Production &amp; Performance Keyboard. Learn beat production, chord progressions, arpeggiators and live arrangement on a compact keyboard. Covers synth basics, pattern sequencing and multi-track song composition.</p>
+            <span style="font-size:12px;opacity:0.6;">Akai MPK Mini MK4 Controller</span>
+          </div>
+        </a>
+
+        <a href="./TR-06 Guide.dc.html" style="text-decoration:none;color:inherit;">
+          <div class="guide-card">
+            <h3>TR-06 Guide</h3>
+            <p>Pattern Editor &amp; Beat Design. Design drum patterns and sounds on Roland's classic rhythm composer. Learn 16-step programming, swing, timing and the relationship between sound selection and pattern composition.</p>
+            <span style="font-size:12px;opacity:0.6;">Roland TR-06 Rhythm Composer</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </main>
+
+  <footer style="padding:var(--space-4);border-top:1px solid var(--color-divider);text-align:center;font-size:12px;opacity:0.6;">
+    <p style="margin:0;">All guides run in the browser with persistent progress storage. No account required.</p>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

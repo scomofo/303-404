@@ -83,7 +83,7 @@ ignored; step is normalized to an integer in the built `STEPS` range. Malformed
 checklists fall back to empty state, and only valid boolean checks for existing
 lesson items hydrate. Reading a save does not require writable storage.
 
-The practice home (`index.dc.html`) reads the same v1 envelopes to show checklist
+The practice home (`index.html`) reads the same v1 envelopes to show checklist
 completion separately from lesson position. Both guides link back through
 **All courses**. The Behringer restored-session notice has a non-destructive
 **Dismiss** action; use Start Over to reset a course. After changing lesson

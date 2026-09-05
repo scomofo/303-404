@@ -76,7 +76,7 @@
       }
       doc.getElementById('storage-status').textContent = result.unavailable
         ? 'Saved progress is unavailable in this browser. You can still open every course.'
-        : 'Progress stays in this browser. No account required.';
+        : 'Course and session progress stay in this browser. No account required.';
     };
     refresh();
     // Back/Forward cache and another open course tab must not leave stale cards.

@@ -3,6 +3,11 @@
 .home-header, .home-main, .home-footer { max-width: 1200px; margin-inline: auto; padding-inline: var(--space-6); }
 .home-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); padding-block: var(--space-6); border-bottom: 1px solid var(--color-divider); }
 .home-brand { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 600; letter-spacing: .06em; }
+.home-brand { color: var(--color-text); text-decoration: none; }
+.home-nav { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.home-nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-neutral-800); font-size: .875rem; }
+.home-nav a:hover { color: var(--color-accent-700); }
+.practice-home :focus-visible { outline: 2px solid var(--color-accent-2); outline-offset: 3px; }
 .brand-caption { display: block; font: 400 .875rem var(--font-mono); letter-spacing: 0; color: var(--color-neutral-700); }
 .home-note { color: var(--color-neutral-700); font-size: .875rem; }
 .home-main { padding-block: var(--space-8); }
@@ -46,6 +51,7 @@
 .skip-link:focus { transform: none; }
 @media (max-width: 1000px) { .courses-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) {
+  .home-header { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
   .home-header, .home-main, .home-footer { padding-inline: var(--space-4); }
   .home-note { display: none; }
   .courses-grid { grid-template-columns: minmax(0, 1fr); }

@@ -72,7 +72,7 @@
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);">
           <span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span>
           <h2 style="margin:0;">{{ currentStep.title }}</h2>
-          <p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p>
+          <sc-if value="{{ currentStep.objective }}" hint-placeholder-val="{{ false }}"><p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p></sc-if>
           <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button>
         </div>
       </sc-if>

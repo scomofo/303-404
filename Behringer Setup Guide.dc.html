@@ -446,9 +446,12 @@
 
               <sc-if value="{{ dbHasCard }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-3);">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                      <label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setDbTempo }}" aria-label="Drum pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label>
+                      <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
+                    </div>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="{{ dbGridStyle }}">
@@ -475,9 +478,12 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <sc-if value="{{ dbHasCard }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-3);">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                      <label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setDbTempo }}" aria-label="Drum pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label>
+                      <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
+                    </div>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="{{ dbGridStyle }}">
@@ -1937,6 +1943,12 @@ class Component extends DCCourseLogic {
     this.stopSequence('db');
     if (this.state.dbPlaying) this.setState({ dbPlaying: false, dbCol: -1 });
   }
+  setDbTempo(value) {
+    var next = Math.max(40, Math.min(240, Number(value && value.target ? value.target.value : value) || 120));
+    var wasPlaying = this.state.dbPlaying;
+    if (wasPlaying) this.stopDrumBank();
+    this.setState({ dbBpm: next }, wasPlaying ? this.playDrumBank.bind(this) : undefined);
+  }
 
   // The loaded pattern, live: only the rows this card actually uses, with the sounding
   // step lit. The printed sheet above is cached and never re-renders, so the playhead
@@ -2151,6 +2163,7 @@ class Component extends DCCourseLogic {
       dbGridStyle: `display:flex;flex-direction:column;gap:4px;padding:2px;min-width:${38 + this.state.dbSteps * 25}px;`,
       dbPlayLabel: this.state.dbPlaying ? 'Stop' : 'Play Pattern',
       dbPlayToggle: this.state.dbPlaying ? () => this.stopDrumBank() : () => this.playDrumBank(),
+      setDbTempo: (e) => this.setDbTempo(e),
       dbPlayheadLabel: this.state.dbPlaying ? `Step ${this.state.dbCol + 1} of ${this.state.dbSteps}` : '',
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],

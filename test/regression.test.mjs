@@ -40,6 +40,86 @@ test('every guide declares the documented CSP baseline', () => {
       `${guide.name}: CSP does not allowlist unpkg`);
     assert.match(html, /'unsafe-eval'/,
       `${guide.name}: CSP must document required unsafe-eval for new Function runtime`);
+    // The design system pulls its faces from Google Fonts via @import; a CSP
+    // that omits either host silently drops every typeface to the system stack.
+    assert.match(html, /style-src[^;]*https:\/\/fonts\.googleapis\.com/,
+      `${guide.name}: CSP style-src must allow fonts.googleapis.com or the @import is blocked`);
+    assert.match(html, /font-src[^;]*https:\/\/fonts\.gstatic\.com/,
+      `${guide.name}: CSP font-src must allow fonts.gstatic.com`);
+  }
+});
+
+// Four guides once carried verbatim copies of the DCCourseLogic navigation,
+// dialog, checklist and persistence methods, and the copies drifted (dropping
+// the stopEngines/onRestart hooks). Only the two hooks may be redefined.
+test('no guide re-declares a DCCourseLogic base method', () => {
+  const shared = readFileSync(join(ROOT, 'support.js'), 'utf8')
+    .match(/\/\* __DC_COURSE_SHARED_START__ \*\/([\s\S]*?)\/\* __DC_COURSE_SHARED_END__ \*\//)[1];
+  const baseMethods = [...shared.matchAll(/^      ([a-zA-Z]+)\([^)]*\) \{/gm)].map(m => m[1])
+    .filter(name => !['stopEngines', 'onRestart', 'componentWillUnmount', 'toggleCable', 'buildCables'].includes(name));
+  assert.ok(baseMethods.includes('goToStep') && baseMethods.includes('enablePersistence'));
+  for (const guide of GUIDES) {
+    const html = readGuide(guide.file);
+    for (const name of baseMethods) {
+      assert.ok(!new RegExp(`^  ${name}\\(`, 'm').test(html),
+        `${guide.name}: re-declares DCCourseLogic.${name}; use the base or the stopEngines/onRestart hooks`);
+    }
+  }
+});
+
+test('a browser without Web Audio gets a visible notice, not a TypeError', () => {
+  const cases = [
+    ['Behringer Setup Guide.dc.html', inst => inst.playRd6()],
+    ['DDJ-FLX4 Guide.dc.html', inst => inst.startEngine()],
+    ['MPK Mini MK4 Guide.dc.html', inst => inst.playBeat()],
+    ['SampleCircuit Guide.dc.html', inst => inst.startTransport()],
+  ];
+  const { store, restore } = stubStorage();
+  try {
+    for (const [file, play] of cases) {
+      const { inst, dispose } = loadComponent(file);
+      try {
+        inst.audioCtx = null;
+        globalThis.window = {};
+        assert.doesNotThrow(() => play(inst), `${file}: play must not throw without Web Audio`);
+        assert.equal(inst.ensureAudio(), null);
+        assert.match(inst.state.audioError || '', /Web Audio/, `${file}: audioError not reported`);
+        assert.equal(inst.renderVals().hasAudioError, true, `${file}: notice not exposed to the template`);
+        inst.saveProgress();
+        assert.ok(!('audioError' in JSON.parse(store.get(inst.persistenceKey)).state), `${file}: audioError leaked into storage`);
+      } finally {
+        dispose();
+      }
+    }
+  } finally {
+    restore();
+  }
+});
+
+test('unmount flushes progress and detaches the persistence listeners', () => {
+  const { store, restore } = stubStorage();
+  const prevWindow = globalThis.window, prevDoc = globalThis.document;
+  try {
+    const { inst, dispose } = loadComponent('Hybrid Live Set.dc.html');
+    try {
+      const removed = [];
+      globalThis.window = { ...globalThis.window, removeEventListener: (type) => removed.push(type) };
+      globalThis.document = { ...globalThis.document, removeEventListener: (type) => removed.push(type) };
+      inst.__persistHideHook = () => {};
+      inst.__persistVisHook = () => {};
+      inst.state = { ...inst.state, step: 4 };
+      inst.componentWillUnmount();
+      assert.deepEqual(removed.sort(), ['pagehide', 'visibilitychange']);
+      assert.equal(inst.__persistHideHook, null);
+      assert.equal(inst.__persistVisHook, null);
+      assert.equal(JSON.parse(store.get(inst.persistenceKey)).state.step, 4, 'unmount must flush the pending save');
+    } finally {
+      dispose();
+    }
+  } finally {
+    globalThis.window = prevWindow;
+    globalThis.document = prevDoc;
+    restore();
   }
 });
 
@@ -171,6 +251,77 @@ test('persistence round-trips learner state and drops transients', () => {
       }
     } finally {
       dispose();
+    }
+  } finally {
+    restore();
+  }
+});
+
+test('transient playback and recorder state never reaches storage', () => {
+  const cases = [
+    ['Behringer Setup Guide.dc.html', { rd6Playing: true, rd6PlayKind: 'chain', rd6PatIdx: 1, rd6Col: 3 }, ['rd6Playing', 'rd6PlayKind', 'rd6PatIdx', 'rd6Col']],
+    ['MPK Mini MK4 Guide.dc.html', { padSel: 'p1', lastNoteLabel: 'Played C4' }, ['padSel', 'lastNoteLabel']],
+    ['DDJ-FLX4 Guide.dc.html', { recording: true, recordedSeconds: 4, recordingReady: true }, ['recording', 'recordedSeconds', 'recordingReady']],
+  ];
+  for (const [file, patch, keys] of cases) {
+    const { store, restore } = stubStorage();
+    try {
+      const { inst, dispose } = loadComponent(file);
+      try {
+        inst.state = { ...inst.state, ...patch };
+        inst.saveProgress();
+        const saved = JSON.parse(store.get(inst.persistenceKey));
+        for (const k of keys) assert.ok(!(k in saved.state), `${file}: ${k} leaked into storage`);
+      } finally {
+        dispose();
+      }
+    } finally {
+      restore();
+    }
+  }
+});
+
+test('DDJ recorder is discarded by a step change and released by Start Over', () => {
+  const { inst, dispose } = loadComponent('DDJ-FLX4 Guide.dc.html');
+  try {
+    inst.toggleRecording();
+    assert.equal(inst.state.recording, true);
+    inst.goNext();
+    assert.equal(inst.state.recording, false, 'step change must stop an in-progress recording');
+    assert.equal(inst.state.recordingReady, false);
+    inst.toggleRecording();
+    inst.toggleRecording();
+    assert.ok(inst.lastRecording, 'a completed drill is kept');
+    inst.restart();
+    assert.equal(inst.lastRecording, null, 'Start Over must release the recorded buffer');
+    assert.equal(inst.state.recording, false);
+  } finally {
+    dispose();
+  }
+});
+
+test('SampleCircuit slice edits to bundled cards survive a reload', () => {
+  const { store, restore } = stubStorage();
+  try {
+    const { inst, dispose } = loadComponent('SampleCircuit Guide.dc.html');
+    let edited;
+    try {
+      inst.state = { ...inst.state, selectedCardId: 'SL-001', sensitivity: 70 };
+      inst.autoSliceSelected();
+      edited = inst.selectedCard().slices.map(sl => [sl.start, sl.end]);
+      assert.ok(edited.length >= 2);
+      inst.saveProgress();
+      assert.ok(JSON.parse(store.get(inst.persistenceKey)).state.sliceEdits['SL-001'], 'slice edits not stored');
+    } finally {
+      dispose();
+    }
+    const second = loadComponent('SampleCircuit Guide.dc.html');
+    try {
+      const card = second.inst.SLICE_CARDS.find(c => c.id === 'SL-001');
+      assert.deepEqual(card.slices.map(sl => [sl.start, sl.end]), edited, 'slices did not hydrate');
+      assert.equal(card.autoSliced, true);
+    } finally {
+      second.dispose();
     }
   } finally {
     restore();

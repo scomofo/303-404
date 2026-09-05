@@ -6,7 +6,7 @@
   "description": "Interactive hardware-music courses for the TD-3/RD-6, TR-06, DDJ-FLX4, MPK Mini MK4, hybrid live performance, and groovebox sampling",
   "type": "module",
   "scripts": {
-    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/mpk.test.mjs test/slicebank.test.mjs test/transitionbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs test/hybrid.test.mjs test/tr06.test.mjs test/regression.test.mjs"
+    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/mpk.test.mjs test/slicebank.test.mjs test/transitionbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs test/hybrid.test.mjs test/tr06.test.mjs test/regression.test.mjs test/boot.test.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -86,21 +86,20 @@ Pattern-chain entries share the same end/start timestamp. Changing tempo stops a
 
 ## State and persistence
 
-initialState owns step, dialogOpen, checks, selectedCardId, sensitivity, selectedTrack, pattern, tempo, playing and status.
+initialState owns step, dialogOpen, checks, selectedCardId, sensitivity, selectedTrack, pattern, tempo, playing, playCol, status and sliceEdits.
 
-Shipped 2026-09-03: versioned localStorage under `303-404/sample-circuit/v1`
-(local mixin on the `DCLogic` component; see `enablePersistence` in
-`SampleCircuit Guide.dc.html`). Persisted: step, checks, selectedCardId,
-sensitivity, selectedTrack, pattern, tempo. Never persisted: dialogOpen,
-playing, status, imported file bytes, sampler nodes, transport timers.
-Note: this guide still extends `DCLogic` (not the shared `DCCourseLogic`),
-so its adapter is a local copy — migrate to the shared base if the class
-is ever unified.
+The component extends the shared `DCCourseLogic` base in `support.js` and
+uses its versioned localStorage adapter under `303-404/sample-circuit/v1`.
+Persisted: step, checks, selectedCardId, sensitivity, selectedTrack, pattern,
+tempo and `sliceEdits` — slice boundaries, `autoSliced`, `algorithm` and
+`sensitivity` for bundled (`original_synthesis`) cards, re-applied to the card
+objects on load so a saved pattern never indexes slices that no longer exist.
+Never persisted: dialogOpen, playing, playCol, status, imported file bytes,
+sampler nodes, sequences or timers.
 
-Progress, imported files and marker edits beyond the persisted pattern are
-memory-only. Start Over rebuilds original card data and writes the fresh
-state back. Imported audio blobs are never persisted; if blob persistence
-is added later:
+Imported audio is memory-only: the card reverts to its generated sound and
+default slices after a refresh. Start Over rebuilds original card data and
+writes the fresh state back. If blob persistence is added later:
 
 - namespace it under 303-404/sample-circuit/;
 - store audio blobs in IndexedDB, not localStorage;

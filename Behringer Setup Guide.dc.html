@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>TD-3 &amp; RD-6 Guide</title>
 <script src="./support.js"></script>
 </head>
@@ -31,7 +31,17 @@
   </header>
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
-    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+    <div style="width:100%;max-width:760px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
+      </sc-if>
+
+      <sc-if value="{{ resumeAvailable }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);border-left:4px solid var(--color-accent-600);font-size:14px;">
+          <div><strong>Progress saved</strong> · You can pick up where you left off</div>
+          <button type="button" class="btn btn-secondary" onclick="{{ clearResumeNotice }}" style="white-space:nowrap;">Clear progress</button>
+        </div>
+      </sc-if>
 
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
@@ -126,9 +136,9 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
               <sc-for list="{{ cablesAudio }}" as="c" hint-placeholder-count="2">
-                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
-                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span style="flex:1 1 40px;min-width:40px;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
                   <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
                   <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
@@ -141,9 +151,9 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Sync cable — tap to mark connected</div>
               <sc-for list="{{ syncCable }}" as="c" hint-placeholder-count="1">
-                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
-                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span style="flex:1 1 40px;min-width:40px;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
                   <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
                   <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
@@ -156,7 +166,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ rd6GridTitle }}</div>
-                <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}">{{ rd6PlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}" aria-pressed="{{ rd6Playing }}" aria-label="Play RD-6 pattern">{{ rd6PlayLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
                 <div style="display:flex;flex-direction:column;gap:5px;min-width:600px;padding:2px;">
@@ -172,6 +182,7 @@
                   </sc-for>
                 </div>
               </div>
+              <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ rd6PlayheadLabel }}</div>
             </div>
           </sc-if>
 
@@ -194,7 +205,7 @@
             <div style="display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Chain playback — Pattern 1 → Pattern 2</div>
-                <button type="button" class="btn btn-primary" onclick="{{ rd6ChainPlayToggle }}">{{ rd6ChainPlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6ChainPlayToggle }}" aria-pressed="{{ rd6Playing }}" aria-label="Play RD-6 chain">{{ rd6ChainPlayLabel }}</button>
               </div>
               <div style="display:flex;gap:10px;">
                 <sc-for list="{{ rd6ChainSlots }}" as="slot" hint-placeholder-count="2">
@@ -361,7 +372,7 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ sbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ sbPlayToggle }}">{{ sbPlayLabel }}</button>
+                    <button type="button" class="btn btn-primary" onclick="{{ sbPlayToggle }}" aria-pressed="{{ sbPlaying }}" aria-label="Play song bank">{{ sbPlayLabel }}</button>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
@@ -382,6 +393,7 @@
                       </sc-for>
                     </div>
                   </div>
+                  <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ sbPlayheadLabel }}</div>
                 </div>
               </sc-if>
               <p style="font-size:12px;opacity:.6;margin:0;">The bank mixes original practice patterns, fan-chart transcriptions and supplied written step tables. Every source type uses the same sheet-inspired programming layout as a visualization; the layout does not imply that each pattern came from a printed Roland sheet. Add your own by editing SONG_CARDS in the component script — see the README.</p>
@@ -441,9 +453,13 @@
 
               <sc-if value="{{ dbHasCard }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-3);">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}">{{ dbPlayLabel }}</button>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                      <label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setDbTempo }}" aria-label="Drum pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label>
+                      <label style="font-size:13px;">Volume <input type="range" min="0" max="1" step="0.05" onchange="{{ setDbMasterVolume }}" aria-label="Master volume" style="width:100px;" /></label>
+                      <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
+                    </div>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="{{ dbGridStyle }}">
@@ -459,6 +475,7 @@
                       </sc-for>
                     </div>
                   </div>
+                  <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ dbPlayheadLabel }}</div>
                 </div>
               </sc-if>
               <p style="font-size:12px;opacity:.6;margin:0;">The bank mixes patterns transcribed from recordings, genre templates from production literature, and one pattern this course wrote itself. Every card names its source. Add your own by editing DRUM_CARDS in the component script — see the README.</p>
@@ -469,9 +486,13 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <sc-if value="{{ dbHasCard }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-3);">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}">{{ dbPlayLabel }}</button>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                      <label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setDbTempo }}" aria-label="Drum pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label>
+                      <label style="font-size:13px;">Volume <input type="range" min="0" max="1" step="0.05" onchange="{{ setDbMasterVolume }}" aria-label="Master volume" style="width:100px;" /></label>
+                      <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
+                    </div>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="{{ dbGridStyle }}">
@@ -487,10 +508,11 @@
                       </sc-for>
                     </div>
                   </div>
+                  <div style=”min-height:20px;font-size:12px;margin-top:6px;” aria-live=”polite”>{{ dbPlayheadLabel }}</div>
                 </div>
               </sc-if>
-              <sc-if value="{{ dbNoCard }}" hint-placeholder-val="{{ false }}">
-                <p style="font-size:13px;opacity:.75;margin:0;padding:12px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);">No pattern sheet is loaded yet — go back one step and tap “Load into engine” on any card, then return here.</p>
+              <sc-if value=”{{ dbNoCard }}” hint-placeholder-val=”{{ false }}”>
+                <p style=”font-size:13px;opacity:.75;margin:0;padding:12px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);”>No pattern sheet is loaded yet — go back one step and tap “Load into engine” on any card, then return here.</p>
               </sc-if>
             </div>
           </sc-if>
@@ -499,7 +521,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Full bassline</div>
-                <button type="button" class="btn btn-primary" onclick="{{ td3PlayToggle }}">{{ td3PlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ td3PlayToggle }}" aria-pressed="{{ td3Playing }}" aria-label="Play TD-3 bassline">{{ td3PlayLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
                 <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
@@ -520,6 +542,7 @@
                   </sc-for>
                 </div>
               </div>
+              <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ td3PlayheadLabel }}</div>
             </div>
           </sc-if>
 
@@ -613,7 +636,7 @@ class Component extends DCCourseLogic {
       accentSweep: 'FAST',
       perfmapSel: 0,
       sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbOverdrive: 0, sbPlaying: false, sbCol: -1, sbSelected: null,
-      dbRows: null, dbSteps: 16, dbBpm: 120, dbPair: null, dbPlaying: false, dbCol: -1, dbSelected: null,
+      dbRows: null, dbSteps: 16, dbBpm: 120, dbMasterVolume: 0.8, dbPair: null, dbPlaying: false, dbCol: -1, dbSelected: null,
     };
   }
 
@@ -991,6 +1014,7 @@ class Component extends DCCourseLogic {
     this.stopSongBank();
     this.stopDrumBank();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+    super.componentWillUnmount();
   }
 
   buildSteps() {
@@ -1349,14 +1373,19 @@ class Component extends DCCourseLogic {
   // what one step sounds like and let startSequence book it.
   ensureAudio() {
     if (!this.audioCtx) {
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioCtx = this.createAudioContext();
+      if (!this.audioCtx) return null;
       const size = this.audioCtx.sampleRate * 1.1;
       const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
       this.noiseBuffer = buf;
+      this.masterGain = this.audioCtx.createGain();
+      this.masterGain.gain.value = this.state.dbMasterVolume || 0.8;
+      this.masterGain.connect(this.audioCtx.destination);
     }
-    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+    this.resumeAudio(this.audioCtx);
+    return this.audioCtx;
   }
   playKick(t, vol) {
     const ctx = this.audioCtx;
@@ -1366,7 +1395,7 @@ class Component extends DCCourseLogic {
     osc.frequency.exponentialRampToValueAtTime(48, t + 0.13);
     g.gain.setValueAtTime(0.9 * vol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(this.masterGain);
     osc.start(t); osc.stop(t + 0.2);
     return osc;
   }
@@ -1378,7 +1407,7 @@ class Component extends DCCourseLogic {
     const g = ctx.createGain();
     g.gain.setValueAtTime(opts.gain, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
-    src.connect(filter).connect(g).connect(ctx.destination);
+    src.connect(filter).connect(g).connect(this.masterGain);
     src.start(t); src.stop(t + opts.duration + 0.02);
     return src;
   }
@@ -1397,9 +1426,9 @@ class Component extends DCCourseLogic {
       const f = ctx.createBiquadFilter();
       f.type = opts.filter.type; f.frequency.value = opts.filter.freq;
       if (opts.filter.Q) f.Q.value = opts.filter.Q;
-      osc.connect(f).connect(g).connect(ctx.destination);
+      osc.connect(f).connect(g).connect(this.masterGain);
     } else {
-      osc.connect(g).connect(ctx.destination);
+      osc.connect(g).connect(this.masterGain);
     }
     osc.start(t); osc.stop(t + opts.duration + 0.02);
     return osc;
@@ -1416,7 +1445,7 @@ class Component extends DCCourseLogic {
   }
   playRd6(kind) {
     kind = kind || 'rd6';
-    this.ensureAudio(); this.stopRd6();
+    if (!this.ensureAudio()) return; this.stopRd6();
     let patIdx = 0;
     const patternFor = () => {
       if (kind === 'chain') return patIdx === 0 ? this.state.rd6 : this.state.rd6Fill;
@@ -1494,7 +1523,7 @@ class Component extends DCCourseLogic {
     setTimeout(() => { try { osc.stop(); } catch (e) {} }, 80);
   }
   playTd3() {
-    this.ensureAudio(); this.stopTd3();
+    if (!this.ensureAudio()) return; this.stopTd3();
     const ctx = this.audioCtx;
     const osc = ctx.createOscillator(); osc.type = 'sawtooth';
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
@@ -1503,7 +1532,7 @@ class Component extends DCCourseLogic {
     shaper.curve = this.makeDistortionCurve(bookedDrive);
     shaper.oversample = '2x';
     const gain = ctx.createGain(); gain.gain.value = 0.0001;
-    osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
+    osc.connect(filter).connect(shaper).connect(gain).connect(this.masterGain);
     osc.start();
     this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
     const stepSec = 0.125;
@@ -1770,7 +1799,7 @@ class Component extends DCCourseLogic {
   }
   playSongBank() {
     if (!this.state.sbNotes) return;
-    this.ensureAudio(); this.stopSongBank();
+    if (!this.ensureAudio()) return; this.stopSongBank();
     const ctx = this.audioCtx;
     const osc = ctx.createOscillator(); osc.type = this.state.sbWaveform || 'sawtooth';
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; filter.Q.value = 8;
@@ -1785,7 +1814,7 @@ class Component extends DCCourseLogic {
       shaper.oversample = '2x';
       tail = tail.connect(shaper);
     }
-    tail.connect(gain).connect(ctx.destination);
+    tail.connect(gain).connect(this.masterGain);
     osc.start();
     this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
     const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
@@ -1911,7 +1940,7 @@ class Component extends DCCourseLogic {
 
   playDrumBank() {
     if (!this.state.dbRows) return;
-    this.ensureAudio(); this.stopDrumBank();
+    if (!this.ensureAudio()) return; this.stopDrumBank();
     const stepSec = this.drumStepSec(this.state.dbBpm);
     const len = this.state.dbSteps;
     this.setState({ dbPlaying: true, dbCol: 0 });
@@ -1925,6 +1954,17 @@ class Component extends DCCourseLogic {
   stopDrumBank() {
     this.stopSequence('db');
     if (this.state.dbPlaying) this.setState({ dbPlaying: false, dbCol: -1 });
+  }
+  setDbTempo(value) {
+    var next = Math.max(40, Math.min(240, Number(value && value.target ? value.target.value : value) || 120));
+    var wasPlaying = this.state.dbPlaying;
+    if (wasPlaying) this.stopDrumBank();
+    this.setState({ dbBpm: next }, wasPlaying ? this.playDrumBank.bind(this) : undefined);
+  }
+  setDbMasterVolume(value) {
+    var next = Math.max(0, Math.min(1, parseFloat(value && value.target ? value.target.value : value) || 0.8));
+    this.setState({ dbMasterVolume: next });
+    if (this.masterGain) this.masterGain.gain.value = next;
   }
 
   // The loaded pattern, live: only the rows this card actually uses, with the sounding
@@ -2039,6 +2079,7 @@ class Component extends DCCourseLogic {
     const knobs = this.buildKnobs(step);
     const switches = step.switches || [];
     return {
+      hasAudioError: !!this.state.audioError, audioError: this.state.audioError || '',
       weekLabel: step.weekTag,
       stepNumber: this.state.step + 1,
       totalSteps: this.STEPS.length,
@@ -2070,6 +2111,7 @@ class Component extends DCCourseLogic {
       rd6PlayLabel: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6') ? 'Stop' : 'Play Pattern',
       rd6PlayToggle: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6')
         ? () => this.stopRd6() : () => this.playRd6(step.widget === 'rd6fill' ? 'rd6fill' : 'rd6'),
+      rd6PlayheadLabel: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6') ? `Step ${this.state.rd6Col + 1} of 16` : '',
       shuffleOptions: step.widget === 'rd6shuffle' ? [
         { label: 'Straight', value: 0 }, { label: 'Light', value: 0.08 },
         { label: 'Medium', value: 0.16 }, { label: 'Heavy', value: 0.25 },
@@ -2087,6 +2129,7 @@ class Component extends DCCourseLogic {
       td3PlayCells: (step.widget === 'td3play' || step.widget === 'td3fx') ? this.buildTd3PlayCells() : [],
       td3PlayLabel: this.state.td3Playing ? 'Stop' : 'Play Bassline',
       td3PlayToggle: this.state.td3Playing ? () => this.stopTd3() : () => this.playTd3(),
+      td3PlayheadLabel: this.state.td3Playing ? `Step ${this.state.td3Col + 1} of 16` : '',
       overdriveOptions: step.widget === 'td3fx' ? [
         { label: 'OFF', value: 0 }, { label: 'LOW', value: 0.3 }, { label: 'MED', value: 0.6 }, { label: 'HIGH', value: 1 },
       ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
@@ -2113,6 +2156,7 @@ class Component extends DCCourseLogic {
       sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],
       sbPlayLabel: this.state.sbPlaying ? 'Stop' : 'Play Bassline',
       sbPlayToggle: this.state.sbPlaying ? () => this.stopSongBank() : () => this.playSongBank(),
+      sbPlayheadLabel: this.state.sbPlaying ? `Step ${this.state.sbCol + 1} of 16` : '',
       // Each drum card renders as its own pattern sheet; Load hands it to the drum
       // engine below, which is independent of the RD-6 grids in the earlier weeks.
       drumCards: step.widget === 'drumbank' ? this.DRUM_CARDS.map(c => {
@@ -2136,6 +2180,9 @@ class Component extends DCCourseLogic {
       dbGridStyle: `display:flex;flex-direction:column;gap:4px;padding:2px;min-width:${38 + this.state.dbSteps * 25}px;`,
       dbPlayLabel: this.state.dbPlaying ? 'Stop' : 'Play Pattern',
       dbPlayToggle: this.state.dbPlaying ? () => this.stopDrumBank() : () => this.playDrumBank(),
+      setDbTempo: (e) => this.setDbTempo(e),
+      setDbMasterVolume: (e) => this.setDbMasterVolume(e),
+      dbPlayheadLabel: this.state.dbPlaying ? `Step ${this.state.dbCol + 1} of ${this.state.dbSteps}` : '',
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
       accentSweepOptions: step.widget === 'moTweaks' ? [
@@ -2153,6 +2200,7 @@ class Component extends DCCourseLogic {
       stopProp: e => e.stopPropagation(),
       goNext: () => this.goNext(),
       goBack: () => this.goBack(),
+      clearResumeNotice: () => this.clearResumeNotice(),
       isFirst: this.state.step === 0,
       isLast: this.state.step === this.STEPS.length - 1,
       restart: () => this.restart(),

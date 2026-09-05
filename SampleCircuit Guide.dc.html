@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>Sample &amp; Circuit Guide — Groovebox / Sampler Curriculum</title>
 <script src="./support.js"></script>
 </head>
@@ -30,7 +30,18 @@
   </header>
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
-    <div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:var(--space-4);">
+    <div style="width:100%;max-width:900px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
+      </sc-if>
+
+      <sc-if value="{{ resumeAvailable }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);border-left:4px solid var(--color-accent-600);font-size:14px;">
+          <div><strong>Progress saved</strong> · You can pick up where you left off</div>
+          <button type="button" class="btn btn-secondary" onclick="{{ clearResumeNotice }}" style="white-space:nowrap;">Clear progress</button>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-5);">
           <div><h1 style="margin:0;">Sample &amp; Circuit Guide</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Groovebox / Sampler Curriculum</h3></div>
@@ -57,17 +68,18 @@
               <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;"><sc-for list="{{ sliceCards }}" as="card" hint-placeholder-count="15"><button type="button" onclick="{{ card.select }}" aria-pressed="{{ card.pressed }}" style="{{ card.style }}"><span style="font-size:11px;opacity:.65;">{{ card.id }}</span><span style="font-weight:700;">{{ card.title }}</span><span style="font-size:11px;opacity:.7;">{{ card.meta }}</span></button></sc-for></div>
               <div class="card" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-accent-100);">
                 <div style="display:flex;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><strong>{{ selectedCard.title }}</strong><div style="font-size:12px;opacity:.72;">{{ selectedCard.provenance }}</div></div><span class="tag tag-neutral">{{ selectedCard.tempoLabel }}</span></div>
-                <canvas data-sampler-waveform="true" width="800" height="180" aria-label="{{ selectedCard.waveformLabel }}" onpointerdown="{{ waveformPointerDown }}" onpointermove="{{ waveformPointerMove }}" onpointerup="{{ waveformPointerUp }}" onpointercancel="{{ waveformPointerUp }}" style="width:100%;height:180px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);cursor:ew-resize;"></canvas>
+                <canvas data-sampler-waveform="true" width="800" height="180" aria-label="{{ selectedCard.waveformLabel }} — click to drag markers, or press Enter to select markers with keyboard (left/right arrows to move, up/down to adjust, Enter to deselect)" tabIndex="0" onpointerdown="{{ waveformPointerDown }}" onpointermove="{{ waveformPointerMove }}" onpointerup="{{ waveformPointerUp }}" onpointercancel="{{ waveformPointerUp }}" onkeydown="{{ waveformKeydown }}" style="width:100%;height:180px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);cursor:ew-resize;"></canvas>
                 <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;"><label style="font-size:13px;">Sensitivity <input type="range" min="0" max="100" value="{{ sensitivity }}" oninput="{{ setSensitivity }}" aria-label="Auto-slice sensitivity" /></label><button type="button" class="btn btn-secondary" onclick="{{ autoSlice }}">Auto-slice</button><button type="button" class="btn btn-secondary" onclick="{{ resample }}">Resample</button><button type="button" class="btn btn-primary" onclick="{{ exportWav }}">Export WAV</button></div>
-                <div style="display:grid;grid-template-columns:repeat(8,minmax(54px,1fr));gap:8px;"><sc-for list="{{ slicePads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.play }}" aria-label="{{ pad.ariaLabel }}" style="{{ pad.style }}"><span style="font-size:11px;opacity:.65;">{{ pad.number }}</span><span style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;">{{ pad.label }}</span></button></sc-for></div>
+                <div role="status" aria-live="polite" style="min-height:18px;font-size:12px;opacity:.82;">{{ status }}</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px;"><sc-for list="{{ slicePads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.play }}" aria-label="{{ pad.ariaLabel }}" style="{{ pad.style }}"><span style="font-size:11px;opacity:.65;">{{ pad.number }}</span><span style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;">{{ pad.label }}</span></button></sc-for></div>
               </div>
             </section>
           </sc-if>
 
           <sc-if value="{{ currentStep.showPatternGrid }}" hint-placeholder-val="{{ false }}">
             <section aria-label="Tempo grid" style="display:flex;flex-direction:column;gap:var(--space-3);border-top:1px solid var(--color-divider);padding-top:var(--space-5);">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><span class="tag tag-accent">Pattern Lab</span><h3 style="margin:8px 0 0;">16-step tempo grid</h3></div><label style="font-size:13px;">Tempo <input type="number" min="40" max="240" value="{{ tempo }}" onchange="{{ setTempo }}" aria-label="Pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label></div>
-              <div style="display:grid;grid-template-columns:repeat(8,minmax(54px,1fr));gap:8px;"><sc-for list="{{ trackPads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.select }}" aria-pressed="{{ pad.pressed }}" style="{{ pad.style }}">Pad {{ pad.number }}</button></sc-for></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><span class="tag tag-accent">Pattern Lab</span><h3 style="margin:8px 0 0;">16-step tempo grid</h3></div><label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setTempo }}" aria-label="Pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px;"><sc-for list="{{ trackPads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.select }}" aria-pressed="{{ pad.pressed }}" style="{{ pad.style }}">Pad {{ pad.number }}</button></sc-for></div>
               <div style="display:grid;grid-template-columns:repeat(16,minmax(30px,1fr));gap:5px;overflow-x:auto;padding-bottom:4px;"><sc-for list="{{ patternSteps }}" as="cell" hint-placeholder-count="16"><button type="button" onclick="{{ cell.toggle }}" aria-label="{{ cell.ariaLabel }}" aria-pressed="{{ cell.pressed }}" style="{{ cell.style }}">{{ cell.number }}</button></sc-for></div>
               <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;"><button type="button" class="btn btn-primary" onclick="{{ toggleTransport }}">{{ transportLabel }}</button><button type="button" class="btn btn-secondary" onclick="{{ clearPattern }}">Clear pattern</button></div>
               <p style="font-size:12px;opacity:.72;margin:0;">The grid schedules sixteenth notes against the audio clock. Changing BPM stops and re-triggers the scheduler so the next bar uses the new tempo.</p>
@@ -204,10 +216,24 @@ class SamplerEngine {
     var offline = new Offline(sourceBuffer.numberOfChannels || 1, sourceBuffer.length, sourceBuffer.sampleRate);
     var source = offline.createBufferSource();
     source.buffer = sourceBuffer;
-    source.connect(offline.destination);
+    // Internal resampling bounces the sound through the machine's own circuit
+    // stage — gentle soft-clip saturation and a 12 kHz roll-off — so the printed
+    // copy is audibly different in level and tone rather than byte-identical.
+    var shaper = offline.createWaveShaper();
+    shaper.curve = this.saturationCurve(1.6);
+    shaper.oversample = '2x';
+    var tone = offline.createBiquadFilter();
+    tone.type = 'lowpass'; tone.frequency.value = 12000; tone.Q.value = 0.7;
+    source.connect(shaper); shaper.connect(tone); tone.connect(offline.destination);
     source.start(0);
     var rendered = await offline.startRendering();
     return rendered;
+  }
+
+  saturationCurve(drive) {
+    var n = 2048, curve = new Float32Array(n), norm = Math.tanh(drive);
+    for (var i = 0; i < n; i += 1) { var x = (i * 2) / (n - 1) - 1; curve[i] = Math.tanh(x * drive) / norm; }
+    return curve;
   }
 
   encodeWav(audioBuffer, bitDepth) {
@@ -253,11 +279,11 @@ class SamplerEngine {
   }
 }
 
-class Component extends DCLogic {
+class Component extends DCCourseLogic {
   persistenceKey = '303-404/sample-circuit/v1';
   persistenceVersion = 1;
   makePattern() { return Array.from({ length:8 }, function () { return Array(16).fill(false); }); }
-  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, status:'' }; }
+  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, playCol:-1, status:'', sliceEdits:{}, selectedSliceIndex:null }; }
   state = this.initialState();
 
   constructor(props) {
@@ -266,18 +292,40 @@ class Component extends DCLogic {
     this.SLICE_CARDS = this.buildSliceCards();
     this.STEPS = this.buildSteps();
     this.sampler = null;
-    this.transportTimer = null;
-    this.nextBarTime = 0;
     this.dragSliceIndex = null;
     this.sequences = {};
     this.enablePersistence();
+    this.applySliceEdits();
   }
-  storageAvailable() { try { if (typeof localStorage === 'undefined') return false; localStorage.setItem('__dc_persist_probe__', '1'); localStorage.removeItem('__dc_persist_probe__'); return true; } catch (e) { return false; } }
-  snapshotForPersist(source) { var s = source || this.state || {}; var out = {}; var omit = { dialogOpen:1, playing:1, status:1 }; for (var k of Object.keys(s)) { if (omit[k]) continue; try { out[k] = JSON.parse(JSON.stringify(s[k])); } catch (e) {} } return out; }
-  saveProgress() { if (!this.persistenceKey || !this.storageAvailable()) return; try { localStorage.setItem(this.persistenceKey, JSON.stringify({ version:this.persistenceVersion, savedAt:Date.now(), state:this.snapshotForPersist() })); } catch (e) {} }
-  saveProgressSoon() { if (!this.persistenceKey) return; if (this.__persistTimer) clearTimeout(this.__persistTimer); var self = this; this.__persistTimer = setTimeout(function () { self.__persistTimer = null; self.saveProgress(); }, 250); }
-  loadProgress() { if (!this.persistenceKey || !this.storageAvailable()) return {}; var raw = null; try { raw = localStorage.getItem(this.persistenceKey); } catch (e) { return {}; } if (!raw) return {}; var parsed = null; try { parsed = JSON.parse(raw); } catch (e) { return {}; } if (!parsed || parsed.version !== this.persistenceVersion || !parsed.state) return {}; var allowed = {}; try { allowed = this.initialState(); } catch (e) {} var out = {}; for (var k of Object.keys(parsed.state)) { if (!(k in allowed) || k === 'dialogOpen' || k === 'playing' || k === 'status') continue; out[k] = parsed.state[k]; } if (typeof out.step === 'number' && this.STEPS && this.STEPS.length) out.step = Math.max(0, Math.min(this.STEPS.length - 1, out.step)); else delete out.step; if (out.checks && typeof out.checks !== 'object') delete out.checks; out.dialogOpen = false; return out; }
-  enablePersistence() { if (!this.persistenceKey || this.__persistWrapped) return; try { var patch = this.loadProgress(); if (patch && Object.keys(patch).length) this.state = Object.assign({}, this.state, patch); } catch (e) {} this.__persistWrapped = true; var orig = this.setState.bind(this); var self = this; self.__persistSnapshot = JSON.stringify(self.snapshotForPersist()); this.setState = function (p, cb) { orig(p, function () { try { var next = JSON.stringify(self.snapshotForPersist()); if (next !== self.__persistSnapshot) { self.__persistSnapshot = next; self.saveProgressSoon(); } } catch (e) {} if (cb) cb(); }); }; }
+  stopEngines() { this.stopTransport(); }
+  onRestart() { this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; }
+
+  // Slice boundaries live on the card objects, not in state, so a saved pattern
+  // would otherwise reload against default slices and collapse onto pad 1.
+  // Edits to bundled (generated) cards are mirrored into `sliceEdits`; imported
+  // audio is never persisted, so its slices are not either.
+  rememberSlices(card) {
+    if (card.sourceType !== 'original_synthesis') return;
+    var entry = { slices:card.slices.map(function (sl) { return { start:sl.start, end:sl.end, label:sl.label }; }),
+      autoSliced:!!card.autoSliced, algorithm:card.algorithm || null, sensitivity:card.sensitivity === undefined ? null : card.sensitivity };
+    this.setState(function (state) { return { sliceEdits:Object.assign({}, state.sliceEdits, { [card.id]:entry }) }; });
+  }
+  applySliceEdits() {
+    var edits = this.state.sliceEdits;
+    if (!edits || typeof edits !== 'object') return;
+    this.SLICE_CARDS.forEach(function (card) {
+      var entry = edits[card.id], slices = entry && entry.slices;
+      if (card.sourceType !== 'original_synthesis' || !Array.isArray(slices) || !slices.length) return;
+      var valid = slices.every(function (sl, i) {
+        return sl && typeof sl.start === 'number' && typeof sl.end === 'number' && sl.start >= 0 && sl.end <= card.duration + 1e-6
+          && sl.end - sl.start >= 0.005 - 1e-9 && (i === 0 ? sl.start === 0 : Math.abs(sl.start - slices[i - 1].end) < 1e-6);
+      });
+      if (!valid) return;
+      card.slices = slices.map(function (sl, i) { return { index:i, start:sl.start, end:sl.end, label:sl.label || ('Slice ' + (i + 1)) }; });
+      card.autoSliced = !!entry.autoSliced; card.algorithm = entry.algorithm || null; card.sensitivity = entry.sensitivity === undefined ? null : entry.sensitivity;
+    });
+  }
+  // Persistence (versioned, namespaced localStorage) is inherited from DCCourseLogic.
 
   makeSlices(count, duration, labels) {
     var width = duration / count;
@@ -380,11 +428,17 @@ class Component extends DCLogic {
   }
 
   ensureAudio() {
-    if (!this.audioCtx) { var Audio = window.AudioContext || window.webkitAudioContext; this.audioCtx = new Audio(); }
-    if (this.audioCtx.state === 'suspended' && this.audioCtx.resume) this.audioCtx.resume();
+    if (!this.audioCtx) { this.audioCtx = this.createAudioContext(); if (!this.audioCtx) return null; }
+    this.resumeAudio(this.audioCtx);
     return this.audioCtx;
   }
-  ensureSampler() { if (!this.sampler) this.sampler = new this.SamplerEngineClass(this.ensureAudio()); return this.sampler; }
+  ensureSampler() {
+    if (this.sampler) return this.sampler;
+    var ctx = this.ensureAudio();
+    if (!ctx) throw new Error(this.AUDIO_UNAVAILABLE);
+    this.sampler = new this.SamplerEngineClass(ctx);
+    return this.sampler;
+  }
   selectedCard() { return this.SLICE_CARDS.find(function (card) { return card.id === this.state.selectedCardId; }, this) || this.SLICE_CARDS[0]; }
   selectCard(id) { this.setState({ selectedCardId:id, status:'' }, this.drawWaveform.bind(this)); }
   setSensitivity(value) { var n = Number(value && value.target ? value.target.value : value); this.setState({ sensitivity:Math.max(0, Math.min(100, n)) }); }
@@ -424,6 +478,7 @@ class Component extends DCLogic {
     var slices = sampler.slice(card.id, this.state.sensitivity);
     if (slices.length < 2) slices = this.makeSlices(Math.min(8, Math.max(2, card.slices.length), Math.floor(card.duration / 0.005)), card.duration);
     card.slices = slices; card.autoSliced = true; card.algorithm = 'transient_detection'; card.sensitivity = this.state.sensitivity;
+    this.rememberSlices(card);
     this.setState({ status:'Created ' + slices.length + ' slices.' }, this.drawWaveform.bind(this));
   }
 
@@ -432,7 +487,9 @@ class Component extends DCLogic {
     var card = this.selectedCard(), sampler = this.ensureSampler();
     var result = await sampler.resample(card);
     sampler.buffers.set(card.id, result);
-    this.setState({ status:'Resampled ' + card.title + ' at ' + result.sampleRate + ' Hz.' }, this.drawWaveform.bind(this));
+    card.waveform = this.waveformFromBuffer(result);
+    card.resampled = (card.resampled || 0) + 1;
+    this.setState({ status:'Resampled ' + card.title + ' through the circuit stage (soft saturation, 12 kHz roll-off) at ' + result.sampleRate + ' Hz.' }, this.drawWaveform.bind(this));
     return result;
   }
   exportSelectedWav() {
@@ -464,23 +521,38 @@ class Component extends DCLogic {
   togglePatternStep(index) { this.setState(function (state) { var pattern = state.pattern.map(function (row) { return row.slice(); }); pattern[state.selectedTrack][index] = !pattern[state.selectedTrack][index]; return { pattern:pattern }; }); }
   clearPattern() { this.setState({ pattern:this.makePattern() }); }
   selectTrack(index) { this.setState({ selectedTrack:index }); }
-  scheduleBar(when) {
-    var grid = this.tempoGrid(this.state.tempo, 16, when), self = this;
-    this.state.pattern.forEach(function (row, pad) { row.forEach(function (on, step) { if (on) self.playSlice(Math.min(pad, self.selectedCard().slices.length - 1), grid[step]); }); });
-    this.nextBarTime = grid[0] + 60 / this.state.tempo * 4;
-    return grid;
-  }
+  // The 16-step grid runs on the shared audio-clock scheduler: the timer only
+  // decides when to look ahead, each hit is booked at an exact AudioContext time,
+  // and the playhead follows the step that is actually sounding.
   startTransport() {
-    if (this.transportTimer) return;
-    var ctx = this.ensureAudio();
-    this.setState({ playing:true });
-    this.scheduleBar(ctx.currentTime + 0.06);
+    if (this.sequences && this.sequences.sampler) return;
+    if (!this.ensureAudio()) return;
     var self = this;
-    this.transportTimer = setInterval(function () { if (self.nextBarTime - ctx.currentTime < 0.6) self.scheduleBar(self.nextBarTime); }, 100);
-    this.sequences.sampler = true;
+    // Render the card's buffer before booking the first step. Generation is
+    // synchronous and can take tens of milliseconds for a multi-second loop;
+    // done inside onStep it would land after the step's own scheduled time.
+    this.ensureSampler().createGenerated(this.selectedCard());
+    this.setState({ playing:true, playCol:-1 });
+    this.startSequence('sampler', {
+      onStep:function (col, at) {
+        var card = self.selectedCard(), ring = 0.05;
+        self.state.pattern.forEach(function (row, pad) {
+          if (!row[col]) return;
+          var trig = self.playSlice(Math.min(pad, card.slices.length - 1), at);
+          if (trig && trig.duration > ring) ring = trig.duration;
+        });
+        return { nodes:[], ring:ring };
+      },
+      stepDur:function () { return self.tempoGrid(self.state.tempo, 2, 0)[1]; },
+      nextCol:function (col) { return (col + 1) % 16; },
+      onVisual:function (col) { self.setState({ playCol:col }); },
+    });
   }
-  stopTransport() { if (this.transportTimer) clearInterval(this.transportTimer); this.transportTimer = null; if (this.sampler) this.sampler.stopAll(); this.sequences = {}; this.setState({ playing:false }); }
-  stopSequence() { this.stopTransport(); }
+  stopTransport() {
+    this.stopSequence('sampler');
+    if (this.sampler) this.sampler.stopAll();
+    if (this.state.playing || this.state.playCol !== -1) this.setState({ playing:false, playCol:-1 });
+  }
   toggleTransport() { if (this.state.playing) this.stopTransport(); else this.startTransport(); }
 
   drawWaveform() {
@@ -493,7 +565,8 @@ class Component extends DCLogic {
     ctx.clearRect(0, 0, w, h); ctx.strokeStyle = ink; ctx.globalAlpha = 0.58; ctx.lineWidth = 2; ctx.beginPath();
     card.waveform.forEach(function (amp, i) { var x = i / (card.waveform.length - 1) * w; ctx.moveTo(x, h / 2 - amp * h * 0.42); ctx.lineTo(x, h / 2 + amp * h * 0.42); }); ctx.stroke();
     ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
-    card.slices.slice(1).forEach(function (slice) { var x = slice.start / card.duration * w; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); });
+    var self = this;
+    card.slices.slice(1).forEach(function (slice, i) { var x = slice.start / card.duration * w; if (self.state.selectedSliceIndex === i + 1) { ctx.globalAlpha = 1; ctx.lineWidth = 4; } ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); if (self.state.selectedSliceIndex === i + 1) { ctx.globalAlpha = 0.9; ctx.lineWidth = 2; } });
     ctx.globalAlpha = 1;
   }
   markerFromEvent(event) {
@@ -510,38 +583,59 @@ class Component extends DCLogic {
     var min = card.slices[i - 1].start + 0.005, max = card.slices[i].end - 0.005, time = Math.max(min, Math.min(max, marker.time));
     card.slices[i - 1].end = time; card.slices[i].start = time; this.drawWaveform();
   }
-  waveformPointerUp() { this.dragSliceIndex = null; }
+  waveformPointerUp() { if (this.dragSliceIndex !== null) { this.dragSliceIndex = null; this.rememberSlices(this.selectedCard()); } }
+  waveformKeydown(event) {
+    var card = this.selectedCard();
+    var currentIndex = this.state.selectedSliceIndex;
+    if (event.key === 'ArrowLeft' && currentIndex !== null && currentIndex > 1) {
+      event.preventDefault();
+      this.setState({ selectedSliceIndex: currentIndex - 1 });
+    } else if (event.key === 'ArrowRight' && currentIndex !== null && currentIndex < card.slices.length - 1) {
+      event.preventDefault();
+      this.setState({ selectedSliceIndex: currentIndex + 1 });
+    } else if (event.key === 'ArrowDown' && currentIndex !== null && currentIndex >= 1) {
+      event.preventDefault();
+      var i = currentIndex, min = card.slices[i - 1].start + 0.005, max = card.slices[i].end - 0.005;
+      var step = (max - min) * 0.02;
+      var newTime = Math.max(min, card.slices[i].start - step);
+      card.slices[i - 1].end = newTime; card.slices[i].start = newTime;
+      this.rememberSlices(card); this.drawWaveform();
+    } else if (event.key === 'ArrowUp' && currentIndex !== null && currentIndex >= 1) {
+      event.preventDefault();
+      var i = currentIndex, min = card.slices[i - 1].start + 0.005, max = card.slices[i].end - 0.005;
+      var step = (max - min) * 0.02;
+      var newTime = Math.min(max, card.slices[i].start + step);
+      card.slices[i - 1].end = newTime; card.slices[i].start = newTime;
+      this.rememberSlices(card); this.drawWaveform();
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (currentIndex === null && card.slices.length > 0) {
+        this.setState({ selectedSliceIndex: 1 });
+      } else if (currentIndex !== null) {
+        this.setState({ selectedSliceIndex: null });
+      }
+    }
+  }
 
-  getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
-  restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }
-  openCourseMap() { this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement; this.setState({ dialogOpen:true }, function () { if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return; var dialog = document.querySelector('[data-course-map-dialog="true"]'); var target = this.getDialogFocusables(dialog)[0] || dialog; if (target && typeof target.focus === 'function') target.focus(); }.bind(this)); }
-  closeCourseMap() { var target = this.dialogReturnFocus; this.dialogReturnFocus = null; this.setState({ dialogOpen:false }, this.restoreDialogFocus.bind(this, target)); }
-  onCourseMapKeydown(e) { if (e.key === 'Escape') { e.preventDefault(); this.closeCourseMap(); return; } if (e.key !== 'Tab') return; var focusables = this.getDialogFocusables(e.currentTarget); if (!focusables.length) { e.preventDefault(); if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus(); return; } var first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
-  goToStep(i) { this.stopTransport(); var idx = Math.max(0, Math.min(this.STEPS.length - 1, i)); var target = this.state.dialogOpen ? this.dialogReturnFocus : null; if (target) this.dialogReturnFocus = null; this.setState({ step:idx, dialogOpen:false }, function () { this.restoreDialogFocus(target); this.drawWaveform(); }.bind(this)); }
-  goNext() { this.goToStep(this.state.step + 1); }
-  goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopTransport(); this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; this.setState(this.initialState(), this.drawWaveform.bind(this)); }
-  toggleCheck(stepId, idx) { this.setState(function (state) { var arr = (state.checks[stepId] || []).slice(); arr[idx] = !arr[idx]; return { checks:Object.assign({}, state.checks, { [stepId]:arr }) }; }); }
-  buildItems(step) { var self = this, checks = this.state.checks[step.id] || []; return (step.items || []).map(function (item, i) { return { text:item.text, checked:!!checks[i], toggle:function () { self.toggleCheck(step.id, i); }, textStyle:checks[i] ? 'text-decoration:line-through;opacity:.5;' : '' }; }); }
-  buildNavGroups() { var self = this, groups = []; this.STEPS.forEach(function (step, i) { var group = groups.find(function (g) { return g.label === step.weekTag; }); if (!group) { group = { label:step.weekTag, items:[] }; groups.push(group); } group.items.push({ title:step.navLabel || step.title, go:function () { self.goToStep(i); }, rowStyle:'display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:' + (i === self.state.step ? 'var(--color-accent-100)' : 'transparent') + ';color:var(--color-text);' }); }); return groups; }
   buildSliceCardsView() { var self = this; return this.SLICE_CARDS.map(function (card) { var selected = card.id === self.state.selectedCardId; return { id:card.id, title:card.title, meta:(card.originalBpm ? card.originalBpm + ' BPM · ' : 'One-shot · ') + card.bitDepth + '-bit', pressed:selected ? 'true' : 'false', select:function () { self.selectCard(card.id); }, style:'display:flex;flex-direction:column;text-align:left;gap:3px;padding:10px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:pointer;font:inherit;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
   buildSlicePads(card) { var self = this; return Array.from({ length:8 }, function (_, i) { var slice = card.slices[i]; return { number:i + 1, label:slice ? slice.label : 'Empty', ariaLabel:slice ? 'Play pad ' + (i + 1) + ': ' + slice.label : 'Pad ' + (i + 1) + ' is empty', play:function () { if (slice) self.playSlice(i); }, style:'min-height:62px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:8px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:' + (slice ? 'pointer' : 'not-allowed') + ';font:inherit;background:' + (slice ? 'var(--color-accent-2-200)' : 'var(--color-neutral-300)') + ';color:var(--color-text);' }; }); }
   buildTrackPads() { var self = this; return Array.from({ length:8 }, function (_, i) { var selected = i === self.state.selectedTrack; return { number:i + 1, pressed:selected ? 'true' : 'false', select:function () { self.selectTrack(i); }, style:'padding:9px 5px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:12px;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
-  buildPatternSteps() { var self = this, row = this.state.pattern[this.state.selectedTrack]; return row.map(function (on, i) { return { number:i + 1, pressed:on ? 'true' : 'false', ariaLabel:'Pad ' + (self.state.selectedTrack + 1) + ', step ' + (i + 1), toggle:function () { self.togglePatternStep(i); }, style:'min-width:30px;aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:' + (on ? 'var(--color-accent-2-600)' : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-bg)')) + ';color:' + (on ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
+  buildPatternSteps() { var self = this, row = this.state.pattern[this.state.selectedTrack]; return row.map(function (on, i) { return { number:i + 1, pressed:on ? 'true' : 'false', ariaLabel:'Pad ' + (self.state.selectedTrack + 1) + ', step ' + (i + 1), toggle:function () { self.togglePatternStep(i); }, style:'min-width:30px;aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:' + (on ? 'var(--color-accent-2-600)' : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-bg)')) + ';color:' + (on ? 'var(--color-bg)' : 'var(--color-text)') + ';' + (i === self.state.playCol ? 'outline:2px solid var(--color-accent);outline-offset:1px;' : '') }; }); }
   componentDidMount() { this.drawWaveform(); }
   componentDidUpdate() { this.drawWaveform(); }
-  componentWillUnmount() { this.stopTransport(); }
+  componentWillUnmount() { this.stopTransport(); if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} } super.componentWillUnmount(); }
 
   renderVals() {
     var step = this.STEPS[this.state.step], card = this.selectedCard();
     return {
+      hasAudioError: !!this.state.audioError, audioError: this.state.audioError || '',
       weekLabel:step.weekTag, stepNumber:this.state.step + 1, totalSteps:this.STEPS.length, progressPct:Math.round(this.state.step / (this.STEPS.length - 1) * 100),
       isOverview:step.kind === 'overview', isWeekIntro:step.kind === 'weekintro', isContent:step.kind === 'content', isComplete:step.kind === 'complete',
       currentStep:{ weekTag:step.weekTag, title:step.title, objective:step.objective, body:step.body || '', items:this.buildItems(step), showSliceBank:step.widget === 'sliceBank', showPatternGrid:step.widget === 'patternGrid' },
       sliceCards:this.buildSliceCardsView(), selectedCard:{ title:card.title, provenance:card.provenance, tempoLabel:card.originalBpm ? card.originalBpm + ' BPM confirmed' : 'One-shot · no source BPM', waveformLabel:'Waveform for ' + card.title + ' with ' + card.slices.length + ' slice regions' }, slicePads:this.buildSlicePads(card),
-      sensitivity:this.state.sensitivity, status:this.state.status, importSample:function (e) { return this.importSample(e); }.bind(this), setSensitivity:function (e) { this.setSensitivity(e); }.bind(this), autoSlice:function () { this.autoSliceSelected(); }.bind(this), resample:function () { return this.resampleSelected(); }.bind(this), exportWav:function () { return this.exportSelectedWav(); }.bind(this), waveformPointerDown:function (e) { this.waveformPointerDown(e); }.bind(this), waveformPointerMove:function (e) { this.waveformPointerMove(e); }.bind(this), waveformPointerUp:function () { this.waveformPointerUp(); }.bind(this),
+      sensitivity:this.state.sensitivity, status:this.state.status, importSample:function (e) { return this.importSample(e); }.bind(this), setSensitivity:function (e) { this.setSensitivity(e); }.bind(this), autoSlice:function () { this.autoSliceSelected(); }.bind(this), resample:function () { return this.resampleSelected(); }.bind(this), exportWav:function () { return this.exportSelectedWav(); }.bind(this), waveformPointerDown:function (e) { this.waveformPointerDown(e); }.bind(this), waveformPointerMove:function (e) { this.waveformPointerMove(e); }.bind(this), waveformPointerUp:function () { this.waveformPointerUp(); }.bind(this), waveformKeydown:function (e) { this.waveformKeydown(e); }.bind(this),
       tempo:this.state.tempo, trackPads:this.buildTrackPads(), patternSteps:this.buildPatternSteps(), transportLabel:this.state.playing ? 'Stop' : 'Play', toggleTransport:function () { this.toggleTransport(); }.bind(this), clearPattern:function () { this.clearPattern(); }.bind(this), setTempo:function (e) { this.setTempo(e); }.bind(this),
-      navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen, openDialog:function () { this.openCourseMap(); }.bind(this), closeDialog:function () { this.closeCourseMap(); }.bind(this), dialogKeydown:function (e) { this.onCourseMapKeydown(e); }.bind(this), stopProp:function (e) { e.stopPropagation(); }, goNext:function () { this.goNext(); }.bind(this), goBack:function () { this.goBack(); }.bind(this), isFirst:this.state.step === 0, isLast:this.state.step === this.STEPS.length - 1, restart:function () { this.restart(); }.bind(this)
+      navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen, openDialog:function () { this.openCourseMap(); }.bind(this), closeDialog:function () { this.closeCourseMap(); }.bind(this), dialogKeydown:function (e) { this.onCourseMapKeydown(e); }.bind(this), stopProp:function (e) { e.stopPropagation(); }, goNext:function () { this.goNext(); }.bind(this), goBack:function () { this.goBack(); }.bind(this), clearResumeNotice:function () { this.clearResumeNotice(); }.bind(this), isFirst:this.state.step === 0, isLast:this.state.step === this.STEPS.length - 1, restart:function () { this.restart(); }.bind(this)
     };
   }
 }

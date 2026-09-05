@@ -165,7 +165,7 @@ class StubLogic {
   renderVals() { return {}; }
 }
 
-// The four guides share one navigation/dialog/checklist/scheduler base class,
+// The six guides share one navigation/dialog/checklist/persistence/scheduler base class,
 // which lives in support.js between extraction markers so the browser runtime
 // and this harness run the same code. Pull it out and build it over StubLogic.
 const sharedMatch = readFileSync(join(ROOT, 'support.js'), 'utf8')

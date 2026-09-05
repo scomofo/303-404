@@ -992,13 +992,14 @@
       persistenceVersion = 1;
       PERSIST_OMIT = new Set([
         'dialogOpen',
-        'rd6Playing', 'rd6Col', 'td3Playing', 'td3Col',
+        'rd6Playing', 'rd6Col', 'rd6PlayKind', 'rd6PatIdx', 'td3Playing', 'td3Col',
         'sbPlaying', 'sbCol', 'dbPlaying', 'dbCol',
         'enginePlaying', 'colA', 'colB',
         'beatPlaying', 'beatCol', 'progPlaying', 'progBar',
         'arpPlaying', 'songPlaying', 'songBar', 'songCol',
         'recording', 'recordedSeconds', 'recordingReady',
-        'playing', 'status',
+        'padSel', 'lastNoteLabel',
+        'playing', 'playCol', 'status', 'audioError', 'selectedSliceIndex', 'resumeAvailable',
       ]);
       storageAvailable() {
         try {
@@ -1091,9 +1092,25 @@
         } catch (e) {
         }
       }
+      clearResumeNotice() {
+        this.clearProgress();
+        this.setState({ resumeAvailable: false });
+      }
       enablePersistence() {
         if (!this.persistenceKey) return;
         try {
+          if (this.persistenceKey && this.storageAvailable()) {
+            const raw = localStorage.getItem(this.persistenceKey);
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.version === this.persistenceVersion && parsed.state) {
+                  this.setState({ resumeAvailable: true });
+                }
+              } catch (e) {
+              }
+            }
+          }
           const patch = this.loadProgress();
           if (patch && Object.keys(patch).length) {
             this.state = { ...this.state, ...patch };
@@ -1131,13 +1148,70 @@
             };
             window.addEventListener('pagehide', this.__persistHideHook);
             if (typeof document !== 'undefined' && document.addEventListener) {
-              document.addEventListener('visibilitychange', () => {
+              this.__persistVisHook = () => {
                 if (document.hidden) this.saveProgress();
-              });
+              };
+              document.addEventListener('visibilitychange', this.__persistVisHook);
             }
           }
         } catch (e) {
         }
+      }
+      // Flush and detach. The runtime swaps logic instances on hot reload and
+      // unmounts on navigation; without this each old instance stayed reachable
+      // from the window through its listeners, AudioContext and all.
+      disablePersistence() {
+        if (this.__persistTimer) {
+          clearTimeout(this.__persistTimer);
+          this.__persistTimer = null;
+        }
+        if (this.__persistWrapped) this.saveProgress();
+        try {
+          if (typeof window !== 'undefined' && window.removeEventListener && this.__persistHideHook) {
+            window.removeEventListener('pagehide', this.__persistHideHook);
+          }
+          if (typeof document !== 'undefined' && document.removeEventListener && this.__persistVisHook) {
+            document.removeEventListener('visibilitychange', this.__persistVisHook);
+          }
+        } catch (e) {
+        }
+        this.__persistHideHook = null;
+        this.__persistVisHook = null;
+      }
+      componentWillUnmount() {
+        this.disablePersistence();
+        if (super.componentWillUnmount) super.componentWillUnmount();
+      }
+
+      // ── audio availability ──
+      // Every engine guide builds its AudioContext through here, so a browser
+      // without Web Audio (or one that refuses to construct a context) gets a
+      // visible explanation instead of an uncaught TypeError on the Play click.
+      AUDIO_UNAVAILABLE = 'This browser does not provide Web Audio, so the practice engines stay silent here. The written steps, checklists and paper grids still work.';
+      createAudioContext() {
+        const Ctor = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+        if (typeof Ctor !== 'function') {
+          this.reportAudioUnavailable();
+          return null;
+        }
+        try {
+          return new Ctor();
+        } catch (e) {
+          this.reportAudioUnavailable();
+          return null;
+        }
+      }
+      resumeAudio(ctx) {
+        if (!ctx || ctx.state !== 'suspended' || typeof ctx.resume !== 'function') return;
+        try {
+          const p = ctx.resume();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        } catch (e) {
+        }
+      }
+      reportAudioUnavailable() {
+        if (this.state && this.state.audioError) return;
+        this.setState({ audioError: this.AUDIO_UNAVAILABLE });
       }
 
       // ── step scheduling ──

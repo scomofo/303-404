@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>DDJ-FLX4 Guide</title>
 <script src="./support.js"></script>
 </head>
@@ -34,7 +34,10 @@
   </header>
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
-    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+    <div style="width:100%;max-width:760px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
+      </sc-if>
 
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
@@ -69,7 +72,7 @@
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-3);">
           <span class="tag tag-accent" style="align-self:flex-start;">{{ currentStep.weekTag }}</span>
           <h2 style="margin:0;">{{ currentStep.title }}</h2>
-          <p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p>
+          <sc-if value="{{ currentStep.objective }}" hint-placeholder-val="{{ false }}"><p style="margin:0;opacity:.85;">{{ currentStep.objective }}</p></sc-if>
           <button type="button" class="btn btn-primary" onclick="{{ goNext }}" style="align-self:flex-start;">Begin →</button>
         </div>
       </sc-if>
@@ -122,9 +125,9 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
               <sc-for list="{{ cablesList }}" as="c" hint-placeholder-count="2">
-                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
-                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span style="flex:1 1 40px;min-width:40px;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
                   <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
                   <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
@@ -293,7 +296,8 @@
 
           <sc-if value="{{ currentStep.showRecording }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:var(--radius-md);background:var(--color-accent-100);">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong>Practice recorder</strong><div style="font-size:12px;opacity:.7;">Short original-synth drills · 44.1 kHz / 16-bit WAV</div></div><button type="button" class="btn btn-primary" onclick="{{ recordToggle }}">{{ recordLabel }}</button></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong>Practice recorder</strong><div style="font-size:12px;opacity:.7;">Short original-synth drills · 44.1 kHz / 16-bit WAV</div></div><button type="button" class="btn btn-primary" onclick="{{ recordToggle }}" aria-pressed="{{ recordPressed }}">{{ recordLabel }}</button></div>
+              <div role="status" aria-live="polite" style="min-height:16px;font-size:12px;opacity:.82;">{{ recordStatus }}</div>
               <p style="margin:0;font-size:12px;opacity:.72;">Use rekordbox or Serato for the final 30-minute mix. This browser recorder is capped at three minutes to keep memory use predictable.</p>
               <sc-if value="{{ hasRecording }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-secondary" onclick="{{ downloadRecording }}" style="align-self:flex-start;">Download practice WAV</button></sc-if>
             </div>
@@ -546,6 +550,7 @@ class Component extends DCCourseLogic {
   componentWillUnmount() {
     this.stopEngine();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+    super.componentWillUnmount();
   }
 
   buildIntensiveSteps() {
@@ -766,7 +771,10 @@ class Component extends DCCourseLogic {
     if (!canvas || typeof canvas.getContext !== 'function') return;
     const ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
     const centers = [w * 0.3, w * 0.7], cols = [Math.max(0, this.state.colA), Math.max(0, this.state.colB)];
-    ctx.clearRect(0,0,w,h); ctx.strokeStyle = 'currentColor'; ctx.fillStyle = 'currentColor';
+    // Canvas 2D never resolves 'currentColor'; read the themed text colour off the
+    // element so the meter is visible on the dark ground instead of default black.
+    const color = (typeof getComputedStyle === 'function' && getComputedStyle(canvas).color) || 'rgb(242, 234, 216)';
+    ctx.clearRect(0,0,w,h); ctx.strokeStyle = color; ctx.fillStyle = color;
     centers.forEach((cx, i) => {
       ctx.globalAlpha = i ? 0.55 : 0.85; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx,h / 2,48,0,Math.PI * 2); ctx.stroke();
       const angle = cols[i] / 16 * Math.PI * 2 - Math.PI / 2;
@@ -784,6 +792,17 @@ class Component extends DCCourseLogic {
   // guide only names the engine a step change or Start Over must silence.
   stopEngines() {
     this.stopEngine();
+    this.discardRecording();
+  }
+  onRestart() {
+    this.lastRecording = null;
+    this.recordStartedAt = null;
+  }
+  // A drill left recording when the reader changes step would otherwise keep
+  // timing until they came back and mint a WAV of the wrong length.
+  discardRecording() {
+    this.recordStartedAt = null;
+    if (this.state.recording) this.setState({ recording:false, recordingReady:false, recordedSeconds:0 });
   }
 
   // ── practice plan ──
@@ -880,14 +899,16 @@ class Component extends DCCourseLogic {
   // the deck engines below only decide what one step sounds like.
   ensureAudio() {
     if (!this.audioCtx) {
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioCtx = this.createAudioContext();
+      if (!this.audioCtx) return null;
       const size = this.audioCtx.sampleRate * 0.3;
       const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
       this.noiseBuffer = buf;
     }
-    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+    this.resumeAudio(this.audioCtx);
+    return this.audioCtx;
   }
   playKickTo(out, t, vol) {
     const ctx = this.audioCtx;
@@ -980,7 +1001,7 @@ class Component extends DCCourseLogic {
     return nodes;
   }
   startEngine() {
-    this.ensureAudio(); this.stopEngine(); this.initChains();
+    if (!this.ensureAudio()) return; this.stopEngine(); this.initChains();
     this.setState({ enginePlaying: true, colA: 0, colB: 0 });
     // Two independent sequences: deck A holds the reference tempo, deck B runs at
     // whatever the tempo fader says, so they drift apart until you beatmatch them.
@@ -1140,19 +1161,6 @@ class Component extends DCCourseLogic {
   }
 
   // ── nav dialog ──
-  buildNavGroups() {
-    const groups = [];
-    this.STEPS.forEach((s, i) => {
-      let g = groups.find(g => g.label === s.weekTag);
-      if (!g) { g = { label: s.weekTag, items: [] }; groups.push(g); }
-      g.items.push({
-        title: s.navLabel || s.title,
-        go: () => this.goToStep(i),
-        rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
-      });
-    });
-    return groups;
-  }
 
   // ── perf map ──
   buildPerfSections() {
@@ -1170,6 +1178,7 @@ class Component extends DCCourseLogic {
     const engineWidgets = ['jogSpin', 'tempo', 'mixerEQ', 'mixerFader', 'sync', 'hotCues', 'loop', 'beatFx'];
     const tempoCtl = { label: this.tempoLabel(), dec: () => this.stepTempo(-1), inc: () => this.stepTempo(1) };
     return {
+      hasAudioError: !!this.state.audioError, audioError: this.state.audioError || '',
       weekLabel: step.weekTag,
       stepNumber: this.state.step + 1,
       totalSteps: this.STEPS.length,
@@ -1274,6 +1283,9 @@ class Component extends DCCourseLogic {
         };
       })(),
       recordLabel:this.state.recording ? 'Stop recording' : 'Record drill',
+      recordPressed:this.state.recording ? 'true' : 'false',
+      recordStatus:this.state.recording ? 'Recording… stop within three minutes.'
+        : this.state.recordingReady ? 'Recorded ' + Number(this.state.recordedSeconds || 0).toFixed(1) + ' s. Download below.' : '',
       recordToggle:() => this.toggleRecording(),
       hasRecording:this.state.recordingReady,
       downloadRecording:() => this.downloadPracticeRecording(),
@@ -1287,6 +1299,7 @@ class Component extends DCCourseLogic {
       goBack: () => this.goBack(),
       isFirst: this.state.step === 0,
       isLast: this.state.step === this.STEPS.length - 1,
+      clearResumeNotice: () => this.clearResumeNotice(),
       restart: () => this.restart(),
     };
   }

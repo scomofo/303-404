@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GUIDES } from './harness.mjs';
 
 let chromium;
 try {
@@ -14,12 +15,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
 const guides = [
+  'index.html',
   'index.dc.html',
-  'Behringer Setup Guide.dc.html',
-  'SampleCircuit Guide.dc.html',
-  'DDJ-FLX4 Guide.dc.html',
-  'MPK Mini MK4 Guide.dc.html',
-  'TR-06 Guide.dc.html',
+  'groove-studio.html',
+  ...GUIDES.map(guide => guide.file),
 ];
 
 test('Guide Boot Check: guides load without errors', { skip: !chromium }, async (t) => {

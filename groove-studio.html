@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build, arrange and record drum and acid-bass grooves using the 303–404 pattern banks.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self';">
+  <title>Groove Studio · 303–404</title>
+  <link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+  <link rel="stylesheet" href="studio/studio.css">
+  <script defer src="studio/banks.js"></script>
+  <script defer src="studio/project.js"></script>
+  <script defer src="studio/audio.js"></script>
+  <script defer src="studio/app.js"></script>
+</head>
+<body class="studio-page">
+  <a class="skip-link" href="#workspace">Skip to instruments</a>
+  <div class="studio-shell">
+    <header class="studio-header">
+      <div><p class="eyebrow">303–404</p><h1>Groove Studio</h1><p class="subtle">Drums and acid bass, on one clock.</p></div>
+      <nav aria-label="Studio navigation"><a href="./index.dc.html">All courses</a><a href="./Behringer%20Setup%20Guide.dc.html">TD-3 / RD-6 guide</a></nav>
+    </header>
+
+    <noscript><p class="notice">Enable JavaScript to use the instruments. Your <a href="./index.dc.html">course links</a> are still available.</p></noscript>
+    <main>
+      <section class="project-toolbar" aria-label="Project">
+        <label class="project-name">Project name<input id="project-name" maxlength="80" value="My first groove" autocomplete="off"></label>
+        <div class="project-actions"><button id="save-project" type="button">Save</button><button id="copy-project" type="button">Save a copy</button><button id="new-project" type="button">New</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
+        <span id="save-state" class="subtle">Ready to play</span>
+      </section>
+
+      <section class="transport" aria-label="Playback and recording">
+        <div class="transport-actions"><button id="play-scene" type="button" class="primary">Play scene</button><button id="play-arrangement" type="button">Play arrangement</button><button id="stop" type="button" disabled>Stop</button></div>
+        <label>Tempo<input id="tempo" type="number" min="40" max="240" step="1" value="128"> BPM</label>
+        <label class="master-control">Master<input id="master" type="range" min="0" max="1" step="0.01" value="0.7"><span id="master-value">70%</span></label>
+        <span id="position" class="position" aria-live="off">Stopped</span>
+      </section>
+      <p id="status" class="status" role="status">Press Play arrangement to hear the starter's intro, groove, breakdown and return.</p>
+      <p id="error" class="notice" role="alert" hidden></p>
+
+      <section class="scene-panel" aria-label="Scenes">
+        <div id="scene-tabs" class="scene-tabs" role="group" aria-label="Edit or queue a scene"></div>
+        <div class="scene-tools"><label>Scene name<input id="scene-name" maxlength="40"></label><label>Copy this scene to<select id="copy-target"><option>A</option><option>B</option><option>C</option><option>D</option></select></label><button id="copy-scene" type="button">Copy scene</button><span class="subtle">While looping, scene changes land on a bar boundary.</span></div>
+      </section>
+
+      <div id="workspace" class="workspace" tabindex="-1">
+        <div class="instruments">
+          <section class="instrument" aria-labelledby="drum-heading">
+            <div class="instrument-heading"><div><p class="eyebrow">01 · Rhythm</p><h2 id="drum-heading">Drum machine</h2></div><button id="mute-drums" type="button" aria-pressed="false">Mute drums</button></div>
+            <div class="bank-controls"><label>Drum Bank<select id="drum-bank"></select></label><button id="load-drums" type="button">Load pattern</button><label>Pattern length<select id="drum-length"><option value="16">16 steps</option><option value="32">32 steps</option></select></label></div>
+            <p id="drum-source" class="source-note"></p>
+            <div class="lane-controls"><label>Edit voice<select id="drum-voice"></select></label><button id="clear-drum" type="button">Clear this voice</button></div>
+            <div id="drum-grid" class="step-grid" role="group" aria-label="Drum sequencer steps"></div>
+          </section>
+
+          <section class="instrument" aria-labelledby="bass-heading">
+            <div class="instrument-heading"><div><p class="eyebrow">02 · Bassline</p><h2 id="bass-heading">Acid synth</h2></div><button id="mute-bass" type="button" aria-pressed="false">Mute bass</button></div>
+            <div class="bank-controls"><label>Song Bank<select id="bass-bank"></select></label><button id="load-bass" type="button">Load pattern</button><label>Pattern length<input id="bass-length" type="number" min="2" max="32" step="1" value="16"></label></div>
+            <p id="bass-source" class="source-note"></p>
+            <div id="bass-grid" class="step-grid bass-grid" role="group" aria-label="Bass sequencer steps"></div>
+            <fieldset class="note-editor"><legend id="note-legend">Edit bass step 1</legend><label>Note<select id="note-pitch"><option value="rest">Rest</option><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></label><label>Octave<select id="note-octave"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label><label class="check"><input id="note-accent" type="checkbox"> Accent</label><label class="check"><input id="note-slide" type="checkbox"> Slide to next note</label></fieldset>
+            <p class="subtle">Choose a step to edit it. Accents lift the note; slides join it to the following note. Rests stay silent.</p>
+          </section>
+        </div>
+
+        <aside class="mixer" aria-labelledby="mixer-heading">
+          <p class="eyebrow">Scene sound</p><h2 id="mixer-heading">Mix &amp; shape</h2>
+          <label>Drum level <span id="drums-value"></span><input id="drums-level" type="range" min="0" max="1" step="0.01"></label>
+          <label>Bass level <span id="bass-value"></span><input id="bass-level" type="range" min="0" max="1" step="0.01"></label>
+          <label>Cutoff <span id="cutoff-value"></span><input id="cutoff" type="range" min="100" max="6000" step="10"></label>
+          <label>Resonance <span id="resonance-value"></span><input id="resonance" type="range" min="0.5" max="12" step="0.1"></label>
+          <label>Waveform<select id="waveform"><option value="sawtooth">Sawtooth</option><option value="square">Square</option></select></label>
+          <p class="subtle">Each scene keeps its own mix and sound settings. The bank supplies pattern data; the studio sound is a synthesized approximation.</p>
+          <div class="practice-prompt"><strong>Try one change</strong><p>Copy Groove to Return, then change two drum hits and open the cutoff. Play both scenes and listen for the lift.</p></div>
+        </aside>
+      </div>
+
+      <section class="arrangement-panel" aria-labelledby="arrangement-heading">
+        <div class="section-heading"><div><p class="eyebrow">Make it a set</p><h2 id="arrangement-heading">Arrangement</h2></div><span id="arrangement-length" class="position"></span></div>
+        <ol id="arrangement" class="arrangement-list"></ol>
+        <div class="section-actions"><button id="add-section" type="button">Add section</button><button id="export-wav" type="button" class="primary">Export arrangement WAV</button><span class="subtle">Up to 32 bars · Stereo 44.1 kHz / 16-bit · Includes 1.1 seconds of release tails</span></div>
+      </section>
+
+      <section class="takes-panel" aria-labelledby="takes-heading">
+        <div class="section-heading"><div><p class="eyebrow">Capture the performance</p><h2 id="takes-heading">Live take</h2></div><button id="record" type="button" aria-pressed="false">Record take</button></div>
+        <p class="subtle">Records the studio's actual output, including your scene launches, mutes and sound changes. Takes stop after three minutes. Download a take to keep it after leaving.</p>
+        <div id="take-result" class="take-result" hidden><audio id="take-preview" controls preload="metadata"></audio><a id="download-take" class="button">Download take</a></div>
+      </section>
+
+      <details class="project-library"><summary>Projects &amp; backups</summary><div class="library-content"><label>Projects saved in this browser<select id="project-list"></select></label><div class="section-actions"><button id="open-project" type="button">Open project</button><button id="delete-project" type="button">Delete selected project</button><button id="export-project" type="button">Download project backup</button><label class="button import-label">Import project<input id="import-project" type="file" accept=".json,application/json"></label></div><p class="subtle">Pattern projects save in this browser. Download a JSON backup to move them to another device or keep a separate copy. Live takes are downloaded separately.</p></div></details>
+    </main>
+    <footer class="studio-footer"><a href="./index.dc.html">Back to your courses</a><span>Original browser synthesis · Pattern attributions stay with your project</span></footer>
+  </div>
+</body>
+</html>

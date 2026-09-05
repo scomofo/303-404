@@ -450,6 +450,7 @@
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
                     <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
                       <label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setDbTempo }}" aria-label="Drum pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label>
+                      <label style="font-size:13px;">Volume <input type="range" min="0" max="1" step="0.05" onchange="{{ setDbMasterVolume }}" aria-label="Master volume" style="width:100px;" /></label>
                       <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
                     </div>
                   </div>
@@ -482,6 +483,7 @@
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
                     <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
                       <label style="font-size:13px;">Tempo <input type="number" min="40" max="240" onchange="{{ setDbTempo }}" aria-label="Drum pattern tempo in BPM" style="width:76px;padding:8px;" /> BPM</label>
+                      <label style="font-size:13px;">Volume <input type="range" min="0" max="1" step="0.05" onchange="{{ setDbMasterVolume }}" aria-label="Master volume" style="width:100px;" /></label>
                       <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
                     </div>
                   </div>
@@ -627,7 +629,7 @@ class Component extends DCCourseLogic {
       accentSweep: 'FAST',
       perfmapSel: 0,
       sbNotes: null, sbAccent: [], sbSlide: [], sbTempo: 125, sbWaveform: 'sawtooth', sbFilterCfg: null, sbOverdrive: 0, sbPlaying: false, sbCol: -1, sbSelected: null,
-      dbRows: null, dbSteps: 16, dbBpm: 120, dbPair: null, dbPlaying: false, dbCol: -1, dbSelected: null,
+      dbRows: null, dbSteps: 16, dbBpm: 120, dbMasterVolume: 0.8, dbPair: null, dbPlaying: false, dbCol: -1, dbSelected: null,
     };
   }
 
@@ -1371,6 +1373,9 @@ class Component extends DCCourseLogic {
       const data = buf.getChannelData(0);
       for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
       this.noiseBuffer = buf;
+      this.masterGain = this.audioCtx.createGain();
+      this.masterGain.gain.value = this.state.dbMasterVolume || 0.8;
+      this.masterGain.connect(this.audioCtx.destination);
     }
     this.resumeAudio(this.audioCtx);
     return this.audioCtx;
@@ -1383,7 +1388,7 @@ class Component extends DCCourseLogic {
     osc.frequency.exponentialRampToValueAtTime(48, t + 0.13);
     g.gain.setValueAtTime(0.9 * vol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(this.masterGain);
     osc.start(t); osc.stop(t + 0.2);
     return osc;
   }
@@ -1395,7 +1400,7 @@ class Component extends DCCourseLogic {
     const g = ctx.createGain();
     g.gain.setValueAtTime(opts.gain, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + opts.duration);
-    src.connect(filter).connect(g).connect(ctx.destination);
+    src.connect(filter).connect(g).connect(this.masterGain);
     src.start(t); src.stop(t + opts.duration + 0.02);
     return src;
   }
@@ -1414,9 +1419,9 @@ class Component extends DCCourseLogic {
       const f = ctx.createBiquadFilter();
       f.type = opts.filter.type; f.frequency.value = opts.filter.freq;
       if (opts.filter.Q) f.Q.value = opts.filter.Q;
-      osc.connect(f).connect(g).connect(ctx.destination);
+      osc.connect(f).connect(g).connect(this.masterGain);
     } else {
-      osc.connect(g).connect(ctx.destination);
+      osc.connect(g).connect(this.masterGain);
     }
     osc.start(t); osc.stop(t + opts.duration + 0.02);
     return osc;
@@ -1520,7 +1525,7 @@ class Component extends DCCourseLogic {
     shaper.curve = this.makeDistortionCurve(bookedDrive);
     shaper.oversample = '2x';
     const gain = ctx.createGain(); gain.gain.value = 0.0001;
-    osc.connect(filter).connect(shaper).connect(gain).connect(ctx.destination);
+    osc.connect(filter).connect(shaper).connect(gain).connect(this.masterGain);
     osc.start();
     this.td3Osc = osc; this.td3Gain = gain; this.td3Filter = filter; this.td3Shaper = shaper;
     const stepSec = 0.125;
@@ -1802,7 +1807,7 @@ class Component extends DCCourseLogic {
       shaper.oversample = '2x';
       tail = tail.connect(shaper);
     }
-    tail.connect(gain).connect(ctx.destination);
+    tail.connect(gain).connect(this.masterGain);
     osc.start();
     this.sbOsc = osc; this.sbGain = gain; this.sbFilter = filter;
     const notes = this.state.sbNotes, accentArr = this.state.sbAccent, slideArr = this.state.sbSlide;
@@ -1948,6 +1953,11 @@ class Component extends DCCourseLogic {
     var wasPlaying = this.state.dbPlaying;
     if (wasPlaying) this.stopDrumBank();
     this.setState({ dbBpm: next }, wasPlaying ? this.playDrumBank.bind(this) : undefined);
+  }
+  setDbMasterVolume(value) {
+    var next = Math.max(0, Math.min(1, parseFloat(value && value.target ? value.target.value : value) || 0.8));
+    this.setState({ dbMasterVolume: next });
+    if (this.masterGain) this.masterGain.gain.value = next;
   }
 
   // The loaded pattern, live: only the rows this card actually uses, with the sounding
@@ -2164,6 +2174,7 @@ class Component extends DCCourseLogic {
       dbPlayLabel: this.state.dbPlaying ? 'Stop' : 'Play Pattern',
       dbPlayToggle: this.state.dbPlaying ? () => this.stopDrumBank() : () => this.playDrumBank(),
       setDbTempo: (e) => this.setDbTempo(e),
+      setDbMasterVolume: (e) => this.setDbMasterVolume(e),
       dbPlayheadLabel: this.state.dbPlaying ? `Step ${this.state.dbCol + 1} of ${this.state.dbSteps}` : '',
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],

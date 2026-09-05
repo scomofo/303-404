@@ -34,6 +34,14 @@
       <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
         <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
       </sc-if>
+
+      <sc-if value="{{ resumeAvailable }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);border-left:4px solid var(--color-accent-600);font-size:14px;">
+          <div><strong>Progress saved</strong> · You can pick up where you left off</div>
+          <button type="button" class="btn btn-secondary" onclick="{{ clearResumeNotice }}" style="white-space:nowrap;">Clear progress</button>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-5);">
           <div><h1 style="margin:0;">Sample &amp; Circuit Guide</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Groovebox / Sampler Curriculum</h3></div>
@@ -627,7 +635,7 @@ class Component extends DCCourseLogic {
       sliceCards:this.buildSliceCardsView(), selectedCard:{ title:card.title, provenance:card.provenance, tempoLabel:card.originalBpm ? card.originalBpm + ' BPM confirmed' : 'One-shot · no source BPM', waveformLabel:'Waveform for ' + card.title + ' with ' + card.slices.length + ' slice regions' }, slicePads:this.buildSlicePads(card),
       sensitivity:this.state.sensitivity, status:this.state.status, importSample:function (e) { return this.importSample(e); }.bind(this), setSensitivity:function (e) { this.setSensitivity(e); }.bind(this), autoSlice:function () { this.autoSliceSelected(); }.bind(this), resample:function () { return this.resampleSelected(); }.bind(this), exportWav:function () { return this.exportSelectedWav(); }.bind(this), waveformPointerDown:function (e) { this.waveformPointerDown(e); }.bind(this), waveformPointerMove:function (e) { this.waveformPointerMove(e); }.bind(this), waveformPointerUp:function () { this.waveformPointerUp(); }.bind(this), waveformKeydown:function (e) { this.waveformKeydown(e); }.bind(this),
       tempo:this.state.tempo, trackPads:this.buildTrackPads(), patternSteps:this.buildPatternSteps(), transportLabel:this.state.playing ? 'Stop' : 'Play', toggleTransport:function () { this.toggleTransport(); }.bind(this), clearPattern:function () { this.clearPattern(); }.bind(this), setTempo:function (e) { this.setTempo(e); }.bind(this),
-      navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen, openDialog:function () { this.openCourseMap(); }.bind(this), closeDialog:function () { this.closeCourseMap(); }.bind(this), dialogKeydown:function (e) { this.onCourseMapKeydown(e); }.bind(this), stopProp:function (e) { e.stopPropagation(); }, goNext:function () { this.goNext(); }.bind(this), goBack:function () { this.goBack(); }.bind(this), isFirst:this.state.step === 0, isLast:this.state.step === this.STEPS.length - 1, restart:function () { this.restart(); }.bind(this)
+      navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen, openDialog:function () { this.openCourseMap(); }.bind(this), closeDialog:function () { this.closeCourseMap(); }.bind(this), dialogKeydown:function (e) { this.onCourseMapKeydown(e); }.bind(this), stopProp:function (e) { e.stopPropagation(); }, goNext:function () { this.goNext(); }.bind(this), goBack:function () { this.goBack(); }.bind(this), clearResumeNotice:function () { this.clearResumeNotice(); }.bind(this), isFirst:this.state.step === 0, isLast:this.state.step === this.STEPS.length - 1, restart:function () { this.restart(); }.bind(this)
     };
   }
 }

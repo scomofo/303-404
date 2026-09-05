@@ -999,7 +999,7 @@
         'arpPlaying', 'songPlaying', 'songBar', 'songCol',
         'recording', 'recordedSeconds', 'recordingReady',
         'padSel', 'lastNoteLabel',
-        'playing', 'playCol', 'status', 'audioError', 'selectedSliceIndex',
+        'playing', 'playCol', 'status', 'audioError', 'selectedSliceIndex', 'resumeAvailable',
       ]);
       storageAvailable() {
         try {
@@ -1092,9 +1092,25 @@
         } catch (e) {
         }
       }
+      clearResumeNotice() {
+        this.clearProgress();
+        this.setState({ resumeAvailable: false });
+      }
       enablePersistence() {
         if (!this.persistenceKey) return;
         try {
+          if (this.persistenceKey && this.storageAvailable()) {
+            const raw = localStorage.getItem(this.persistenceKey);
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.version === this.persistenceVersion && parsed.state) {
+                  this.setState({ resumeAvailable: true });
+                }
+              } catch (e) {
+              }
+            }
+          }
           const patch = this.loadProgress();
           if (patch && Object.keys(patch).length) {
             this.state = { ...this.state, ...patch };

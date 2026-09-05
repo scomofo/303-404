@@ -36,6 +36,13 @@
         <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
       </sc-if>
 
+      <sc-if value="{{ resumeAvailable }}" hint-placeholder-val="{{ false }}">
+        <div class="card elev-sm" style="padding:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);border-left:4px solid var(--color-accent-600);font-size:14px;">
+          <div><strong>Progress saved</strong> · You can pick up where you left off</div>
+          <button type="button" class="btn btn-secondary" onclick="{{ clearResumeNotice }}" style="white-space:nowrap;">Clear progress</button>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
           <div>
@@ -2193,6 +2200,7 @@ class Component extends DCCourseLogic {
       stopProp: e => e.stopPropagation(),
       goNext: () => this.goNext(),
       goBack: () => this.goBack(),
+      clearResumeNotice: () => this.clearResumeNotice(),
       isFirst: this.state.step === 0,
       isLast: this.state.step === this.STEPS.length - 1,
       restart: () => this.restart(),

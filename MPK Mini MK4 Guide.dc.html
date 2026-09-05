@@ -1818,6 +1818,7 @@ class Component extends DCCourseLogic {
       goBack: () => this.goBack(),
       isFirst: this.state.step === 0,
       isLast: this.state.step === this.STEPS.length - 1,
+      clearResumeNotice: () => this.clearResumeNotice(),
       restart: () => this.restart(),
     };
   }

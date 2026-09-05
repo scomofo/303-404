@@ -368,7 +368,7 @@ class Component extends DCCourseLogic {
       },
       navGroups:this.buildNavGroups(), dialogOpen:this.state.dialogOpen,
       openDialog:()=>this.openCourseMap(), closeDialog:()=>this.closeCourseMap(), dialogKeydown:e=>this.onCourseMapKeydown(e), stopProp:e=>e.stopPropagation(),
-      goNext:()=>this.goNext(), goBack:()=>this.goBack(), isFirst:this.state.step===0, isLast:this.state.step===this.STEPS.length-1, restart:()=>this.restart(),
+      goNext:()=>this.goNext(), goBack:()=>this.goBack(), clearResumeNotice:()=>this.clearResumeNotice(), isFirst:this.state.step===0, isLast:this.state.step===this.STEPS.length-1, restart:()=>this.restart(),
     };
   }
 }

@@ -159,7 +159,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ rd6GridTitle }}</div>
-                <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}">{{ rd6PlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6PlayToggle }}" aria-pressed="{{ rd6Playing }}" aria-label="Play RD-6 pattern">{{ rd6PlayLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
                 <div style="display:flex;flex-direction:column;gap:5px;min-width:600px;padding:2px;">
@@ -175,6 +175,7 @@
                   </sc-for>
                 </div>
               </div>
+              <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ rd6PlayheadLabel }}</div>
             </div>
           </sc-if>
 
@@ -197,7 +198,7 @@
             <div style="display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Chain playback — Pattern 1 → Pattern 2</div>
-                <button type="button" class="btn btn-primary" onclick="{{ rd6ChainPlayToggle }}">{{ rd6ChainPlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ rd6ChainPlayToggle }}" aria-pressed="{{ rd6Playing }}" aria-label="Play RD-6 chain">{{ rd6ChainPlayLabel }}</button>
               </div>
               <div style="display:flex;gap:10px;">
                 <sc-for list="{{ rd6ChainSlots }}" as="slot" hint-placeholder-count="2">
@@ -364,7 +365,7 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ sbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ sbPlayToggle }}">{{ sbPlayLabel }}</button>
+                    <button type="button" class="btn btn-primary" onclick="{{ sbPlayToggle }}" aria-pressed="{{ sbPlaying }}" aria-label="Play song bank">{{ sbPlayLabel }}</button>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
@@ -385,6 +386,7 @@
                       </sc-for>
                     </div>
                   </div>
+                  <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ sbPlayheadLabel }}</div>
                 </div>
               </sc-if>
               <p style="font-size:12px;opacity:.6;margin:0;">The bank mixes original practice patterns, fan-chart transcriptions and supplied written step tables. Every source type uses the same sheet-inspired programming layout as a visualization; the layout does not imply that each pattern came from a printed Roland sheet. Add your own by editing SONG_CARDS in the component script — see the README.</p>
@@ -446,7 +448,7 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}">{{ dbPlayLabel }}</button>
+                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="{{ dbGridStyle }}">
@@ -462,6 +464,7 @@
                       </sc-for>
                     </div>
                   </div>
+                  <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ dbPlayheadLabel }}</div>
                 </div>
               </sc-if>
               <p style="font-size:12px;opacity:.6;margin:0;">The bank mixes patterns transcribed from recordings, genre templates from production literature, and one pattern this course wrote itself. Every card names its source. Add your own by editing DRUM_CARDS in the component script — see the README.</p>
@@ -474,7 +477,7 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">{{ dbTitle }}</div>
-                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}">{{ dbPlayLabel }}</button>
+                    <button type="button" class="btn btn-primary" onclick="{{ dbPlayToggle }}" aria-pressed="{{ dbPlaying }}" aria-label="Play drum bank">{{ dbPlayLabel }}</button>
                   </div>
                   <div style="overflow-x:auto;">
                     <div style="{{ dbGridStyle }}">
@@ -490,10 +493,11 @@
                       </sc-for>
                     </div>
                   </div>
+                  <div style=”min-height:20px;font-size:12px;margin-top:6px;” aria-live=”polite”>{{ dbPlayheadLabel }}</div>
                 </div>
               </sc-if>
-              <sc-if value="{{ dbNoCard }}" hint-placeholder-val="{{ false }}">
-                <p style="font-size:13px;opacity:.75;margin:0;padding:12px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);">No pattern sheet is loaded yet — go back one step and tap “Load into engine” on any card, then return here.</p>
+              <sc-if value=”{{ dbNoCard }}” hint-placeholder-val=”{{ false }}”>
+                <p style=”font-size:13px;opacity:.75;margin:0;padding:12px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);”>No pattern sheet is loaded yet — go back one step and tap “Load into engine” on any card, then return here.</p>
               </sc-if>
             </div>
           </sc-if>
@@ -502,7 +506,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Full bassline</div>
-                <button type="button" class="btn btn-primary" onclick="{{ td3PlayToggle }}">{{ td3PlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ td3PlayToggle }}" aria-pressed="{{ td3Playing }}" aria-label="Play TD-3 bassline">{{ td3PlayLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
                 <div style="display:flex;gap:6px;min-width:680px;padding:2px;">
@@ -523,6 +527,7 @@
                   </sc-for>
                 </div>
               </div>
+              <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ td3PlayheadLabel }}</div>
             </div>
           </sc-if>
 
@@ -2077,6 +2082,7 @@ class Component extends DCCourseLogic {
       rd6PlayLabel: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6') ? 'Stop' : 'Play Pattern',
       rd6PlayToggle: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6')
         ? () => this.stopRd6() : () => this.playRd6(step.widget === 'rd6fill' ? 'rd6fill' : 'rd6'),
+      rd6PlayheadLabel: this.state.rd6Playing && this.state.rd6PlayKind === (step.widget === 'rd6fill' ? 'rd6fill' : 'rd6') ? `Step ${this.state.rd6Col + 1} of 16` : '',
       shuffleOptions: step.widget === 'rd6shuffle' ? [
         { label: 'Straight', value: 0 }, { label: 'Light', value: 0.08 },
         { label: 'Medium', value: 0.16 }, { label: 'Heavy', value: 0.25 },
@@ -2094,6 +2100,7 @@ class Component extends DCCourseLogic {
       td3PlayCells: (step.widget === 'td3play' || step.widget === 'td3fx') ? this.buildTd3PlayCells() : [],
       td3PlayLabel: this.state.td3Playing ? 'Stop' : 'Play Bassline',
       td3PlayToggle: this.state.td3Playing ? () => this.stopTd3() : () => this.playTd3(),
+      td3PlayheadLabel: this.state.td3Playing ? `Step ${this.state.td3Col + 1} of 16` : '',
       overdriveOptions: step.widget === 'td3fx' ? [
         { label: 'OFF', value: 0 }, { label: 'LOW', value: 0.3 }, { label: 'MED', value: 0.6 }, { label: 'HIGH', value: 1 },
       ].map(o => ({ label: o.label, checked: this.state.td3Overdrive === o.value, select: () => this.setState({ td3Overdrive: o.value }) })) : [],
@@ -2120,6 +2127,7 @@ class Component extends DCCourseLogic {
       sbCells: step.widget === 'songbank' ? this.buildSongBankCells() : [],
       sbPlayLabel: this.state.sbPlaying ? 'Stop' : 'Play Bassline',
       sbPlayToggle: this.state.sbPlaying ? () => this.stopSongBank() : () => this.playSongBank(),
+      sbPlayheadLabel: this.state.sbPlaying ? `Step ${this.state.sbCol + 1} of 16` : '',
       // Each drum card renders as its own pattern sheet; Load hands it to the drum
       // engine below, which is independent of the RD-6 grids in the earlier weeks.
       drumCards: step.widget === 'drumbank' ? this.DRUM_CARDS.map(c => {
@@ -2143,6 +2151,7 @@ class Component extends DCCourseLogic {
       dbGridStyle: `display:flex;flex-direction:column;gap:4px;padding:2px;min-width:${38 + this.state.dbSteps * 25}px;`,
       dbPlayLabel: this.state.dbPlaying ? 'Stop' : 'Play Pattern',
       dbPlayToggle: this.state.dbPlaying ? () => this.stopDrumBank() : () => this.playDrumBank(),
+      dbPlayheadLabel: this.state.dbPlaying ? `Step ${this.state.dbCol + 1} of ${this.state.dbSteps}` : '',
       cablesAudio: step.widget === 'cablesAudio' ? this.buildCablesAudio() : [],
       syncCable: step.widget === 'sync' ? this.buildSyncCable() : [],
       accentSweepOptions: step.widget === 'moTweaks' ? [

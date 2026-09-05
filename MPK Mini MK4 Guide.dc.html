@@ -250,7 +250,7 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div class="dc-kicker">Step sequencer &mdash; one bar, 16 steps, {{ padBankName }}</div>
-                <button type="button" class="btn btn-primary" onclick="{{ beatToggle }}">{{ beatLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ beatToggle }}" aria-pressed="{{ beatPlaying }}" aria-label="Play step sequencer">{{ beatLabel }}</button>
               </div>
               <div style="overflow-x:auto;">
                 <div style="display:flex;flex-direction:column;gap:5px;min-width:640px;padding:2px;">
@@ -266,6 +266,7 @@
                   </sc-for>
                 </div>
               </div>
+              <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ beatPlayheadLabel }}</div>
               <p class="dc-hint">A cell is written at whichever velocity is selected above, so the same row can hold soft ghost notes and full-force accents. Click a written cell again at the same velocity to erase it.</p>
             </div>
           </sc-if>
@@ -346,9 +347,10 @@
                   </sc-for>
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                  <button type="button" class="btn btn-primary" onclick="{{ progToggle }}">{{ progLabel }}</button>
+                  <button type="button" class="btn btn-primary" onclick="{{ progToggle }}" aria-pressed="{{ progPlaying }}" aria-label="Play progression">{{ progLabel }}</button>
                   <span style="font-size:12.5px;opacity:.75;">{{ progHint }}</span>
                 </div>
+                <div style="min-height:20px;font-size:12px;margin-top:6px;" aria-live="polite">{{ progPlayheadLabel }}</div>
               </div>
             </div>
           </sc-if>
@@ -357,7 +359,7 @@
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div class="dc-kicker">Arpeggiator &mdash; hold a chord, get a pattern</div>
-                <button type="button" class="btn btn-primary" onclick="{{ arpToggle }}">{{ arpLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ arpToggle }}" aria-pressed="{{ arpPlaying }}" aria-label="Play arpeggiator">{{ arpLabel }}</button>
               </div>
               <div>
                 <div class="dc-kicker" style="margin-bottom:6px;">Held chord</div>
@@ -387,6 +389,7 @@
                 <button type="button" class="btn btn-secondary" onclick="{{ arpMutateToggle }}" aria-pressed="{{ arpMutatePressed }}">{{ arpMutateLabel }}</button>
               </div>
               <div style="font-size:12.5px;" aria-live="polite">{{ arpSequenceLabel }}</div>
+              <div style="min-height:20px;font-size:12px;" aria-live="polite">{{ arpPlayheadLabel }}</div>
               <p class="dc-hint">Freeze locks the note order that is running now, so changing the held chord leaves the shape alone. Mutate nudges one step of that order every time the pattern comes round &mdash; always to another note of the same chord, so it wanders without going wrong. Both are simplified stand-ins for the hardware's own arp; use them to learn what to listen for, then find the same controls on the unit.</p>
             </div>
           </sc-if>
@@ -395,7 +398,7 @@
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div class="dc-kicker">8 assignable knobs &mdash; start the loop, then turn one</div>
-                <button type="button" class="btn btn-primary" onclick="{{ progToggle }}">{{ progLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ progToggle }}" aria-pressed="{{ progPlaying }}" aria-label="Play progression">{{ progLabel }}</button>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:var(--space-4);">
                 <sc-for list="{{ knobRows }}" as="k" hint-placeholder-count="8">
@@ -421,7 +424,7 @@
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div class="dc-kicker">Arrangement &mdash; {{ songLengthLabel }}</div>
-                <button type="button" class="btn btn-primary" onclick="{{ songToggle }}">{{ songPlayLabel }}</button>
+                <button type="button" class="btn btn-primary" onclick="{{ songToggle }}" aria-pressed="{{ songPlaying }}" aria-label="Play arrangement">{{ songPlayLabel }}</button>
               </div>
               <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;height:44px;">
                 <sc-for list="{{ songSections }}" as="sec" hint-placeholder-count="4">
@@ -438,6 +441,7 @@
                 </div>
               </div>
               <div style="font-size:12.5px;font-weight:700;min-height:20px;" aria-live="polite">{{ songPositionLabel }}</div>
+              <div style="min-height:20px;font-size:12px;" aria-live="polite">{{ songPlayheadLabel }}</div>
               <p class="dc-hint">The drums come from your Week 2 grid, the chords from your Week 3 progression, and the arp from your Week 4 settings &mdash; change any of them and this arrangement changes with it.</p>
             </div>
           </sc-if>
@@ -1746,6 +1750,7 @@ class Component extends DCCourseLogic {
       beatRows: has('beat') ? this.buildBeatRows() : [],
       beatLabel: this.state.beatPlaying ? 'Stop' : 'Play Beat',
       beatToggle: this.state.beatPlaying ? () => this.stopAll() : () => this.playBeat(),
+      beatPlayheadLabel: this.state.beatPlaying ? `Step ${this.state.beatCol + 1} of 16` : '',
 
       scaleToggleLabel: this.state.scaleOn ? 'Scale Mode ON' : 'Scale Mode OFF',
       scaleToggle: () => this.setState(s => ({ scaleOn: !s.scaleOn })),
@@ -1771,6 +1776,7 @@ class Component extends DCCourseLogic {
       progSlots: has('chord') ? this.buildProgSlots() : [],
       progLabel: this.state.progPlaying ? 'Stop' : 'Play Progression',
       progToggle,
+      progPlayheadLabel: this.state.progPlaying ? `Bar ${this.state.progBar + 1} of 4` : '',
       progHint: `One chord per bar at ${this.state.tempo} BPM, looping.`,
 
       arpChordOptions: has('arp') ? Array.from({ length: this.degreeCount() }, (_, d) => ({
@@ -1780,6 +1786,7 @@ class Component extends DCCourseLogic {
       arpControls: has('arp') ? this.buildArpControls() : [],
       arpLabel: this.state.arpPlaying ? 'Stop' : 'Play Arp',
       arpToggle: this.state.arpPlaying ? () => this.stopAll() : () => this.playArp(),
+      arpPlayheadLabel: this.state.arpPlaying ? 'Arpeggiator running' : '',
       arpFreezeLabel: this.state.arpFreeze ? 'Freeze ON' : 'Freeze OFF',
       arpFreezePressed: this.state.arpFreeze ? 'true' : 'false',
       arpFreezeToggle: () => this.setState(s => ({ arpFreeze: !s.arpFreeze })),
@@ -1795,6 +1802,7 @@ class Component extends DCCourseLogic {
       songLengthLabel: `${totalBars} bars, about ${songSeconds}s at ${this.state.tempo} BPM`,
       songPlayLabel: this.state.songPlaying ? 'Stop' : 'Play Arrangement',
       songToggle: this.state.songPlaying ? () => this.stopAll() : () => this.playSong(),
+      songPlayheadLabel: this.state.songPlaying ? `Bar ${this.state.songBar + 1} of ${totalBars}` : '',
       songPositionLabel: this.state.songPlaying
         ? `Bar ${this.state.songBar + 1} of ${totalBars} · ${this.sectionForBar(this.state.songBar).title}`
         : 'Stopped.',

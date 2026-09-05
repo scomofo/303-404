@@ -1155,19 +1155,6 @@ class Component extends DCCourseLogic {
   }
 
   // ── nav dialog ──
-  buildNavGroups() {
-    const groups = [];
-    this.STEPS.forEach((s, i) => {
-      let g = groups.find(g => g.label === s.weekTag);
-      if (!g) { g = { label: s.weekTag, items: [] }; groups.push(g); }
-      g.items.push({
-        title: s.navLabel || s.title,
-        go: () => this.goToStep(i),
-        rowStyle: `display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);`,
-      });
-    });
-    return groups;
-  }
 
   // ── perf map ──
   buildPerfSections() {

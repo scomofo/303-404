@@ -296,17 +296,8 @@ class Component extends DCCourseLogic {
     ];
   }
 
-  getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
-  restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }
-  openCourseMap() { this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement; this.setState({ dialogOpen:true }, () => { if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return; const dialog = document.querySelector('[data-course-map-dialog="true"]'); const target = this.getDialogFocusables(dialog)[0] || dialog; if (target && typeof target.focus === 'function') target.focus(); }); }
-  closeCourseMap() { const target = this.dialogReturnFocus; this.dialogReturnFocus = null; this.setState({ dialogOpen:false }, () => this.restoreDialogFocus(target)); }
-  onCourseMapKeydown(e) { if (e.key === 'Escape') { e.preventDefault(); this.closeCourseMap(); return; } if (e.key !== 'Tab') return; const focusables = this.getDialogFocusables(e.currentTarget); if (!focusables.length) { e.preventDefault(); if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus(); return; } const first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
-  goToStep(i) { const idx = Math.max(0, Math.min(this.STEPS.length - 1, i)); const target = this.state.dialogOpen ? this.dialogReturnFocus : null; if (target) this.dialogReturnFocus = null; this.setState({ step:idx, dialogOpen:false }, () => this.restoreDialogFocus(target)); }
-  goNext() { this.goToStep(this.state.step + 1); }
-  goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.setState(this.initialState()); }
-  toggleCheck(stepId, idx) { this.setState(s => { const arr = (s.checks[stepId] || []).slice(); arr[idx] = !arr[idx]; return { checks:{ ...s.checks, [stepId]:arr } }; }); }
-  buildItems(step) { if (!step.items) return []; const checks = this.state.checks[step.id] || []; return step.items.map((it, i) => ({ text:it.text, checked:!!checks[i], toggle:() => this.toggleCheck(step.id, i), textStyle:checks[i] ? 'text-decoration:line-through;opacity:.5;' : '', hasSub:!!(it.subitems && it.subitems.length), subitems:it.subitems || [] })); }
+  // Dialog, step navigation, checklist and persistence are inherited from the
+  // shared DCCourseLogic base in support.js; nothing here needs to override them.
 
   setGridVoice(id) { this.setState({ gridVoice:id }); }
   toggleGridCell(voiceId, index) {
@@ -347,7 +338,6 @@ class Component extends DCCourseLogic {
     }));
   }
 
-  buildNavGroups() { const groups = []; this.STEPS.forEach((s, i) => { let g = groups.find(g => g.label === s.weekTag); if (!g) { g = { label:s.weekTag, items:[] }; groups.push(g); } g.items.push({ title:s.navLabel || s.title, go:() => this.goToStep(i), rowStyle:`display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:${i === this.state.step ? 'var(--color-accent-100)' : 'transparent'};color:var(--color-text);` }); }); return groups; }
 
   renderVals() {
     const step = this.STEPS[this.state.step];

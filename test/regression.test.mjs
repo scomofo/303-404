@@ -49,6 +49,24 @@ test('every guide declares the documented CSP baseline', () => {
   }
 });
 
+// Four guides once carried verbatim copies of the DCCourseLogic navigation,
+// dialog, checklist and persistence methods, and the copies drifted (dropping
+// the stopEngines/onRestart hooks). Only the two hooks may be redefined.
+test('no guide re-declares a DCCourseLogic base method', () => {
+  const shared = readFileSync(join(ROOT, 'support.js'), 'utf8')
+    .match(/\/\* __DC_COURSE_SHARED_START__ \*\/([\s\S]*?)\/\* __DC_COURSE_SHARED_END__ \*\//)[1];
+  const baseMethods = [...shared.matchAll(/^      ([a-zA-Z]+)\([^)]*\) \{/gm)].map(m => m[1])
+    .filter(name => !['stopEngines', 'onRestart', 'componentWillUnmount', 'toggleCable', 'buildCables'].includes(name));
+  assert.ok(baseMethods.includes('goToStep') && baseMethods.includes('enablePersistence'));
+  for (const guide of GUIDES) {
+    const html = readGuide(guide.file);
+    for (const name of baseMethods) {
+      assert.ok(!new RegExp(`^  ${name}\\(`, 'm').test(html),
+        `${guide.name}: re-declares DCCourseLogic.${name}; use the base or the stopEngines/onRestart hooks`);
+    }
+  }
+});
+
 test('support.js pins SRI for unpkg React/Babel', () => {
   const js = readFileSync(join(ROOT, 'support.js'), 'utf8');
   for (const name of ['REACT_SRI', 'REACT_DOM_SRI', 'BABEL_SRI']) {

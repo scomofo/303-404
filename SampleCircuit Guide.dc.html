@@ -268,11 +268,11 @@ class SamplerEngine {
   }
 }
 
-class Component extends DCLogic {
+class Component extends DCCourseLogic {
   persistenceKey = '303-404/sample-circuit/v1';
   persistenceVersion = 1;
   makePattern() { return Array.from({ length:8 }, function () { return Array(16).fill(false); }); }
-  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, status:'', sliceEdits:{} }; }
+  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, playCol:-1, status:'', sliceEdits:{} }; }
   state = this.initialState();
 
   constructor(props) {
@@ -281,13 +281,13 @@ class Component extends DCLogic {
     this.SLICE_CARDS = this.buildSliceCards();
     this.STEPS = this.buildSteps();
     this.sampler = null;
-    this.transportTimer = null;
-    this.nextBarTime = 0;
     this.dragSliceIndex = null;
     this.sequences = {};
     this.enablePersistence();
     this.applySliceEdits();
   }
+  stopEngines() { this.stopTransport(); }
+  onRestart() { this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; }
 
   // Slice boundaries live on the card objects, not in state, so a saved pattern
   // would otherwise reload against default slices and collapse onto pad 1.
@@ -314,12 +314,7 @@ class Component extends DCLogic {
       card.autoSliced = !!entry.autoSliced; card.algorithm = entry.algorithm || null; card.sensitivity = entry.sensitivity === undefined ? null : entry.sensitivity;
     });
   }
-  storageAvailable() { try { if (typeof localStorage === 'undefined') return false; localStorage.setItem('__dc_persist_probe__', '1'); localStorage.removeItem('__dc_persist_probe__'); return true; } catch (e) { return false; } }
-  snapshotForPersist(source) { var s = source || this.state || {}; var out = {}; var omit = { dialogOpen:1, playing:1, status:1 }; for (var k of Object.keys(s)) { if (omit[k]) continue; try { out[k] = JSON.parse(JSON.stringify(s[k])); } catch (e) {} } return out; }
-  saveProgress() { if (!this.persistenceKey || !this.storageAvailable()) return; try { localStorage.setItem(this.persistenceKey, JSON.stringify({ version:this.persistenceVersion, savedAt:Date.now(), state:this.snapshotForPersist() })); } catch (e) {} }
-  saveProgressSoon() { if (!this.persistenceKey) return; if (this.__persistTimer) clearTimeout(this.__persistTimer); var self = this; this.__persistTimer = setTimeout(function () { self.__persistTimer = null; self.saveProgress(); }, 250); }
-  loadProgress() { if (!this.persistenceKey || !this.storageAvailable()) return {}; var raw = null; try { raw = localStorage.getItem(this.persistenceKey); } catch (e) { return {}; } if (!raw) return {}; var parsed = null; try { parsed = JSON.parse(raw); } catch (e) { return {}; } if (!parsed || parsed.version !== this.persistenceVersion || !parsed.state) return {}; var allowed = {}; try { allowed = this.initialState(); } catch (e) {} var out = {}; for (var k of Object.keys(parsed.state)) { if (!(k in allowed) || k === 'dialogOpen' || k === 'playing' || k === 'status') continue; out[k] = parsed.state[k]; } if (typeof out.step === 'number' && this.STEPS && this.STEPS.length) out.step = Math.max(0, Math.min(this.STEPS.length - 1, out.step)); else delete out.step; if (out.checks && typeof out.checks !== 'object') delete out.checks; out.dialogOpen = false; return out; }
-  enablePersistence() { if (!this.persistenceKey || this.__persistWrapped) return; try { var patch = this.loadProgress(); if (patch && Object.keys(patch).length) this.state = Object.assign({}, this.state, patch); } catch (e) {} this.__persistWrapped = true; var orig = this.setState.bind(this); var self = this; self.__persistSnapshot = JSON.stringify(self.snapshotForPersist()); this.setState = function (p, cb) { orig(p, function () { try { var next = JSON.stringify(self.snapshotForPersist()); if (next !== self.__persistSnapshot) { self.__persistSnapshot = next; self.saveProgressSoon(); } } catch (e) {} if (cb) cb(); }); }; }
+  // Persistence (versioned, namespaced localStorage) is inherited from DCCourseLogic.
 
   makeSlices(count, duration, labels) {
     var width = duration / count;
@@ -509,23 +504,34 @@ class Component extends DCLogic {
   togglePatternStep(index) { this.setState(function (state) { var pattern = state.pattern.map(function (row) { return row.slice(); }); pattern[state.selectedTrack][index] = !pattern[state.selectedTrack][index]; return { pattern:pattern }; }); }
   clearPattern() { this.setState({ pattern:this.makePattern() }); }
   selectTrack(index) { this.setState({ selectedTrack:index }); }
-  scheduleBar(when) {
-    var grid = this.tempoGrid(this.state.tempo, 16, when), self = this;
-    this.state.pattern.forEach(function (row, pad) { row.forEach(function (on, step) { if (on) self.playSlice(Math.min(pad, self.selectedCard().slices.length - 1), grid[step]); }); });
-    this.nextBarTime = grid[0] + 60 / this.state.tempo * 4;
-    return grid;
-  }
+  // The 16-step grid runs on the shared audio-clock scheduler: the timer only
+  // decides when to look ahead, each hit is booked at an exact AudioContext time,
+  // and the playhead follows the step that is actually sounding.
   startTransport() {
-    if (this.transportTimer) return;
-    var ctx = this.ensureAudio();
-    this.setState({ playing:true });
-    this.scheduleBar(ctx.currentTime + 0.06);
+    if (this.sequences && this.sequences.sampler) return;
+    this.ensureAudio();
     var self = this;
-    this.transportTimer = setInterval(function () { if (self.nextBarTime - ctx.currentTime < 0.6) self.scheduleBar(self.nextBarTime); }, 100);
-    this.sequences.sampler = true;
+    this.setState({ playing:true, playCol:-1 });
+    this.startSequence('sampler', {
+      onStep:function (col, at) {
+        var card = self.selectedCard(), ring = 0.05;
+        self.state.pattern.forEach(function (row, pad) {
+          if (!row[col]) return;
+          var trig = self.playSlice(Math.min(pad, card.slices.length - 1), at);
+          if (trig && trig.duration > ring) ring = trig.duration;
+        });
+        return { nodes:[], ring:ring };
+      },
+      stepDur:function () { return self.tempoGrid(self.state.tempo, 2, 0)[1]; },
+      nextCol:function (col) { return (col + 1) % 16; },
+      onVisual:function (col) { self.setState({ playCol:col }); },
+    });
   }
-  stopTransport() { if (this.transportTimer) clearInterval(this.transportTimer); this.transportTimer = null; if (this.sampler) this.sampler.stopAll(); this.sequences = {}; this.setState({ playing:false }); }
-  stopSequence() { this.stopTransport(); }
+  stopTransport() {
+    this.stopSequence('sampler');
+    if (this.sampler) this.sampler.stopAll();
+    if (this.state.playing || this.state.playCol !== -1) this.setState({ playing:false, playCol:-1 });
+  }
   toggleTransport() { if (this.state.playing) this.stopTransport(); else this.startTransport(); }
 
   drawWaveform() {
@@ -557,22 +563,10 @@ class Component extends DCLogic {
   }
   waveformPointerUp() { if (this.dragSliceIndex !== null) { this.dragSliceIndex = null; this.rememberSlices(this.selectedCard()); } }
 
-  getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
-  restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }
-  openCourseMap() { this.dialogReturnFocus = typeof document === 'undefined' ? null : document.activeElement; this.setState({ dialogOpen:true }, function () { if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return; var dialog = document.querySelector('[data-course-map-dialog="true"]'); var target = this.getDialogFocusables(dialog)[0] || dialog; if (target && typeof target.focus === 'function') target.focus(); }.bind(this)); }
-  closeCourseMap() { var target = this.dialogReturnFocus; this.dialogReturnFocus = null; this.setState({ dialogOpen:false }, this.restoreDialogFocus.bind(this, target)); }
-  onCourseMapKeydown(e) { if (e.key === 'Escape') { e.preventDefault(); this.closeCourseMap(); return; } if (e.key !== 'Tab') return; var focusables = this.getDialogFocusables(e.currentTarget); if (!focusables.length) { e.preventDefault(); if (e.currentTarget && typeof e.currentTarget.focus === 'function') e.currentTarget.focus(); return; } var first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
-  goToStep(i) { this.stopTransport(); var idx = Math.max(0, Math.min(this.STEPS.length - 1, i)); var target = this.state.dialogOpen ? this.dialogReturnFocus : null; if (target) this.dialogReturnFocus = null; this.setState({ step:idx, dialogOpen:false }, function () { this.restoreDialogFocus(target); this.drawWaveform(); }.bind(this)); }
-  goNext() { this.goToStep(this.state.step + 1); }
-  goBack() { this.goToStep(this.state.step - 1); }
-  restart() { this.stopTransport(); this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; this.setState(this.initialState(), this.drawWaveform.bind(this)); }
-  toggleCheck(stepId, idx) { this.setState(function (state) { var arr = (state.checks[stepId] || []).slice(); arr[idx] = !arr[idx]; return { checks:Object.assign({}, state.checks, { [stepId]:arr }) }; }); }
-  buildItems(step) { var self = this, checks = this.state.checks[step.id] || []; return (step.items || []).map(function (item, i) { return { text:item.text, checked:!!checks[i], toggle:function () { self.toggleCheck(step.id, i); }, textStyle:checks[i] ? 'text-decoration:line-through;opacity:.5;' : '' }; }); }
-  buildNavGroups() { var self = this, groups = []; this.STEPS.forEach(function (step, i) { var group = groups.find(function (g) { return g.label === step.weekTag; }); if (!group) { group = { label:step.weekTag, items:[] }; groups.push(group); } group.items.push({ title:step.navLabel || step.title, go:function () { self.goToStep(i); }, rowStyle:'display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;font:inherit;font-size:13px;background:' + (i === self.state.step ? 'var(--color-accent-100)' : 'transparent') + ';color:var(--color-text);' }); }); return groups; }
   buildSliceCardsView() { var self = this; return this.SLICE_CARDS.map(function (card) { var selected = card.id === self.state.selectedCardId; return { id:card.id, title:card.title, meta:(card.originalBpm ? card.originalBpm + ' BPM · ' : 'One-shot · ') + card.bitDepth + '-bit', pressed:selected ? 'true' : 'false', select:function () { self.selectCard(card.id); }, style:'display:flex;flex-direction:column;text-align:left;gap:3px;padding:10px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:pointer;font:inherit;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
   buildSlicePads(card) { var self = this; return Array.from({ length:8 }, function (_, i) { var slice = card.slices[i]; return { number:i + 1, label:slice ? slice.label : 'Empty', ariaLabel:slice ? 'Play pad ' + (i + 1) + ': ' + slice.label : 'Pad ' + (i + 1) + ' is empty', play:function () { if (slice) self.playSlice(i); }, style:'min-height:62px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:8px;border-radius:var(--radius-md);border:1px solid var(--color-divider);cursor:' + (slice ? 'pointer' : 'not-allowed') + ';font:inherit;background:' + (slice ? 'var(--color-accent-2-200)' : 'var(--color-neutral-300)') + ';color:var(--color-text);' }; }); }
   buildTrackPads() { var self = this; return Array.from({ length:8 }, function (_, i) { var selected = i === self.state.selectedTrack; return { number:i + 1, pressed:selected ? 'true' : 'false', select:function () { self.selectTrack(i); }, style:'padding:9px 5px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:12px;background:' + (selected ? 'var(--color-accent)' : 'var(--color-bg)') + ';color:' + (selected ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
-  buildPatternSteps() { var self = this, row = this.state.pattern[this.state.selectedTrack]; return row.map(function (on, i) { return { number:i + 1, pressed:on ? 'true' : 'false', ariaLabel:'Pad ' + (self.state.selectedTrack + 1) + ', step ' + (i + 1), toggle:function () { self.togglePatternStep(i); }, style:'min-width:30px;aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:' + (on ? 'var(--color-accent-2-600)' : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-bg)')) + ';color:' + (on ? 'var(--color-bg)' : 'var(--color-text)') + ';' }; }); }
+  buildPatternSteps() { var self = this, row = this.state.pattern[this.state.selectedTrack]; return row.map(function (on, i) { return { number:i + 1, pressed:on ? 'true' : 'false', ariaLabel:'Pad ' + (self.state.selectedTrack + 1) + ', step ' + (i + 1), toggle:function () { self.togglePatternStep(i); }, style:'min-width:30px;aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:' + (on ? 'var(--color-accent-2-600)' : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-bg)')) + ';color:' + (on ? 'var(--color-bg)' : 'var(--color-text)') + ';' + (i === self.state.playCol ? 'outline:2px solid var(--color-accent);outline-offset:1px;' : '') }; }); }
   componentDidMount() { this.drawWaveform(); }
   componentDidUpdate() { this.drawWaveform(); }
   componentWillUnmount() { this.stopTransport(); }

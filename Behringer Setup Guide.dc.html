@@ -28,6 +28,7 @@
       </div>
     </div>
     <a href="./index.dc.html" class="btn btn-ghost">All courses</a>
+    <a href="./groove-studio.html" class="btn btn-ghost">Groove Studio</a>
     <button type="button" class="btn btn-ghost" onclick="{{ openDialog }}">Course map</button>
   </header>
 
@@ -279,6 +280,7 @@
                       <span style="font-size:34px;font-weight:700;letter-spacing:.01em;line-height:1;">TB-303</span>
                     </div>
                     <button type="button" class="{{ card.loadClass }}" onclick="{{ card.load }}" aria-pressed="{{ card.pressed }}" aria-label="{{ card.loadName }}">{{ card.loadLabel }}</button>
+                    <a class="btn btn-secondary" href="{{ card.studioHref }}" aria-label="{{ card.studioName }}">Use in Groove Studio</a>
                   </div>
 
                   <div role="region" aria-label="{{ card.title }} pattern chart" tabIndex="0" style="overflow-x:auto;">
@@ -414,6 +416,7 @@
                       <span style="font-size:34px;font-weight:700;letter-spacing:.01em;line-height:1;">TR-808</span>
                     </div>
                     <button type="button" class="{{ card.loadClass }}" onclick="{{ card.load }}" aria-pressed="{{ card.pressed }}" aria-label="{{ card.loadName }}">{{ card.loadLabel }}</button>
+                    <a class="btn btn-secondary" href="{{ card.studioHref }}" aria-label="{{ card.studioName }}">Use in Groove Studio</a>
                   </div>
 
                   <div role="region" aria-label="{{ card.title }} pattern sheet" tabIndex="0" style="overflow-x:auto;">
@@ -2144,6 +2147,8 @@ class Component extends DCCourseLogic {
         return {
           ...this.getSongChart(c),
           load: () => this.loadSongCard(c),
+          studioHref: './groove-studio.html?bass=' + encodeURIComponent(c.id),
+          studioName: `Create a Groove Studio project with ${c.title}`,
           pressed: selected ? 'true' : 'false',
           loadLabel: selected ? 'Loaded \u2713' : 'Load into engine',
           loadClass: selected ? 'btn btn-primary' : 'btn btn-secondary',
@@ -2165,6 +2170,8 @@ class Component extends DCCourseLogic {
         return {
           ...this.getDrumChart(c),
           load: () => this.loadDrumCard(c),
+          studioHref: './groove-studio.html?drums=' + encodeURIComponent(c.id),
+          studioName: `Create a Groove Studio project with ${c.title}`,
           pressed: selected ? 'true' : 'false',
           loadLabel: selected ? 'Loaded \u2713' : 'Load into engine',
           loadClass: selected ? 'btn btn-primary' : 'btn btn-secondary',

@@ -52,3 +52,7 @@
   .continue-panel { align-items: stretch; flex-direction: column; }
   .continue-panel a { justify-content: center; }
 }
+.studio-entry { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-6); padding: var(--space-6); margin-bottom: var(--space-8); border: 1px solid var(--color-accent-700); border-radius: var(--radius-lg); background: var(--color-surface); }
+.studio-entry > div { flex: 1 1 320px; }
+.studio-entry h2 { margin-bottom: var(--space-3); }
+.studio-entry p:last-child { color: var(--color-neutral-800); max-width: 65ch; margin-bottom: 0; }

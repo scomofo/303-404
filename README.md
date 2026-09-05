@@ -2,6 +2,49 @@
 
 Six single-page interactive courses share one runtime and design system: the **TD-3 & RD-6 Guide**, the **TR-06 Guide**, **DDJ-FLX4 Guide**, **MPK Mini MK4 Guide**, **Hybrid Live Set Guide**, and the eight-week **Sample & Circuit Guide** for grooveboxes and samplers.
 
+**Groove Studio** connects the lessons to a creative workspace: build a drum
+and bass groove, make variations, perform an arrangement and keep the result.
+
+## Groove Studio
+
+Open `groove-studio.html` from the practice home or any course. **Use in Groove
+Studio** on a Song Bank or Drum Bank card starts a separate project with that
+pattern. The starter contains an intro, groove, breakdown and return; press
+**Play arrangement** to hear the complete one-minute form at 128 BPM.
+
+- Edit four independent scenes, each with drum hits, bass notes, rests, accents,
+  slides, mutes, track levels, cutoff, resonance and waveform.
+- Combine all 31 bass patterns and 11 drum patterns. Drums retain 16/32-step
+  lengths and RS/CL or CP/MA switch pairs; bass patterns retain their own cycle,
+  including the shorter 8- and 10-step patterns. Source notes and the six
+  unresolved accent/slide transcription flags stay visible and travel with backups.
+- Loop a scene and queue another on a bar boundary, or reorder up to eight
+  arrangement sections with a total of 32 bars. Both lanes share an audio clock;
+  a new section resets their cycles. Tempo and arrangement edits stop playback.
+- Export the actual arrangement as a stereo 44.1 kHz / 16-bit WAV, including
+  1.1 seconds of release tails. Offline export and playback share the same
+  synthesis engine and step events. Export renders the saved musical settings;
+  use a live take to capture gestures made during a performance.
+- Record the studio's live output, including scene launches, mutes and sound
+  changes, through `MediaStreamAudioDestinationNode` and `MediaRecorder`.
+  Takes stop after three minutes and download in the browser-supported WebM,
+  Ogg or M4A format. Listen back before downloading; takes do not persist on reload.
+- Autosave edits to separate browser-local projects, save copies, undo/redo,
+  and import/export portable `.groove.json` backups. Invalid imports do not
+  replace current work. Quota failures and conflicting edits in another tab
+  are surfaced instead of silently overwriting data. No account or cloud sync.
+
+The studio synthesizes its own sounds; it is an approximation of the instruments,
+not a hardware-audio input or a sample player. The existing course labs remain
+independent. Playback stops when the tab is hidden or the clock scheduler falls
+behind. Unsupported recording or offline rendering APIs show an actionable error.
+
+`studio/banks.js` is generated from the Behringer guide, preserving its source
+metadata. After changing either bank, run `npm run studio:banks` and commit the
+output. The studio uses plain JavaScript and the existing design tokens, with
+no added runtime dependency. See `docs/HANDOFF_GROOVE_STUDIO.md` for the project
+format, audio lifecycle and remaining browser checks.
+
 ## Your practice home
 
 `index.dc.html` brings all six courses together with accurate course lengths,
@@ -221,6 +264,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/tr06.test.mjs` | Five-week TR-06 structure, search-only watch links, 8×16 paper grid, default Week 1 pattern, Start Over, README week table |
 | `test/regression.test.mjs` | Handoff count sync, CSP/SRI presence, noise-buffer duration, shared-runtime markers, license/attribution files |
 | `test/home.test.mjs` | Course discovery and return links, generated catalog consistency, honest checklist progress, latest-session selection, existing-save round trips across all six guides, corrupt checklists, fractional steps, full storage quota and non-destructive notice dismissal |
+| `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
@@ -233,6 +277,12 @@ index.dc.html                  practice home with all six courses
 practice-home.css / .js         home styling and read-only progress summary
 course-catalog.js               generated lesson labels and checklist sizes
 scripts/build-course-catalog.mjs catalog generator (npm run catalog)
+groove-studio.html              connected drum/bass scene editor and performance workspace
+studio/project.js              portable project schema and browser-local project store
+studio/audio.js                shared playback/export synthesis and live capture
+studio/app.js / studio.css      studio controls and responsive styling
+studio/banks.js                 generated course pattern data (npm run studio:banks)
+scripts/build-studio-banks.mjs  studio bank generator
 Behringer Setup Guide.dc.html   TD-3/RD-6 course and audio engines
 TR-06 Guide.dc.html             Roland TR-06 Boutique drums course
 DDJ-FLX4 Guide.dc.html          DDJ-FLX4 course and Practice Plan

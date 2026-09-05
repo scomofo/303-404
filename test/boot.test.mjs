@@ -17,6 +17,7 @@ const rootDir = path.resolve(__dirname, '..');
 const guides = [
   'index.html',
   'index.dc.html',
+  'groove-studio.html',
   ...GUIDES.map(guide => guide.file),
 ];
 

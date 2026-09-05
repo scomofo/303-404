@@ -7,7 +7,8 @@
   "type": "module",
   "scripts": {
     "catalog": "node scripts/build-course-catalog.mjs",
-    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/mpk.test.mjs test/slicebank.test.mjs test/transitionbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs test/hybrid.test.mjs test/tr06.test.mjs test/regression.test.mjs test/home.test.mjs test/boot.test.mjs"
+    "studio:banks": "node scripts/build-studio-banks.mjs",
+    "test": "node --test test/structure.test.mjs test/songbank.test.mjs test/drumbank.test.mjs test/mpk.test.mjs test/slicebank.test.mjs test/transitionbank.test.mjs test/timing.test.mjs test/curriculum.test.mjs test/hybrid.test.mjs test/tr06.test.mjs test/regression.test.mjs test/home.test.mjs test/studio.test.mjs test/boot.test.mjs"
   },
   "engines": {
     "node": ">=20"

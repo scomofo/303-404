@@ -201,5 +201,9 @@ test('dismissing the restored-session notice preserves the saved work', t => {
     assert.equal(storage.get(course.storageKey), before);
     assert.equal(inst.state.step, 4);
     assert.match(readGuide(course.file), />Dismiss<\/button>/);
+    for (const { file } of GUIDES) {
+      const notices = [...readGuide(file).matchAll(/<button[^>]*onclick="{{ clearResumeNotice }}"[^>]*>([^<]+)<\/button>/g)];
+      for (const notice of notices) assert.equal(notice[1], 'Dismiss', `${file}: a notice dismissal must not promise to clear saved work`);
+    }
   } finally { inst.disablePersistence(); dispose(); }
 });

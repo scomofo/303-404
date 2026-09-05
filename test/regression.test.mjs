@@ -40,6 +40,12 @@ test('every guide declares the documented CSP baseline', () => {
       `${guide.name}: CSP does not allowlist unpkg`);
     assert.match(html, /'unsafe-eval'/,
       `${guide.name}: CSP must document required unsafe-eval for new Function runtime`);
+    // The design system pulls its faces from Google Fonts via @import; a CSP
+    // that omits either host silently drops every typeface to the system stack.
+    assert.match(html, /style-src[^;]*https:\/\/fonts\.googleapis\.com/,
+      `${guide.name}: CSP style-src must allow fonts.googleapis.com or the @import is blocked`);
+    assert.match(html, /font-src[^;]*https:\/\/fonts\.gstatic\.com/,
+      `${guide.name}: CSP font-src must allow fonts.gstatic.com`);
   }
 });
 
@@ -171,6 +177,77 @@ test('persistence round-trips learner state and drops transients', () => {
       }
     } finally {
       dispose();
+    }
+  } finally {
+    restore();
+  }
+});
+
+test('transient playback and recorder state never reaches storage', () => {
+  const cases = [
+    ['Behringer Setup Guide.dc.html', { rd6Playing: true, rd6PlayKind: 'chain', rd6PatIdx: 1, rd6Col: 3 }, ['rd6Playing', 'rd6PlayKind', 'rd6PatIdx', 'rd6Col']],
+    ['MPK Mini MK4 Guide.dc.html', { padSel: 'p1', lastNoteLabel: 'Played C4' }, ['padSel', 'lastNoteLabel']],
+    ['DDJ-FLX4 Guide.dc.html', { recording: true, recordedSeconds: 4, recordingReady: true }, ['recording', 'recordedSeconds', 'recordingReady']],
+  ];
+  for (const [file, patch, keys] of cases) {
+    const { store, restore } = stubStorage();
+    try {
+      const { inst, dispose } = loadComponent(file);
+      try {
+        inst.state = { ...inst.state, ...patch };
+        inst.saveProgress();
+        const saved = JSON.parse(store.get(inst.persistenceKey));
+        for (const k of keys) assert.ok(!(k in saved.state), `${file}: ${k} leaked into storage`);
+      } finally {
+        dispose();
+      }
+    } finally {
+      restore();
+    }
+  }
+});
+
+test('DDJ recorder is discarded by a step change and released by Start Over', () => {
+  const { inst, dispose } = loadComponent('DDJ-FLX4 Guide.dc.html');
+  try {
+    inst.toggleRecording();
+    assert.equal(inst.state.recording, true);
+    inst.goNext();
+    assert.equal(inst.state.recording, false, 'step change must stop an in-progress recording');
+    assert.equal(inst.state.recordingReady, false);
+    inst.toggleRecording();
+    inst.toggleRecording();
+    assert.ok(inst.lastRecording, 'a completed drill is kept');
+    inst.restart();
+    assert.equal(inst.lastRecording, null, 'Start Over must release the recorded buffer');
+    assert.equal(inst.state.recording, false);
+  } finally {
+    dispose();
+  }
+});
+
+test('SampleCircuit slice edits to bundled cards survive a reload', () => {
+  const { store, restore } = stubStorage();
+  try {
+    const { inst, dispose } = loadComponent('SampleCircuit Guide.dc.html');
+    let edited;
+    try {
+      inst.state = { ...inst.state, selectedCardId: 'SL-001', sensitivity: 70 };
+      inst.autoSliceSelected();
+      edited = inst.selectedCard().slices.map(sl => [sl.start, sl.end]);
+      assert.ok(edited.length >= 2);
+      inst.saveProgress();
+      assert.ok(JSON.parse(store.get(inst.persistenceKey)).state.sliceEdits['SL-001'], 'slice edits not stored');
+    } finally {
+      dispose();
+    }
+    const second = loadComponent('SampleCircuit Guide.dc.html');
+    try {
+      const card = second.inst.SLICE_CARDS.find(c => c.id === 'SL-001');
+      assert.deepEqual(card.slices.map(sl => [sl.start, sl.end]), edited, 'slices did not hydrate');
+      assert.equal(card.autoSliced, true);
+    } finally {
+      second.dispose();
     }
   } finally {
     restore();

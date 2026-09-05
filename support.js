@@ -992,12 +992,13 @@
       persistenceVersion = 1;
       PERSIST_OMIT = new Set([
         'dialogOpen',
-        'rd6Playing', 'rd6Col', 'td3Playing', 'td3Col',
+        'rd6Playing', 'rd6Col', 'rd6PlayKind', 'rd6PatIdx', 'td3Playing', 'td3Col',
         'sbPlaying', 'sbCol', 'dbPlaying', 'dbCol',
         'enginePlaying', 'colA', 'colB',
         'beatPlaying', 'beatCol', 'progPlaying', 'progBar',
         'arpPlaying', 'songPlaying', 'songBar', 'songCol',
         'recording', 'recordedSeconds', 'recordingReady',
+        'padSel', 'lastNoteLabel',
         'playing', 'status',
       ]);
       storageAvailable() {

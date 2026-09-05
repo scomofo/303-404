@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Runtime uses new Function + inline template/styles, so unsafe-eval/inline are required. SRI for unpkg React/Babel is enforced in support.js cdnScriptFor(). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com;">
 <title>Sample &amp; Circuit Guide — Groovebox / Sampler Curriculum</title>
 <script src="./support.js"></script>
 </head>
@@ -59,6 +59,7 @@
                 <div style="display:flex;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><strong>{{ selectedCard.title }}</strong><div style="font-size:12px;opacity:.72;">{{ selectedCard.provenance }}</div></div><span class="tag tag-neutral">{{ selectedCard.tempoLabel }}</span></div>
                 <canvas data-sampler-waveform="true" width="800" height="180" aria-label="{{ selectedCard.waveformLabel }}" onpointerdown="{{ waveformPointerDown }}" onpointermove="{{ waveformPointerMove }}" onpointerup="{{ waveformPointerUp }}" onpointercancel="{{ waveformPointerUp }}" style="width:100%;height:180px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);cursor:ew-resize;"></canvas>
                 <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;"><label style="font-size:13px;">Sensitivity <input type="range" min="0" max="100" value="{{ sensitivity }}" oninput="{{ setSensitivity }}" aria-label="Auto-slice sensitivity" /></label><button type="button" class="btn btn-secondary" onclick="{{ autoSlice }}">Auto-slice</button><button type="button" class="btn btn-secondary" onclick="{{ resample }}">Resample</button><button type="button" class="btn btn-primary" onclick="{{ exportWav }}">Export WAV</button></div>
+                <div role="status" aria-live="polite" style="min-height:18px;font-size:12px;opacity:.82;">{{ status }}</div>
                 <div style="display:grid;grid-template-columns:repeat(8,minmax(54px,1fr));gap:8px;"><sc-for list="{{ slicePads }}" as="pad" hint-placeholder-count="8"><button type="button" onclick="{{ pad.play }}" aria-label="{{ pad.ariaLabel }}" style="{{ pad.style }}"><span style="font-size:11px;opacity:.65;">{{ pad.number }}</span><span style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;">{{ pad.label }}</span></button></sc-for></div>
               </div>
             </section>
@@ -204,10 +205,24 @@ class SamplerEngine {
     var offline = new Offline(sourceBuffer.numberOfChannels || 1, sourceBuffer.length, sourceBuffer.sampleRate);
     var source = offline.createBufferSource();
     source.buffer = sourceBuffer;
-    source.connect(offline.destination);
+    // Internal resampling bounces the sound through the machine's own circuit
+    // stage — gentle soft-clip saturation and a 12 kHz roll-off — so the printed
+    // copy is audibly different in level and tone rather than byte-identical.
+    var shaper = offline.createWaveShaper();
+    shaper.curve = this.saturationCurve(1.6);
+    shaper.oversample = '2x';
+    var tone = offline.createBiquadFilter();
+    tone.type = 'lowpass'; tone.frequency.value = 12000; tone.Q.value = 0.7;
+    source.connect(shaper); shaper.connect(tone); tone.connect(offline.destination);
     source.start(0);
     var rendered = await offline.startRendering();
     return rendered;
+  }
+
+  saturationCurve(drive) {
+    var n = 2048, curve = new Float32Array(n), norm = Math.tanh(drive);
+    for (var i = 0; i < n; i += 1) { var x = (i * 2) / (n - 1) - 1; curve[i] = Math.tanh(x * drive) / norm; }
+    return curve;
   }
 
   encodeWav(audioBuffer, bitDepth) {
@@ -257,7 +272,7 @@ class Component extends DCLogic {
   persistenceKey = '303-404/sample-circuit/v1';
   persistenceVersion = 1;
   makePattern() { return Array.from({ length:8 }, function () { return Array(16).fill(false); }); }
-  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, status:'' }; }
+  initialState() { return { step:0, dialogOpen:false, checks:{}, selectedCardId:'SL-001', sensitivity:70, selectedTrack:0, pattern:this.makePattern(), tempo:120, playing:false, status:'', sliceEdits:{} }; }
   state = this.initialState();
 
   constructor(props) {
@@ -271,6 +286,33 @@ class Component extends DCLogic {
     this.dragSliceIndex = null;
     this.sequences = {};
     this.enablePersistence();
+    this.applySliceEdits();
+  }
+
+  // Slice boundaries live on the card objects, not in state, so a saved pattern
+  // would otherwise reload against default slices and collapse onto pad 1.
+  // Edits to bundled (generated) cards are mirrored into `sliceEdits`; imported
+  // audio is never persisted, so its slices are not either.
+  rememberSlices(card) {
+    if (card.sourceType !== 'original_synthesis') return;
+    var entry = { slices:card.slices.map(function (sl) { return { start:sl.start, end:sl.end, label:sl.label }; }),
+      autoSliced:!!card.autoSliced, algorithm:card.algorithm || null, sensitivity:card.sensitivity === undefined ? null : card.sensitivity };
+    this.setState(function (state) { return { sliceEdits:Object.assign({}, state.sliceEdits, { [card.id]:entry }) }; });
+  }
+  applySliceEdits() {
+    var edits = this.state.sliceEdits;
+    if (!edits || typeof edits !== 'object') return;
+    this.SLICE_CARDS.forEach(function (card) {
+      var entry = edits[card.id], slices = entry && entry.slices;
+      if (card.sourceType !== 'original_synthesis' || !Array.isArray(slices) || !slices.length) return;
+      var valid = slices.every(function (sl, i) {
+        return sl && typeof sl.start === 'number' && typeof sl.end === 'number' && sl.start >= 0 && sl.end <= card.duration + 1e-6
+          && sl.end - sl.start >= 0.005 - 1e-9 && (i === 0 ? sl.start === 0 : Math.abs(sl.start - slices[i - 1].end) < 1e-6);
+      });
+      if (!valid) return;
+      card.slices = slices.map(function (sl, i) { return { index:i, start:sl.start, end:sl.end, label:sl.label || ('Slice ' + (i + 1)) }; });
+      card.autoSliced = !!entry.autoSliced; card.algorithm = entry.algorithm || null; card.sensitivity = entry.sensitivity === undefined ? null : entry.sensitivity;
+    });
   }
   storageAvailable() { try { if (typeof localStorage === 'undefined') return false; localStorage.setItem('__dc_persist_probe__', '1'); localStorage.removeItem('__dc_persist_probe__'); return true; } catch (e) { return false; } }
   snapshotForPersist(source) { var s = source || this.state || {}; var out = {}; var omit = { dialogOpen:1, playing:1, status:1 }; for (var k of Object.keys(s)) { if (omit[k]) continue; try { out[k] = JSON.parse(JSON.stringify(s[k])); } catch (e) {} } return out; }
@@ -424,6 +466,7 @@ class Component extends DCLogic {
     var slices = sampler.slice(card.id, this.state.sensitivity);
     if (slices.length < 2) slices = this.makeSlices(Math.min(8, Math.max(2, card.slices.length), Math.floor(card.duration / 0.005)), card.duration);
     card.slices = slices; card.autoSliced = true; card.algorithm = 'transient_detection'; card.sensitivity = this.state.sensitivity;
+    this.rememberSlices(card);
     this.setState({ status:'Created ' + slices.length + ' slices.' }, this.drawWaveform.bind(this));
   }
 
@@ -432,7 +475,9 @@ class Component extends DCLogic {
     var card = this.selectedCard(), sampler = this.ensureSampler();
     var result = await sampler.resample(card);
     sampler.buffers.set(card.id, result);
-    this.setState({ status:'Resampled ' + card.title + ' at ' + result.sampleRate + ' Hz.' }, this.drawWaveform.bind(this));
+    card.waveform = this.waveformFromBuffer(result);
+    card.resampled = (card.resampled || 0) + 1;
+    this.setState({ status:'Resampled ' + card.title + ' through the circuit stage (soft saturation, 12 kHz roll-off) at ' + result.sampleRate + ' Hz.' }, this.drawWaveform.bind(this));
     return result;
   }
   exportSelectedWav() {
@@ -510,7 +555,7 @@ class Component extends DCLogic {
     var min = card.slices[i - 1].start + 0.005, max = card.slices[i].end - 0.005, time = Math.max(min, Math.min(max, marker.time));
     card.slices[i - 1].end = time; card.slices[i].start = time; this.drawWaveform();
   }
-  waveformPointerUp() { this.dragSliceIndex = null; }
+  waveformPointerUp() { if (this.dragSliceIndex !== null) { this.dragSliceIndex = null; this.rememberSlices(this.selectedCard()); } }
 
   getDialogFocusables(dialog) { if (!dialog || typeof dialog.querySelectorAll !== 'function') return []; return Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')); }
   restoreDialogFocus(target) { if (target && target.isConnected !== false && typeof target.focus === 'function') target.focus(); }

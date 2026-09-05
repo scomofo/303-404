@@ -999,7 +999,7 @@
         'arpPlaying', 'songPlaying', 'songBar', 'songCol',
         'recording', 'recordedSeconds', 'recordingReady',
         'padSel', 'lastNoteLabel',
-        'playing', 'playCol', 'status', 'audioError',
+        'playing', 'playCol', 'status', 'audioError', 'selectedSliceIndex',
       ]);
       storageAvailable() {
         try {

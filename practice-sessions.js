@@ -6,8 +6,8 @@
       outcome: 'A drum groove with a clear pulse and one deliberate change.',
       steps: [
         'Open scene B (Groove in the starter), then press Play scene. Count “1, 2, 3, 4” through four repeats before editing.',
-        'Mute bass. Choose CH in Edit voice and change two closed-hat steps. Listen for four repeats, then use Undo to compare.',
-        'Keep the version whose pulse you can follow most easily. Unmute bass and save your project with a name you will recognise.',
+        'Mute bass. Choose CH in Edit voice and toggle two different steps once each. Listen for four repeats. Press Undo twice, then Play scene to hear the original; press Redo twice, then Play scene to hear your variation again.',
+        'Keep the variation, or press Undo twice to restore the original hats. Unmute bass, press Play scene and save your project with a name you will recognise.',
       ],
       checks: ['I can count the pulse through four repeats.', 'I compared the original hats with my variation.', 'I chose a version and saved my project.'],
       listen: 'Does the groove still feel steady when the hats change? More hits do not automatically make it stronger.',
@@ -18,8 +18,8 @@
       outcome: 'A bass phrase with a recognisable rhythm and purposeful silence.',
       steps: [
         'Keep working in scene B. Loop the scene and listen to how the bass rhythm sits against the kick.',
-        'Select a sounding bass step and set Note to Rest. Repeat with one more step, then compare with Undo and Redo.',
-        'Add Accent to one remaining note. Listen for four repeats, choose your version and save the project.',
+        'Select a sounding bass step and set Note to Rest. Repeat with one more sounding step. Press Undo twice, then Play scene to hear the original; press Redo twice, then Play scene to hear the phrase with two rests.',
+        'Keep the two rests, or press Undo twice to restore the original phrase. Select a sounding note, compare Accent off and on, pressing Play scene if playback has stopped. Listen for four repeats with Accent on and save the project.',
       ],
       checks: ['I compared the bass phrase with and without two notes.', 'I can hear the accented note in the phrase.', 'I kept and saved the version with the clearest rhythm.'],
       listen: 'Can you hum the bass rhythm after playback stops? Listen for a phrase, not just a stream of notes.',
@@ -31,11 +31,11 @@
       steps: [
         'Stop playback and Save a copy if scene D already contains something you want to keep. Select B, choose D in Copy this scene to, and press Copy scene.',
         'Select D and change only two drum hits and one bass note. Give D a name that describes the answer.',
-        'Play scene B, then select D while it loops. The switch lands on a bar boundary. Compare both directions and save.',
+        'Select B and press Play scene, then select D while it loops. The switch lands on a bar boundary. Compare both directions and save.',
       ],
       checks: ['I made a second scene while keeping the first intact.', 'I can hear the shared idea and the changed answer.', 'I switched between the scenes and saved both.'],
       listen: 'Is the answer recognisable as the same groove? Small changes can make a stronger response than replacing everything.',
-      stretch: 'Undo one of the three changes. Decide whether the simpler answer works better.',
+      stretch: 'Select D and toggle one of the drum hits you changed back to its original state. Press Play scene and decide whether the simpler answer works better.',
     },
     {
       id: 'breakdown', title: 'Create some space', minutes: 10, skill: 'Arrangement & subtraction',
@@ -71,7 +71,7 @@
       ],
       checks: ['I rehearsed the same scene sequence twice.', 'I made one intentional cutoff change.', 'I can recover my count and launch the return again.'],
       listen: 'Did the sound change support the transition? Aim for an action you can repeat instead of constant knob movement.',
-      stretch: 'Use Record live take, if available, to capture the gestures. Listen back and download the take before leaving the page.',
+      stretch: 'Use Record take in Live take, if available, to capture the gestures. Press Stop recording, listen back and download the take before leaving the page.',
     },
     {
       id: 'finish', title: 'Keep a finished take', minutes: 15, skill: 'Finishing & reflection',
@@ -79,7 +79,7 @@
       steps: [
         'Play your arrangement from beginning to end. Pick one small improvement, make it, and save the project.',
         'Use Export arrangement WAV, then open the downloaded audio and listen through it. This renders scene settings; use a downloaded live take to keep performance gestures.',
-        'Download a project backup as well as your audio. Write one thing that works and one thing to try on your next groove.',
+        'Open Projects & backups and choose Download project backup as well as keeping your audio. Write one thing that works and one thing to try on your next groove.',
       ],
       checks: ['I listened to a complete final arrangement.', 'I exported audio and listened to the downloaded result.', 'I kept a project backup and identified my next improvement.'],
       listen: 'Does the export tell the same musical story as your arrangement? Check the opening, transitions and ending.',
@@ -89,7 +89,13 @@
   const PREFIX = '303-404/practice-sessions/v1/';
   const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const getSession = id => sessions.find(session => session.id === id) || null;
-  const emptyRecord = session => ({ version: 1, checks: session.checks.map(() => false), reflection: '', note: '', completedAt: 0, days: [] });
+  const emptyRecord = session => ({ version: 1, checks: session.checks.map(() => false), reflection: '', note: '', completedAt: 0, updatedAt: 0, days: [] });
+  const hasDraft = record => !!record && (
+    Array.isArray(record.checks) && record.checks.some(checked => checked === true) ||
+    typeof record.note === 'string' && record.note.trim().length > 0 ||
+    typeof record.reflection === 'string' && record.reflection.length > 0 ||
+    Number.isFinite(record.updatedAt) && record.updatedAt > 0
+  );
   function localDay(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
@@ -106,6 +112,7 @@
       reflection: ['ready', 'revisit'].includes(value.reflection) ? value.reflection : '',
       note: typeof value.note === 'string' ? value.note.slice(0, 500) : '',
       completedAt: Number.isFinite(value.completedAt) && value.completedAt > 0 ? value.completedAt : 0,
+      updatedAt: Number.isFinite(value.updatedAt) && value.updatedAt > 0 ? value.updatedAt : 0,
       days: Array.isArray(value.days) ? [...new Set(value.days.filter(validDay))].sort().slice(-180) : [],
     };
   }
@@ -131,7 +138,10 @@
     return { completed, practiceDays: days.size };
   }
   function recommended(records) {
-    return sessions.find(session => !records[session.id]?.completedAt) ||
+    const drafts = sessions.filter(session => !records[session.id]?.completedAt && hasDraft(records[session.id]));
+    const latest = drafts.reduce((chosen, session) => !chosen ||
+      (records[session.id].updatedAt || 0) > (records[chosen.id].updatedAt || 0) ? session : chosen, null);
+    return latest || sessions.find(session => !records[session.id]?.completedAt) ||
       sessions.find(session => records[session.id]?.reflection === 'revisit') || sessions[sessions.length - 1];
   }
   class PracticeStore {
@@ -152,15 +162,15 @@
       }
       return { records, errors };
     }
-    save(session, record) {
+    save(session, record, now = new Date()) {
       if (this.blocked.has(session.id)) throw new Error('This session save is unavailable. Existing data has been kept; other sessions can still be opened.');
       const previous = this.storage.getItem(PREFIX + session.id);
       if (!this.seen.has(session.id) || previous !== this.seen.get(session.id)) throw new Error('This session changed in another tab. Copy your note, then reload this page before saving again.');
-      const next = normalizeRecord(session, record), raw = JSON.stringify(next);
+      const next = { ...normalizeRecord(session, record), updatedAt: now.getTime() }, raw = JSON.stringify(next);
       this.storage.setItem(PREFIX + session.id, raw);
       this.seen.set(session.id, raw);
       return next;
     }
   }
-  globalThis.DCPracticeSessions = { sessions, PREFIX, getSession, emptyRecord, localDay, normalizeRecord, complete, summarize, recommended, PracticeStore };
+  globalThis.DCPracticeSessions = { sessions, PREFIX, getSession, emptyRecord, hasDraft, localDay, normalizeRecord, complete, summarize, recommended, PracticeStore };
 })();

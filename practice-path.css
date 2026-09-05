@@ -27,6 +27,14 @@
 .guided-session > summary { cursor: pointer; padding: var(--space-4) var(--space-6); font-family: var(--font-heading); font-weight: 600; min-height: 48px; }
 .guided-session[open] > summary { border-bottom: 1px solid var(--color-divider); }
 .guided-session-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6); }
+.session-switcher { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3) var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--color-divider); }
+.session-switcher label { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; flex: 1 1 280px; text-align: left; color: var(--color-text); }
+.session-choice { width: 100%; min-width: 0; min-height: 44px; padding: var(--space-2); border: 1px solid var(--color-neutral-500); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font: inherit; }
+.session-switcher > p { flex: 1 1 240px; margin-bottom: 0; }
+.session-return { display: inline-flex; align-items: center; min-height: 44px; }
+.session-directions { display: flex; flex-direction: column; gap: var(--space-3); border-top: 1px solid var(--color-divider); padding-top: var(--space-4); }
+.session-directions a { display: flex; flex-direction: column; gap: var(--space-1); min-height: 44px; }
+.session-directions .session-meta { text-decoration: none; }
 .session-jump { padding: var(--space-4) var(--space-6) 0; margin-bottom: 0; font-size: .875rem; }
 .session-brief, .session-reflection { min-width: 0; }
 .session-brief h2 { font-size: 1.25rem; line-height: 1.35; }
@@ -36,7 +44,7 @@
 .session-reflection { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-3); }
 .session-reflection fieldset { padding: 0; border: 0; margin: 0; }
 .session-reflection legend { font-weight: 600; margin-bottom: var(--space-2); }
-.session-reflection label { display: flex; flex-direction: column; gap: var(--space-2); color: var(--color-text); font-size: .875rem; }
+.session-reflection label { display: flex; flex-direction: column; gap: var(--space-2); color: var(--color-text); font-size: .875rem; text-align: left; }
 .session-reflection .session-check { flex-direction: row; align-items: flex-start; padding-block: var(--space-2); min-height: 44px; cursor: pointer; }
 .session-check input { flex: 0 0 auto; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--color-accent); }
 .session-reflection select, .session-reflection textarea { display: block; width: 100%; min-width: 0; min-height: 44px; padding: var(--space-2); font: inherit; color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-neutral-500); border-radius: var(--radius-md); }

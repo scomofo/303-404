@@ -68,25 +68,34 @@ listening goals, an optional stretch challenge and a brief reflection:
 | Rehearse the return | A repeatable live scene sequence and sound change |
 | Keep a finished take | A heard audio export, project backup and next idea |
 
-Starting a session opens its collapsible brief alongside Groove Studio's
-instruments. **Next** changes the brief on the same page, preserving the current
-project, playback and any live take. Free play remains available without a brief.
+Starting a session opens its collapsible brief below Groove Studio's playback
+controls, with links to the instruments and back to the brief. **Next** and the
+**Practice session** selector change the brief on the same page, preserving the
+current project, playback and any live take. Free play remains available without a brief.
 The path builds on the studio starter or the learner's latest saved project;
 opening a session does not replace patterns or create a project.
 
 Checklists and reflections save in this browser. Completing a session requires
 all three goals and a self-assessment; visiting a page or moving a playhead earns
-no progress. Home recommends the first unfinished session, then any completed
-skill marked **Worth another pass**. Every session is always accessible. The
+no progress. **Save for later** keeps your place without completing a session or
+counting a practice day. Home resumes the most recently saved unfinished session,
+including a note-only or reflection-only draft, then recommends the first
+unfinished session or a completed skill marked **Worth another pass**. Every
+session is always accessible. After the final session, links lead into the
+sampling and keyboard courses or the full course menu. The
 practice-day count measures distinct local dates with an explicitly completed
 session during the last seven calendar days. Repeating a session on the same day
 does not add another day, and missed days do not remove completed milestones.
 These are self-reported listening checks, not automated audio assessment.
 
 Session records use separate `303-404/practice-sessions/v1/<session-id>` keys;
-course and studio saves stay independent. Notes are limited to 500 characters
+course and studio saves stay independent. The optional `updatedAt` field orders
+unfinished drafts; older v1 records remain readable without rewriting them.
+Notes are limited to 500 characters
 and rendered as text. Storage errors are visible, corrupt or incompatible records
 are preserved, and stale same-session writes from another tab are rejected.
+Failed saves keep the current brief open, block in-page session changes and offer
+**Retry saving practice**; leaving the page also requests the browser's unsaved-change warning.
 Session progress contains no audio and is not included in `.groove.json` backups.
 Download project backups and audio exports separately to keep your music.
 
@@ -311,8 +320,8 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/tr06.test.mjs` | Five-week TR-06 structure, search-only watch links, 8×16 paper grid, default Week 1 pattern, Start Over, README week table |
 | `test/regression.test.mjs` | Handoff count sync, CSP/SRI presence, noise-buffer duration, shared-runtime markers, license/attribution files |
 | `test/home.test.mjs` | Course discovery and return links, generated catalog consistency, honest checklist progress, latest-session selection, existing-save round trips across all six guides, corrupt checklists, fractional steps, full storage quota and non-destructive notice dismissal |
-| `test/practice-sessions.test.mjs` | Guided listening-goal completion, reflection round trips, local practice dates, repeat deduplication, corrupt-save isolation, quota failure, cross-tab conflicts and recommendations |
-| `test/practice-path.test.mjs` | Home-to-studio events, checklist and note restoration, in-page Next, free-play fallback and visible save failures against a small DOM double; does not test browser layout or audio |
+| `test/practice-sessions.test.mjs` | Listening-goal completion, local practice dates, repeat deduplication, corrupt-save isolation, quota failure, cross-tab conflicts, recent-draft recommendations and legacy record compatibility |
+| `test/practice-path.test.mjs` | Home resume, partial saves, in-page session switching, failed-save navigation guards and retries, final course links and free-play fallback against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 

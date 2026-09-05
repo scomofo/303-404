@@ -39,7 +39,7 @@
         const { button, state } = buttons.get(candidate.id), record = records[candidate.id];
         button.setAttribute('aria-pressed', String(candidate.id === session.id));
         button.dataset.complete = !!record.completedAt;
-        state.textContent = record.completedAt ? record.reflection === 'revisit' ? 'Completed · Revisit' : 'Completed' : record.checks.some(Boolean) ? 'In progress' : 'Not yet completed';
+        state.textContent = record.completedAt ? record.reflection === 'revisit' ? 'Completed · Revisit' : 'Completed' : P.hasDraft(record) ? 'In progress' : 'Not yet completed';
       }
       $('practice-session-title').textContent = session.title;
       $('practice-session-meta').textContent = `Session ${P.sessions.indexOf(session) + 1} · About ${session.minutes} min · ${session.skill}`;
@@ -49,7 +49,7 @@
       $('practice-session-note').hidden = !record.note;
       $('practice-session-note').textContent = record.note ? `Your note: ${record.note}` : '';
       $('practice-session-link').href = sessionHref(session);
-      $('practice-session-link').textContent = record.completedAt ? 'Practise this again' : record.checks.some(Boolean) ? 'Continue session' : 'Start this session';
+      $('practice-session-link').textContent = record.completedAt ? 'Practise this again' : P.hasDraft(record) ? 'Continue session' : 'Start this session';
       $('path-complete').hidden = summary.completed !== P.sessions.length;
     }
     refresh();
@@ -64,17 +64,29 @@
     const params = new URLSearchParams(window.location.search);
     const initial = P.getSession(params.get('mission'));
     if (!initial) return; // Free play and unknown links leave the studio usable.
-    const drafts = new Map();
-    let current;
+    let current, unsaved = false;
+    $('return-to-session').hidden = false;
+    $('return-to-session').addEventListener('click', () => { panel.open = true; });
     function open(session, focus = false) {
       current = session;
+      unsaved = false;
       let record, readError = false;
-      try { record = drafts.get(session.id) || store.read(session); }
+      try { record = store.read(session); }
       catch { record = P.emptyRecord(session); readError = true; }
       panel.hidden = false;
       panel.open = true;
       $('guided-session-heading').textContent = `Session ${P.sessions.indexOf(session) + 1} · ${session.title}`;
       const body = $('guided-session-body');
+      const navigation = make('div', '', { className: 'session-switcher' });
+      const choiceLabel = make('label', 'Practice session');
+      const choice = make('select', '', { className: 'session-choice' });
+      P.sessions.forEach((candidate, index) => choice.append(make('option', `${index + 1}. ${candidate.title}`, { value: candidate.id })));
+      choice.value = session.id;
+      choice.addEventListener('change', () => {
+        if (!switchSession(P.getSession(choice.value))) choice.value = session.id;
+      });
+      choiceLabel.append(choice);
+      navigation.append(choiceLabel, make('p', 'Every session is open. Switching keeps your music and live take on this page.', { className: 'session-meta' }));
       const brief = make('div', '', { className: 'session-brief' });
       brief.append(make('p', `About ${session.minutes} min · ${session.skill}`, { className: 'session-meta' }), make('h2', session.outcome));
       const steps = make('ol', '', { className: 'session-instructions' });
@@ -89,7 +101,20 @@
       const failure = make('p', '', { className: 'session-error', role: 'alert', hidden: !readError });
       if (readError) failure.textContent = 'Saved session data is unavailable. You can follow the brief; existing data has been kept.';
       const submit = make('button', 'Save completed session', { type: 'submit', className: 'session-primary' });
+      const saveLater = make('button', 'Save for later', { type: 'button', className: 'session-save-later' });
       const next = make('button', '', { type: 'button', className: 'session-next', hidden: true });
+      const directions = make('nav', '', { className: 'session-directions', hidden: true });
+      directions.setAttribute('aria-label', 'Keep learning after your groove');
+      directions.append(make('strong', 'Choose your next direction'));
+      for (const [href, title, description] of [
+        ['./SampleCircuit%20Guide.dc.html', 'Explore sampling', 'Slice sounds, resample and build a fresh groove.'],
+        ['./MPK%20Mini%20MK4%20Guide.dc.html', 'Add chords and melody', 'Learn expressive pads, chords and arpeggios.'],
+        ['./index.html#courses', 'Browse all six courses', 'Choose a course for your gear.'],
+      ]) {
+        const link = make('a', '', { href });
+        link.append(make('span', title), make('span', description, { className: 'session-meta' }));
+        directions.append(link);
+      }
       const hint = make('p', 'Check all three goals and choose how it felt to complete a session.', { className: 'session-meta', id: 'session-completion-hint' });
       submit.setAttribute('aria-describedby', hint.id);
       function update() {
@@ -97,12 +122,15 @@
         submit.textContent = record.completedAt ? 'Save another practice' : 'Save completed session';
         const index = P.sessions.indexOf(session), following = P.sessions[index + 1];
         next.hidden = !record.completedAt || !following;
+        next.disabled = unsaved;
+        saveLater.textContent = unsaved ? 'Retry saving practice' : 'Save for later';
+        directions.hidden = session.id !== 'finish' || !record.completedAt || unsaved;
         if (following) next.textContent = `Next: ${following.title}`;
       }
       function saveDraft() {
-        drafts.set(session.id, record);
+        unsaved = true;
         try {
-          record = store.save(session, record); failure.hidden = true;
+          record = store.save(session, record); unsaved = false; failure.hidden = true;
           if (feedback.textContent !== 'Checklist and reflection saved.') feedback.textContent = 'Checklist and reflection saved.';
         } catch (error) {
           feedback.textContent = 'Changes are not saved.';
@@ -110,6 +138,17 @@
           failure.textContent = /another tab|existing|Existing/.test(error.message) ? error.message : 'Could not save your session in this browser. Keep your note elsewhere and try saving again.';
         }
         update();
+        return !unsaved;
+      }
+      saveLater.addEventListener('click', () => {
+        if (saveDraft()) feedback.textContent = 'Your place is saved. Continue from Home when you are ready. Practice days are counted when you complete a session.';
+      });
+      function switchSession(target) {
+        if (!target || (unsaved && !saveDraft())) return false;
+        const url = new URL(window.location.href); url.searchParams.set('mission', target.id);
+        window.history.replaceState(null, '', url);
+        open(target, true);
+        return true;
       }
       session.checks.forEach((text, i) => {
         const label = make('label', '', { className: 'session-check' });
@@ -131,30 +170,34 @@
         event.preventDefault();
         try {
           const completed = P.complete(session, record);
-          record = store.save(session, completed); drafts.set(session.id, record);
+          record = store.save(session, completed); unsaved = false;
           failure.hidden = true;
           feedback.textContent = session.id === 'finish' ? 'Session complete. Keep your finished groove and bring one idea into your next project.' : 'Session complete. Your listening goals and reflection are saved.';
           update();
         } catch (error) {
+          unsaved = true;
+          feedback.textContent = 'Session completion is not saved.';
           failure.hidden = false;
           failure.textContent = /another tab|before saving|existing|Existing/.test(error.message) ? error.message : 'Session completion was not saved. Keep your note elsewhere and try again.';
+          update();
         }
       });
       next.addEventListener('click', () => {
         const following = P.sessions[P.sessions.indexOf(session) + 1];
         if (!following) return;
-        const url = new URL(window.location.href); url.searchParams.set('mission', following.id);
-        window.history.replaceState(null, '', url);
-        open(following, true); // Keep the project, live take and transport on this page.
+        switchSession(following);
       });
-      form.append(goals, feeling, noteLabel, hint, submit, feedback, failure, next,
+      form.append(goals, feeling, noteLabel, hint, submit, saveLater, feedback, failure, next, directions,
         make('p', 'These are your own listening checks. Save your music with the studio controls; session progress does not contain audio.', { className: 'session-meta' }));
-      body.replaceChildren(brief, form);
+      body.replaceChildren(navigation, brief, form);
       update();
       if (record.completedAt) feedback.textContent = 'Completed before. Practise again or move to the next session.';
       if (focus) $('guided-session-heading').focus();
     }
     open(initial);
+    window.addEventListener('beforeunload', event => {
+      if (unsaved) { event.preventDefault(); event.returnValue = ''; }
+    });
     window.addEventListener('storage', event => {
       if (event.key === null || event.key === P.PREFIX + current.id) {
         const failure = panel.querySelector('.session-error');

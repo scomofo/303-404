@@ -81,7 +81,7 @@ test('home → studio goals → next session → returning home preserves progre
   const submit = body.querySelector('.session-primary');
   assert.equal(submit.disabled, true);
   for (const input of body.querySelectorAll('input')) { input.checked = true; input.fire('change'); }
-  const feeling = body.querySelector('select'); feeling.value = 'revisit'; feeling.fire('change');
+  const feeling = body.querySelector('form').querySelector('select'); feeling.value = 'revisit'; feeling.fire('change');
   const note = body.querySelector('textarea'); note.value = '<b>Less bass before the return.</b>'; note.fire('input');
   assert.equal(submit.disabled, false);
   body.querySelector('form').fire('submit');
@@ -108,7 +108,7 @@ test('home → studio goals → next session → returning home preserves progre
   assert.equal(returned.document.getElementById('practice-session-link').href, './groove-studio.html?mission=bass-space');
   const restored = load('groove-studio.html', storage, '?mission=pocket').document.getElementById('guided-session-body');
   assert.ok(restored.querySelectorAll('input').every(input => input.checked));
-  assert.equal(restored.querySelector('select').value, 'revisit');
+  assert.equal(restored.querySelector('form').querySelector('select').value, 'revisit');
   assert.equal(restored.querySelector('textarea').value, note.value);
 });
 
@@ -125,10 +125,80 @@ test('a failed completion stays visibly unsaved and does not unlock Next or infl
   const body = app.document.getElementById('guided-session-body');
   storage.setItem = () => { throw new Error('Quota exceeded'); };
   for (const input of body.querySelectorAll('input')) { input.checked = true; input.fire('change'); }
-  const feeling = body.querySelector('select'); feeling.value = 'ready'; feeling.fire('change');
+  const feeling = body.querySelector('form').querySelector('select'); feeling.value = 'ready'; feeling.fire('change');
   body.querySelector('form').fire('submit');
   assert.equal(body.querySelector('.session-error').hidden, false);
   assert.match(body.querySelector('.session-error').textContent, /not saved/);
   assert.equal(body.querySelector('.session-next').hidden, true);
   assert.equal(load('index.html', storage).document.getElementById('path-count').textContent, '0 of 7 sessions completed');
+});
+
+test('Home resumes a later session saved for later, with no completion or practice-day credit', () => {
+  for (const draft of ['note', 'reflection', 'save-for-later']) {
+    const storage = memory(), app = load('groove-studio.html', storage, '?mission=variation');
+    const body = app.document.getElementById('guided-session-body');
+    if (draft === 'note') {
+      const note = body.querySelector('textarea'); note.value = 'Next time, try fewer hats.'; note.fire('input');
+    } else if (draft === 'reflection') {
+      const feeling = body.querySelector('form').querySelector('select'); feeling.value = 'revisit'; feeling.fire('change');
+    } else body.querySelector('.session-save-later').fire('click');
+    const returned = load('index.html', storage).document;
+    assert.equal(returned.getElementById('practice-session-link').href, './groove-studio.html?mission=variation');
+    assert.equal(returned.getElementById('practice-session-link').textContent, 'Continue session');
+    assert.equal(returned.getElementById('practice-path-list').children[2].querySelector('.path-step-state').textContent, 'In progress');
+    assert.equal(returned.getElementById('path-count').textContent, '0 of 7 sessions completed');
+    assert.equal(returned.getElementById('practice-days').textContent, '0 practice days in the last 7 days');
+  }
+});
+
+test('failed repeat-session notes stay accessible until retry succeeds, including Next and session switching', () => {
+  const storage = memory();
+  const { P } = load('groove-studio.html', storage);
+  const session = P.sessions[0], seed = new P.PracticeStore(storage);
+  seed.read(session);
+  seed.save(session, P.complete(session, { ...P.emptyRecord(session), checks: [true, true, true], reflection: 'ready' }));
+  const app = load('groove-studio.html', storage, '?mission=pocket');
+  const body = app.document.getElementById('guided-session-body'), next = body.querySelector('.session-next');
+  const write = storage.setItem;
+  storage.setItem = () => { throw new Error('Quota exceeded'); };
+  const note = body.querySelector('textarea'); note.value = 'Keep this unsaved idea.'; note.fire('input');
+  assert.equal(next.disabled, true);
+  next.fire('click'); // The handler also guards programmatic or stale actions.
+  assert.equal(app.window.location.search, '?mission=pocket');
+  const choice = body.querySelector('.session-choice'); choice.value = 'variation'; choice.fire('change');
+  assert.equal(choice.value, 'pocket');
+  assert.equal(app.window.location.search, '?mission=pocket');
+  assert.equal(body.querySelector('textarea').value, note.value);
+  let warned = false;
+  for (const check of app.events.get('beforeunload')) check({ preventDefault() { warned = true; } });
+  assert.equal(warned, true);
+  storage.setItem = write;
+  body.querySelector('.session-save-later').fire('click');
+  assert.equal(next.disabled, false);
+  assert.equal(new P.PracticeStore(storage).read(session).note, note.value);
+  warned = false;
+  for (const check of app.events.get('beforeunload')) check({ preventDefault() { warned = true; } });
+  assert.equal(warned, false);
+  next.fire('click');
+  assert.equal(app.window.location.search, '?mission=bass-space');
+});
+
+test('learners can switch to any session in-page, return to saved notes, and follow the finish handoff', () => {
+  const storage = memory(), app = load('groove-studio.html', storage, '?mission=pocket');
+  const body = app.document.getElementById('guided-session-body');
+  const note = body.querySelector('textarea'); note.value = 'Try a quieter answer.'; note.fire('input');
+  let choice = body.querySelector('.session-choice'); choice.value = 'variation'; choice.fire('change');
+  assert.equal(app.window.location.search, '?mission=variation');
+  choice = body.querySelector('.session-choice'); choice.value = 'pocket'; choice.fire('change');
+  assert.equal(body.querySelector('textarea').value, note.value);
+  choice = body.querySelector('.session-choice'); choice.value = 'finish'; choice.fire('change');
+  assert.equal(body.querySelector('.session-directions').hidden, true);
+  for (const input of body.querySelectorAll('input')) { input.checked = true; input.fire('change'); }
+  const feeling = body.querySelector('form').querySelector('select'); feeling.value = 'ready'; feeling.fire('change');
+  body.querySelector('form').fire('submit');
+  const directions = body.querySelector('.session-directions');
+  assert.equal(directions.hidden, false);
+  assert.deepEqual(directions.querySelectorAll('a').map(link => link.href), ['./SampleCircuit%20Guide.dc.html', './MPK%20Mini%20MK4%20Guide.dc.html', './index.html#courses']);
+  assert.match(body.querySelector('.session-feedback').textContent, /Session complete/);
+  assert.equal(load('index.html', storage).document.getElementById('path-count').textContent, '1 of 7 sessions completed');
 });

@@ -39,6 +39,9 @@
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
     <div style="width:100%;max-width:760px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
+      </sc-if>
 
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
@@ -768,6 +771,7 @@ class Component extends DCCourseLogic {
   componentWillUnmount() {
     this.stopAll();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+    super.componentWillUnmount();
   }
 
   buildSteps() {
@@ -971,7 +975,8 @@ class Component extends DCCourseLogic {
   // ── audio graph ──────────────────────────────────────────────────────────
   ensureAudio() {
     if (!this.audioCtx) {
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioCtx = this.createAudioContext();
+      if (!this.audioCtx) return null;
     }
     if (!this.noiseBuffer) {
       const size = Math.floor(this.audioCtx.sampleRate * 0.5);
@@ -981,7 +986,8 @@ class Component extends DCCourseLogic {
       this.noiseBuffer = buf;
     }
     if (!this.master) this.buildGraph();
-    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+    this.resumeAudio(this.audioCtx);
+    return this.audioCtx;
   }
   // Built once and kept: the knobs edit this graph live, which is the whole
   // point of Week 4, so it can't be torn down between plays.
@@ -1301,7 +1307,7 @@ class Component extends DCCourseLogic {
   chordRing() { return this.baseStepSeconds() * 16 * 0.92 + 0.06; }
   arpRing() { return Math.max(0.06, Math.min(0.5, this.baseStepSeconds() * this.state.arpRate * 0.9)) + 0.06; }
   playBeat() {
-    this.ensureAudio(); this.stopAll();
+    if (!this.ensureAudio()) return; this.stopAll();
     this.setState({ beatPlaying: true, beatCol: 0 });
     this.startSequence('beat', {
       // The grid is read at schedule time, so edits land within a lookahead.
@@ -1312,7 +1318,7 @@ class Component extends DCCourseLogic {
     });
   }
   playProgression() {
-    this.ensureAudio(); this.stopAll();
+    if (!this.ensureAudio()) return; this.stopAll();
     this.progBarRef = 0;
     this.setState({ progPlaying: true, progBar: 0 });
     this.startSequence('prog', {
@@ -1331,7 +1337,7 @@ class Component extends DCCourseLogic {
     });
   }
   playArp() {
-    this.ensureAudio(); this.stopAll();
+    if (!this.ensureAudio()) return; this.stopAll();
     this.arpIdx = 0;
     this.setState({ arpPlaying: true });
     this.startSequence('arp', {
@@ -1375,7 +1381,7 @@ class Component extends DCCourseLogic {
     return [this.synthNote(seq[idx % seq.length], t, Math.min(0.5, this.baseStepSeconds() * rate * 0.9), 0.08)];
   }
   playSong() {
-    this.ensureAudio(); this.stopAll();
+    if (!this.ensureAudio()) return; this.stopAll();
     this.songBarRef = 0;
     this.setState({ songPlaying: true, songBar: 0, songCol: 0 });
     this.startSequence('song', {
@@ -1404,7 +1410,7 @@ class Component extends DCCourseLogic {
 
   // ── interactions ─────────────────────────────────────────────────────────
   hitPad(pad) {
-    this.ensureAudio();
+    if (!this.ensureAudio()) return;
     const t0 = this.audioCtx.currentTime + 0.03;
     const vel = this.state.velocity;
     const shots = [];
@@ -1420,7 +1426,7 @@ class Component extends DCCourseLogic {
     this.setState({ padSel: pad.id });
   }
   pressKey(keyIndex) {
-    this.ensureAudio();
+    if (!this.ensureAudio()) return;
     const pressed = 36 + this.state.octave * 12 + keyIndex;
     const played = this.state.scaleOn ? this.snapToScale(pressed) : pressed;
     const t = this.audioCtx.currentTime + 0.03;
@@ -1691,6 +1697,7 @@ class Component extends DCCourseLogic {
     const totalBars = this.songTotalBars();
     const songSeconds = Math.round(totalBars * 4 * 60 / this.state.tempo);
     return {
+      hasAudioError: !!this.state.audioError, audioError: this.state.audioError || '',
       weekLabel: step.weekTag,
       stepNumber: this.state.step + 1,
       totalSteps: this.STEPS.length,

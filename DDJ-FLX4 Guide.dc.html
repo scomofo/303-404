@@ -35,6 +35,9 @@
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
     <div style="width:100%;max-width:760px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
+      </sc-if>
 
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
@@ -547,6 +550,7 @@ class Component extends DCCourseLogic {
   componentWillUnmount() {
     this.stopEngine();
     if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} }
+    super.componentWillUnmount();
   }
 
   buildIntensiveSteps() {
@@ -895,14 +899,16 @@ class Component extends DCCourseLogic {
   // the deck engines below only decide what one step sounds like.
   ensureAudio() {
     if (!this.audioCtx) {
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioCtx = this.createAudioContext();
+      if (!this.audioCtx) return null;
       const size = this.audioCtx.sampleRate * 0.3;
       const buf = this.audioCtx.createBuffer(1, size, this.audioCtx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
       this.noiseBuffer = buf;
     }
-    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+    this.resumeAudio(this.audioCtx);
+    return this.audioCtx;
   }
   playKickTo(out, t, vol) {
     const ctx = this.audioCtx;
@@ -995,7 +1001,7 @@ class Component extends DCCourseLogic {
     return nodes;
   }
   startEngine() {
-    this.ensureAudio(); this.stopEngine(); this.initChains();
+    if (!this.ensureAudio()) return; this.stopEngine(); this.initChains();
     this.setState({ enginePlaying: true, colA: 0, colB: 0 });
     // Two independent sequences: deck A holds the reference tempo, deck B runs at
     // whatever the tempo fader says, so they drift apart until you beatmatch them.
@@ -1172,6 +1178,7 @@ class Component extends DCCourseLogic {
     const engineWidgets = ['jogSpin', 'tempo', 'mixerEQ', 'mixerFader', 'sync', 'hotCues', 'loop', 'beatFx'];
     const tempoCtl = { label: this.tempoLabel(), dec: () => this.stepTempo(-1), inc: () => this.stepTempo(1) };
     return {
+      hasAudioError: !!this.state.audioError, audioError: this.state.audioError || '',
       weekLabel: step.weekTag,
       stepNumber: this.state.step + 1,
       totalSteps: this.STEPS.length,

@@ -67,6 +67,62 @@ test('no guide re-declares a DCCourseLogic base method', () => {
   }
 });
 
+test('a browser without Web Audio gets a visible notice, not a TypeError', () => {
+  const cases = [
+    ['Behringer Setup Guide.dc.html', inst => inst.playRd6()],
+    ['DDJ-FLX4 Guide.dc.html', inst => inst.startEngine()],
+    ['MPK Mini MK4 Guide.dc.html', inst => inst.playBeat()],
+    ['SampleCircuit Guide.dc.html', inst => inst.startTransport()],
+  ];
+  const { store, restore } = stubStorage();
+  try {
+    for (const [file, play] of cases) {
+      const { inst, dispose } = loadComponent(file);
+      try {
+        inst.audioCtx = null;
+        globalThis.window = {};
+        assert.doesNotThrow(() => play(inst), `${file}: play must not throw without Web Audio`);
+        assert.equal(inst.ensureAudio(), null);
+        assert.match(inst.state.audioError || '', /Web Audio/, `${file}: audioError not reported`);
+        assert.equal(inst.renderVals().hasAudioError, true, `${file}: notice not exposed to the template`);
+        inst.saveProgress();
+        assert.ok(!('audioError' in JSON.parse(store.get(inst.persistenceKey)).state), `${file}: audioError leaked into storage`);
+      } finally {
+        dispose();
+      }
+    }
+  } finally {
+    restore();
+  }
+});
+
+test('unmount flushes progress and detaches the persistence listeners', () => {
+  const { store, restore } = stubStorage();
+  const prevWindow = globalThis.window, prevDoc = globalThis.document;
+  try {
+    const { inst, dispose } = loadComponent('Hybrid Live Set.dc.html');
+    try {
+      const removed = [];
+      globalThis.window = { ...globalThis.window, removeEventListener: (type) => removed.push(type) };
+      globalThis.document = { ...globalThis.document, removeEventListener: (type) => removed.push(type) };
+      inst.__persistHideHook = () => {};
+      inst.__persistVisHook = () => {};
+      inst.state = { ...inst.state, step: 4 };
+      inst.componentWillUnmount();
+      assert.deepEqual(removed.sort(), ['pagehide', 'visibilitychange']);
+      assert.equal(inst.__persistHideHook, null);
+      assert.equal(inst.__persistVisHook, null);
+      assert.equal(JSON.parse(store.get(inst.persistenceKey)).state.step, 4, 'unmount must flush the pending save');
+    } finally {
+      dispose();
+    }
+  } finally {
+    globalThis.window = prevWindow;
+    globalThis.document = prevDoc;
+    restore();
+  }
+});
+
 test('support.js pins SRI for unpkg React/Babel', () => {
   const js = readFileSync(join(ROOT, 'support.js'), 'utf8');
   for (const name of ['REACT_SRI', 'REACT_DOM_SRI', 'BABEL_SRI']) {

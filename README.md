@@ -147,17 +147,26 @@ The guides load React 18, ReactDOM, Babel Standalone and fonts at runtime. Audio
 
 ## Persistence contract
 
-Stateless by design (current): step, checklist, pattern, mute, and playhead
-state live in memory only. Reload resets via `initialState()`; nothing is
-written to `localStorage`/`IndexedDB`, and no audio nodes, timers, or object
-URLs are persisted. `test/structure.test.mjs` guards the `restart()` reset
-contract.
+Every guide persists serializable learner state to versioned, namespaced
+`localStorage` through the shared `DCCourseLogic` adapter in `support.js`:
+each component sets `persistenceKey = '303-404/<module>/v1'` and calls
+`enablePersistence()` at the end of its constructor. The keys are
+`303-404/behringer/v1`, `303-404/tr06/v1`, `303-404/ddj-flx4/v1`,
+`303-404/mpk-mini-mk4/v1`, `303-404/hybrid/v1` and `303-404/sample-circuit/v1`.
 
-If persistence is added later: namespace by module (`303-404/behringer/…`,
-`303-404/hybrid/…`, `303-404/ddj-flx4/…`, `303-404/sample-circuit/…`), store
-serializable learner state only (audio blobs in IndexedDB, never
-localStorage), version the schema, and document quota/deletion/migration.
-See `docs/HANDOFF_*.md` per-module plans and `THIRD-PARTY-NOTICES.md`.
+Stored: only `initialState()` keys outside `PERSIST_OMIT` — step, checklists,
+patterns, mixer and knob settings, tempo, selections and, in Sample & Circuit,
+slice edits to the bundled cards. Never stored: `dialogOpen`, playing flags,
+playheads, recorder state, transient labels, the audio-unavailable notice,
+audio nodes, contexts, timers, imported audio or object URLs. Saves are
+debounced, skipped when the snapshot is unchanged, flushed on
+`pagehide`/`visibilitychange`, and the listeners are removed on unmount. A
+version mismatch is ignored and `step` is clamped to the course length. Start
+Over resets in-memory state via `initialState()`. `test/regression.test.mjs`
+guards the key names, the transient exclusions and the round trip.
+
+If audio blobs are ever persisted, use IndexedDB rather than `localStorage`,
+and document quota, deletion and migration. See `docs/HANDOFF_*.md`.
 
 ## Tests
 

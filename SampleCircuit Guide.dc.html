@@ -31,6 +31,9 @@
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
     <div style="width:100%;max-width:900px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
+      <sc-if value="{{ hasAudioError }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="card elev-sm" style="padding:var(--space-4);border-left:4px solid var(--color-accent);font-size:14px;">{{ audioError }}</div>
+      </sc-if>
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-5);">
           <div><h1 style="margin:0;">Sample &amp; Circuit Guide</h1><h3 style="margin:6px 0 0;font-weight:400;color:var(--color-accent-700);">Groovebox / Sampler Curriculum</h3></div>
@@ -417,11 +420,17 @@ class Component extends DCCourseLogic {
   }
 
   ensureAudio() {
-    if (!this.audioCtx) { var Audio = window.AudioContext || window.webkitAudioContext; this.audioCtx = new Audio(); }
-    if (this.audioCtx.state === 'suspended' && this.audioCtx.resume) this.audioCtx.resume();
+    if (!this.audioCtx) { this.audioCtx = this.createAudioContext(); if (!this.audioCtx) return null; }
+    this.resumeAudio(this.audioCtx);
     return this.audioCtx;
   }
-  ensureSampler() { if (!this.sampler) this.sampler = new this.SamplerEngineClass(this.ensureAudio()); return this.sampler; }
+  ensureSampler() {
+    if (this.sampler) return this.sampler;
+    var ctx = this.ensureAudio();
+    if (!ctx) throw new Error(this.AUDIO_UNAVAILABLE);
+    this.sampler = new this.SamplerEngineClass(ctx);
+    return this.sampler;
+  }
   selectedCard() { return this.SLICE_CARDS.find(function (card) { return card.id === this.state.selectedCardId; }, this) || this.SLICE_CARDS[0]; }
   selectCard(id) { this.setState({ selectedCardId:id, status:'' }, this.drawWaveform.bind(this)); }
   setSensitivity(value) { var n = Number(value && value.target ? value.target.value : value); this.setState({ sensitivity:Math.max(0, Math.min(100, n)) }); }
@@ -509,7 +518,7 @@ class Component extends DCCourseLogic {
   // and the playhead follows the step that is actually sounding.
   startTransport() {
     if (this.sequences && this.sequences.sampler) return;
-    this.ensureAudio();
+    if (!this.ensureAudio()) return;
     var self = this;
     this.setState({ playing:true, playCol:-1 });
     this.startSequence('sampler', {
@@ -569,11 +578,12 @@ class Component extends DCCourseLogic {
   buildPatternSteps() { var self = this, row = this.state.pattern[this.state.selectedTrack]; return row.map(function (on, i) { return { number:i + 1, pressed:on ? 'true' : 'false', ariaLabel:'Pad ' + (self.state.selectedTrack + 1) + ', step ' + (i + 1), toggle:function () { self.togglePatternStep(i); }, style:'min-width:30px;aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:10px;background:' + (on ? 'var(--color-accent-2-600)' : (i % 4 === 0 ? 'var(--color-neutral-300)' : 'var(--color-bg)')) + ';color:' + (on ? 'var(--color-bg)' : 'var(--color-text)') + ';' + (i === self.state.playCol ? 'outline:2px solid var(--color-accent);outline-offset:1px;' : '') }; }); }
   componentDidMount() { this.drawWaveform(); }
   componentDidUpdate() { this.drawWaveform(); }
-  componentWillUnmount() { this.stopTransport(); }
+  componentWillUnmount() { this.stopTransport(); if (this.audioCtx) { try { this.audioCtx.close(); } catch (e) {} } super.componentWillUnmount(); }
 
   renderVals() {
     var step = this.STEPS[this.state.step], card = this.selectedCard();
     return {
+      hasAudioError: !!this.state.audioError, audioError: this.state.audioError || '',
       weekLabel:step.weekTag, stepNumber:this.state.step + 1, totalSteps:this.STEPS.length, progressPct:Math.round(this.state.step / (this.STEPS.length - 1) * 100),
       isOverview:step.kind === 'overview', isWeekIntro:step.kind === 'weekintro', isContent:step.kind === 'content', isComplete:step.kind === 'complete',
       currentStep:{ weekTag:step.weekTag, title:step.title, objective:step.objective, body:step.body || '', items:this.buildItems(step), showSliceBank:step.widget === 'sliceBank', showPatternGrid:step.widget === 'patternGrid' },

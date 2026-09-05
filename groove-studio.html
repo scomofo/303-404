@@ -8,28 +8,36 @@
   <title>Groove Studio · 303–404</title>
   <link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
   <link rel="stylesheet" href="studio/studio.css">
+  <link rel="stylesheet" href="practice-path.css">
   <script defer src="studio/banks.js"></script>
   <script defer src="studio/project.js"></script>
   <script defer src="studio/audio.js"></script>
   <script defer src="studio/app.js"></script>
+  <script defer src="practice-sessions.js"></script>
+  <script defer src="practice-path.js"></script>
 </head>
 <body class="studio-page">
   <a class="skip-link" href="#workspace">Skip to instruments</a>
   <div class="studio-shell">
     <header class="studio-header">
       <div><p class="eyebrow">303–404</p><h1>Groove Studio</h1><p class="subtle">Drums and acid bass, on one clock.</p></div>
-      <nav aria-label="Studio navigation"><a href="./index.dc.html">All courses</a><a href="./Behringer%20Setup%20Guide.dc.html">TD-3 / RD-6 guide</a></nav>
+      <nav aria-label="Studio navigation"><a href="./index.html">Home</a><a href="./index.html#practice">Guided practice</a><a href="./index.html#courses">All courses</a><a href="./Behringer%20Setup%20Guide.dc.html">TD-3 / RD-6 guide</a></nav>
     </header>
 
-    <noscript><p class="notice">Enable JavaScript to use the instruments. Your <a href="./index.dc.html">course links</a> are still available.</p></noscript>
+    <noscript><p class="notice">Enable JavaScript to use the instruments. Your <a href="./index.html">course links</a> are still available.</p></noscript>
     <main>
+      <details class="guided-session" data-practice-studio hidden>
+        <summary id="guided-session-heading">Your guided session</summary>
+        <p class="session-jump"><a href="#studio-transport">Go to playback controls</a> · Collapse this brief whenever you need more room.</p>
+        <div id="guided-session-body" class="guided-session-body"></div>
+      </details>
       <section class="project-toolbar" aria-label="Project">
         <label class="project-name">Project name<input id="project-name" maxlength="80" value="My first groove" autocomplete="off"></label>
         <div class="project-actions"><button id="save-project" type="button">Save</button><button id="copy-project" type="button">Save a copy</button><button id="new-project" type="button">New</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
         <span id="save-state" class="subtle">Ready to play</span>
       </section>
 
-      <section class="transport" aria-label="Playback and recording">
+      <section id="studio-transport" class="transport" tabindex="-1" aria-label="Playback and recording">
         <div class="transport-actions"><button id="play-scene" type="button" class="primary">Play scene</button><button id="play-arrangement" type="button">Play arrangement</button><button id="stop" type="button" disabled>Stop</button></div>
         <label>Tempo<input id="tempo" type="number" min="40" max="240" step="1" value="128"> BPM</label>
         <label class="master-control">Master<input id="master" type="range" min="0" max="1" step="0.01" value="0.7"><span id="master-value">70%</span></label>
@@ -89,7 +97,7 @@
 
       <details class="project-library"><summary>Projects &amp; backups</summary><div class="library-content"><label>Projects saved in this browser<select id="project-list"></select></label><div class="section-actions"><button id="open-project" type="button">Open project</button><button id="delete-project" type="button">Delete selected project</button><button id="export-project" type="button">Download project backup</button><label class="button import-label">Import project<input id="import-project" type="file" accept=".json,application/json"></label></div><p class="subtle">Pattern projects save in this browser. Download a JSON backup to move them to another device or keep a separate copy. Live takes are downloaded separately.</p></div></details>
     </main>
-    <footer class="studio-footer"><a href="./index.dc.html">Back to your courses</a><span>Original browser synthesis · Pattern attributions stay with your project</span></footer>
+    <footer class="studio-footer"><a href="./index.html">Back to Home</a><span>Original browser synthesis · Pattern attributions stay with your project</span></footer>
   </div>
 </body>
 </html>

@@ -35,7 +35,7 @@ test('home catalog is generated from the current lesson titles and checklists', 
 });
 
 test('all six courses are discoverable without the app runtime, with a route home', () => {
-  const home = readGuide('index.dc.html');
+  const home = readGuide('index.html');
   const cards = [...home.matchAll(/<article\b[^>]*data-course="([^"]+)"[^>]*>([\s\S]*?)<\/article>/g)];
   assert.equal(cards.length, GUIDES.length);
   assert.equal(new Set(cards.map(card => card[1])).size, GUIDES.length);
@@ -44,7 +44,8 @@ test('all six courses are discoverable without the app runtime, with a route hom
     assert.ok(card, `${course.file}: missing from home`);
     const href = card[2].match(/class="home-action course-link" href="([^"]+)"/)[1];
     assert.equal(decodeURIComponent(href), `./${course.file}`);
-    assert.match(readGuide(course.file), /href="\.\/index\.dc\.html"[^>]*>All courses<\/a>/);
+    assert.match(readGuide(course.file), /href="\.\/index\.html"[^>]*>Home<\/a>/);
+    assert.match(readGuide(course.file), /href="\.\/index\.html#courses"[^>]*>All courses<\/a>/);
     const { inst, dispose } = loadComponent(course.file);
     try {
       const weeks = inst.STEPS.filter(step => step.kind === 'weekintro').length;
@@ -53,7 +54,8 @@ test('all six courses are discoverable without the app runtime, with a route hom
     } finally { dispose(); }
   }
   assert.doesNotMatch(home, /<x-dc|src="\.\/support\.js"|unsafe-eval|unsafe-inline/);
-  assert.match(readGuide('index.html'), /http-equiv="refresh" content="0;url=\.\/index\.dc\.html"/);
+  assert.doesNotMatch(home, /http-equiv="refresh"/);
+  assert.match(readGuide('index.dc.html'), /http-equiv="refresh" content="0;url=\.\/index\.html"/);
   // Check local navigation and assets on both entrypoints, including fragment targets.
   for (const file of ['index.html', 'index.dc.html']) {
     const html = readGuide(file);

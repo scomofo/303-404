@@ -47,20 +47,60 @@ format, audio lifecycle and remaining browser checks.
 
 ## Your practice home
 
-`index.dc.html` brings all six courses together with accurate course lengths,
-saved checklist counts and a **Continue lesson** link for the most recently
-saved active course. Every course has an **All courses** link back home.
-`index.html` directs a static server's root URL to the same home page.
+The root URL (`index.html`) is the app's **Home / Main menu**. It has clear
+routes into guided practice, all six courses and free play in Groove Studio.
+Every guide and the studio have a **Home** link; **All courses** jumps straight
+to the course list. Older `index.dc.html` bookmarks redirect to Home.
 
-The home reads existing v1 saves without changing them. Progress meters count
+### Your first finished groove
+
+Seven original, browser-first sessions connect a short practice to a musical
+result. Each takes about 10–15 minutes and includes three actions, three
+listening goals, an optional stretch challenge and a brief reflection:
+
+| Session | Result |
+| --- | --- |
+| Find the pocket | A clear drum pulse and a deliberate hat variation |
+| Give the bass room | A bass phrase with rests and an intentional accent |
+| Make an answer | Two related scenes with audible contrast |
+| Create some space | A breakdown that sets up the full groove |
+| Shape a short set | An intro, groove, breakdown and return |
+| Rehearse the return | A repeatable live scene sequence and sound change |
+| Keep a finished take | A heard audio export, project backup and next idea |
+
+Starting a session opens its collapsible brief alongside Groove Studio's
+instruments. **Next** changes the brief on the same page, preserving the current
+project, playback and any live take. Free play remains available without a brief.
+The path builds on the studio starter or the learner's latest saved project;
+opening a session does not replace patterns or create a project.
+
+Checklists and reflections save in this browser. Completing a session requires
+all three goals and a self-assessment; visiting a page or moving a playhead earns
+no progress. Home recommends the first unfinished session, then any completed
+skill marked **Worth another pass**. Every session is always accessible. The
+practice-day count measures distinct local dates with an explicitly completed
+session during the last seven calendar days. Repeating a session on the same day
+does not add another day, and missed days do not remove completed milestones.
+These are self-reported listening checks, not automated audio assessment.
+
+Session records use separate `303-404/practice-sessions/v1/<session-id>` keys;
+course and studio saves stay independent. Notes are limited to 500 characters
+and rendered as text. Storage errors are visible, corrupt or incompatible records
+are preserved, and stale same-session writes from another tab are rejected.
+Session progress contains no audio and is not included in `.groove.json` backups.
+Download project backups and audio exports separately to keep your music.
+
+Course cards retain accurate course lengths, saved checklist counts and a
+**Continue lesson** link for the most recently saved active course. The home
+reads existing v1 course saves without changing them. Progress meters count
 checked items in the current curriculum; the last opened lesson is shown
 separately, so jumping to the last page does not imply completion. Cards refresh
 when you return to the tab or another course tab saves. Missing, incompatible
 or malformed saves cannot block the course links.
 
-The home uses plain HTML and two local scripts. Its course links remain usable
-without React, Babel or JavaScript. The individual interactive guides retain
-their shared runtime. Lesson titles and checklist sizes come from
+Home uses plain HTML and local scripts. Its course and studio links remain
+usable without React, Babel or JavaScript. The individual interactive guides
+retain their shared runtime. Lesson titles and checklist sizes come from
 `course-catalog.js`, generated from the actual course logic. After changing
 course steps, run `npm run catalog` and commit the updated catalog; `npm test`
 detects drift.
@@ -271,6 +311,8 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/tr06.test.mjs` | Five-week TR-06 structure, search-only watch links, 8×16 paper grid, default Week 1 pattern, Start Over, README week table |
 | `test/regression.test.mjs` | Handoff count sync, CSP/SRI presence, noise-buffer duration, shared-runtime markers, license/attribution files |
 | `test/home.test.mjs` | Course discovery and return links, generated catalog consistency, honest checklist progress, latest-session selection, existing-save round trips across all six guides, corrupt checklists, fractional steps, full storage quota and non-destructive notice dismissal |
+| `test/practice-sessions.test.mjs` | Guided listening-goal completion, reflection round trips, local practice dates, repeat deduplication, corrupt-save isolation, quota failure, cross-tab conflicts and recommendations |
+| `test/practice-path.test.mjs` | Home-to-studio events, checklist and note restoration, in-page Next, free-play fallback and visible save failures against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
@@ -279,9 +321,11 @@ The test harness loads each guide's inline component logic against a stub runtim
 ## Layout
 
 ```text
-index.html                     static-server root entrypoint
-index.dc.html                  practice home with all six courses
-practice-home.css / .js         home styling and read-only progress summary
+index.html                     home, main menu, guided practice and all six courses
+index.dc.html                  legacy bookmark redirect to Home
+practice-home.css / .js         home styling and read-only course progress summary
+practice-sessions.js            original seven-session curriculum and local progress store
+practice-path.css / .js         shared guided-practice interface for Home and Studio
 course-catalog.js               generated lesson labels and checklist sizes
 scripts/build-course-catalog.mjs catalog generator (npm run catalog)
 groove-studio.html              connected drum/bass scene editor and performance workspace

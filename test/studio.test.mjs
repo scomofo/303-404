@@ -97,7 +97,7 @@ test('studio banks match the courses and retain every note, slot, attribution an
 });
 
 test('home, all courses and each bank card link into the studio with the intended pattern', () => {
-  assert.match(readGuide('index.dc.html'), /href="\.\/groove-studio\.html"/);
+  assert.match(readGuide('index.html'), /href="\.\/groove-studio\.html"/);
   for (const { file } of GUIDES) assert.match(readGuide(file), /href="\.\/groove-studio\.html"[^>]*>Groove Studio<\/a>/);
   const { inst, dispose } = loadComponent('Behringer Setup Guide.dc.html');
   try {

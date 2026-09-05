@@ -31,7 +31,7 @@
   </header>
 
   <main style="flex:1;display:flex;justify-content:center;padding:var(--space-6) var(--space-4);">
-    <div style="width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--space-4);">
+    <div style="width:100%;max-width:760px;min-width:0;display:flex;flex-direction:column;gap:var(--space-4);">
 
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div class="card elev-sm" style="padding:var(--space-8);display:flex;flex-direction:column;gap:var(--space-4);">
@@ -126,9 +126,9 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Signal path — tap to mark connected</div>
               <sc-for list="{{ cablesAudio }}" as="c" hint-placeholder-count="2">
-                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
-                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span style="flex:1 1 40px;min-width:40px;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
                   <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
                   <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>
@@ -141,9 +141,9 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.55;">Sync cable — tap to mark connected</div>
               <sc-for list="{{ syncCable }}" as="c" hint-placeholder-count="1">
-                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
+                <button type="button" onclick="{{ c.toggle }}" aria-pressed="{{ c.pressed }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);border:1px dashed var(--color-divider);background:var(--color-surface);cursor:pointer;text-align:left;">
                   <span class="tag tag-neutral" style="flex:none;">{{ c.from }}</span>
-                  <span style="flex:1;height:2px;background:{{ c.lineColor }};"></span>
+                  <span style="flex:1 1 40px;min-width:40px;height:2px;background:{{ c.lineColor }};"></span>
                   <span class="tag tag-neutral" style="flex:none;">{{ c.to }}</span>
                   <span style="width:9px;height:9px;border-radius:50%;background:{{ c.dotColor }};flex:none;"></span>
                   <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ c.statusText }}</span>

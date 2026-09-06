@@ -32,6 +32,29 @@ owning global object. A regression test checks both receivers.
 serves the existing static pages with auto-refresh. The responsive fixture is
 `test/manual-viewport.html`. Production does not depend on Vite or a build step.
 
+## Guided-practice return pass — 2026-09-05
+
+After the practice-home changes in PR #34, another Chrome interaction pass verified:
+
+- A note saved in session 3 with **Save for later** makes Home offer **Continue
+  session** for session 3, even with earlier sessions unfinished.
+- Enter on the session summary collapses and reopens the brief. Playback controls
+  remain above the brief, with links between the brief and the instruments.
+- Completing session 3 and choosing **Next: Create some space** opens session 4
+  on the same page. The edited project name persists, playback continues with an
+  advancing playhead, and an existing recorded WebM take keeps the same download
+  URL. **Stop** still stops playback afterward.
+- Home and guided Studio have no horizontal overflow at 390 and 320 px iframe
+  widths: document client widths and scroll widths both measured 375 and 305 px
+  after scrollbars. The narrow Studio toolbar and playback controls stack visibly.
+
+`test/manual-practice-viewport.html` repeats the four narrow-layout checks using
+the actual Home and Studio pages. These are fixed-width frames, not physical
+mobile-device tests. This pass checked recording controls and take preservation;
+it did not repeat audio decoding or include human listening. Automated regression
+tests separately cover failed-save retries and navigation guards, recent-draft
+ordering, and the final session's course handoff.
+
 ## Limits
 
 This is Chrome browser interaction, responsive-layout and decoded audio-data

@@ -43,6 +43,72 @@ test('a session requires listening goals and reflection; opening or drafting ear
   assert.equal(P.recommended(after.records).id, second.id);
 });
 
+test('a later checklist, note, reflection or save-for-later draft is recommended before untouched sessions', () => {
+  const later = P.sessions[3], now = new Date(2026, 8, 5, 12);
+  assert.equal(P.hasDraft(P.emptyRecord(later)), false);
+  assert.equal(P.hasDraft(undefined), false);
+  for (const changes of [{ checks: [true, false, false] }, { note: 'Try fewer hats.' }, { reflection: 'revisit' }, {}]) {
+    const storage = memory(), store = new P.PracticeStore(storage);
+    const draft = { ...P.emptyRecord(later), ...changes };
+    if (Object.keys(changes).length) assert.equal(P.recommended({ [later.id]: draft }).id, later.id, 'legacy drafts also resume without a timestamp');
+    store.readAll();
+    store.save(later, draft, now);
+    const { records } = new P.PracticeStore(storage).readAll();
+    assert.equal(P.hasDraft(records[later.id]), true);
+    assert.equal(P.recommended(records).id, later.id);
+    assert.deepEqual(plain(P.summarize(records, now)), { completed: 0, practiceDays: 0 });
+  }
+});
+
+test('the most recently saved unfinished draft wins, and completing it returns to the remaining draft', () => {
+  const storage = memory(), store = new P.PracticeStore(storage), later = P.sessions[4];
+  store.readAll();
+  const earlier = new Date(2026, 8, 5, 10), recent = new Date(2026, 8, 5, 11), latest = new Date(2026, 8, 5, 12);
+  store.save(second, { ...P.emptyRecord(second), note: 'Leave space.' }, earlier);
+  store.save(later, { ...P.emptyRecord(later), reflection: 'revisit' }, recent);
+  assert.equal(P.recommended(store.readAll().records).id, later.id);
+  store.save(second, { ...P.emptyRecord(second), note: 'Come back to the bass.' }, latest);
+  assert.equal(P.recommended(store.readAll().records).id, second.id);
+  store.save(second, P.complete(second, ready(second), latest), latest);
+  assert.equal(P.recommended(store.readAll().records).id, later.id);
+  store.save(later, P.complete(later, ready(later), latest), latest);
+  assert.equal(P.recommended(store.readAll().records).id, first.id);
+});
+
+test('legacy v1 drafts without timestamps remain readable and resume without rewriting existing data', () => {
+  const storage = memory(), later = P.sessions[2];
+  const legacy = { version: 1, checks: [false, false, false], reflection: '', note: 'Keep the answer sparse.', completedAt: 0, days: [] };
+  const raw = JSON.stringify(legacy);
+  storage.data.set(P.PREFIX + later.id, raw);
+  const store = new P.PracticeStore(storage), { records, errors } = store.readAll();
+  assert.equal(errors.length, 0);
+  assert.equal(records[later.id].updatedAt, 0);
+  assert.deepEqual(plain(records[later.id]), { ...legacy, updatedAt: 0 });
+  assert.equal(P.recommended(records).id, later.id);
+  assert.equal(storage.getItem(P.PREFIX + later.id), raw);
+  const now = new Date(2026, 8, 5, 12);
+  const updated = store.save(later, records[later.id], now);
+  assert.deepEqual(plain(updated), { ...legacy, updatedAt: now.getTime() });
+  assert.equal(JSON.parse(storage.getItem(P.PREFIX + later.id)).version, 1);
+});
+
+test('a failed draft write preserves its previous timestamp and allows a successful retry', () => {
+  const storage = memory(), store = new P.PracticeStore(storage);
+  store.readAll();
+  const before = new Date(2026, 8, 5, 10), after = new Date(2026, 8, 5, 12);
+  const draft = store.save(second, { ...P.emptyRecord(second), note: 'Original idea.' }, before);
+  const raw = storage.getItem(P.PREFIX + second.id), write = storage.setItem;
+  const changed = { ...draft, note: 'New idea.' };
+  storage.setItem = () => { throw new Error('Quota exceeded'); };
+  assert.throws(() => store.save(second, changed, after), /Quota/);
+  assert.equal(changed.updatedAt, before.getTime(), 'failed writes do not stamp the caller’s draft');
+  assert.equal(storage.getItem(P.PREFIX + second.id), raw);
+  storage.setItem = write;
+  const saved = store.save(second, changed, after);
+  assert.equal(saved.updatedAt, after.getTime());
+  assert.equal(store.read(second).note, 'New idea.');
+});
+
 test('repeat practice and several sessions on one date count as one practice day', () => {
   const now = new Date(2026, 8, 5, 18), earlier = new Date(2026, 8, 5, 9);
   const once = P.complete(first, ready(first), earlier);
@@ -87,11 +153,12 @@ test('corrupt and newer session saves are isolated and never silently overwritte
 });
 
 test('malformed fields cannot inflate checklist goals or retain unbounded notes and history', () => {
-  const normalized = P.normalizeRecord(first, { version: 1, checks: [true, 'true', 1, true], note: 'x'.repeat(600), reflection: 'perfect', completedAt: Infinity, days: ['2026-02-30', null, '2026-02-28', '2026-02-28', 'not a date'] });
+  const normalized = P.normalizeRecord(first, { version: 1, checks: [true, 'true', 1, true], note: 'x'.repeat(600), reflection: 'perfect', completedAt: Infinity, updatedAt: Infinity, days: ['2026-02-30', null, '2026-02-28', '2026-02-28', 'not a date'] });
   assert.deepEqual(plain(normalized.checks), [true, false, false]);
   assert.equal(normalized.note.length, 500);
   assert.equal(normalized.reflection, '');
   assert.equal(normalized.completedAt, 0);
+  assert.equal(normalized.updatedAt, 0);
   assert.deepEqual(plain(normalized.days), ['2026-02-28']);
 });
 

@@ -26,11 +26,6 @@
 
     <noscript><p class="notice">Enable JavaScript to use the instruments. Your <a href="./index.html">course links</a> are still available.</p></noscript>
     <main>
-      <details class="guided-session" data-practice-studio hidden>
-        <summary id="guided-session-heading">Your guided session</summary>
-        <p class="session-jump"><a href="#studio-transport">Go to playback controls</a> · Collapse this brief whenever you need more room.</p>
-        <div id="guided-session-body" class="guided-session-body"></div>
-      </details>
       <section class="project-toolbar" aria-label="Project">
         <label class="project-name">Project name<input id="project-name" maxlength="80" value="My first groove" autocomplete="off"></label>
         <div class="project-actions"><button id="save-project" type="button">Save</button><button id="copy-project" type="button">Save a copy</button><button id="new-project" type="button">New</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
@@ -46,11 +41,18 @@
       <p id="status" class="status" role="status">Press Play arrangement to hear the starter's intro, groove, breakdown and return.</p>
       <p id="error" class="notice" role="alert" hidden></p>
 
+      <details class="guided-session" data-practice-studio hidden>
+        <summary id="guided-session-heading">Your guided session</summary>
+        <p class="session-jump"><a href="#studio-transport">Playback controls</a> · <a href="#workspace">Go to instruments</a> · Collapse this brief whenever you need more room.</p>
+        <div id="guided-session-body" class="guided-session-body"></div>
+      </details>
+
       <section class="scene-panel" aria-label="Scenes">
         <div id="scene-tabs" class="scene-tabs" role="group" aria-label="Edit or queue a scene"></div>
         <div class="scene-tools"><label>Scene name<input id="scene-name" maxlength="40"></label><label>Copy this scene to<select id="copy-target"><option>A</option><option>B</option><option>C</option><option>D</option></select></label><button id="copy-scene" type="button">Copy scene</button><span class="subtle">While looping, scene changes land on a bar boundary.</span></div>
       </section>
 
+      <a id="return-to-session" class="session-return" href="#guided-session-heading" hidden>Back to your session</a>
       <div id="workspace" class="workspace" tabindex="-1">
         <div class="instruments">
           <section class="instrument" aria-labelledby="drum-heading">

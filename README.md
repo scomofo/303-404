@@ -70,6 +70,32 @@ web sample playback does not support procedural synthesis; stream playback
 supports more features with latency trade-offs. See the official
 [Godot web audio documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html#audio-playback).
 
+## Drop Lab
+
+Open **Drop Lab** from Home for a ready-to-play intro, groove, breakdown and
+return. Tap the four large scene pads or keys **1–4** to perform; changes queue
+on the next bar, with separate indicators for the scene you hear and the one
+coming next. Mute drums or bass, sweep the bass filter, or reset the current
+scene's controls. Optional prompts suggest a few live moves to try.
+
+- **Build a Drop Lab set** in Arcade builds four contrasting scenes from your
+  current beat or remix B. **Perform in Drop Lab** in Studio and **Load scenes**
+  in Drop Lab preserve your existing four scenes exactly. Every import is an
+  independent copy and retains pattern lengths and source notes.
+- **Record a take** captures the live output for up to 60 seconds, including
+  scene launches, mutes and filter moves. Finish early, listen back, and download
+  the recording in the browser-supported format. Live playback and listen-back
+  pause each other. Stop or hiding the tab finishes an active recording.
+- A successful new recording replaces the previous take; failed recordings keep
+  it available. Download each take you want to keep before recording again or
+  leaving. Audio takes are held only for this visit and are not stored in projects.
+- **Keep scene settings** saves a separate Studio project; repeated unchanged
+  saves reuse the saved copy. **Edit in Studio** opens that exact project. These
+  saves retain the final scene settings and arrangement, not a replay of live
+  gestures. Storage failures keep your set available for retry or audio capture.
+- Tempo changes stop playback, and tempo/project changes wait until recording
+  finishes. Playback and pending audio starts stop when the tab hides.
+
 ## Groove Studio
 
 Open `groove-studio.html` from the practice home or any course. **Use in Groove
@@ -389,6 +415,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/practice-path.test.mjs` | Home resume, partial saves, in-page session switching, failed-save navigation guards and retries, final course links and free-play fallback against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
 | `test/arcade.test.mjs` | Exact-lane scoring, target/draft isolation, immutable best scores, failed-save recovery, keyboard events, pending-audio cancellation, remix variations and full-scene undo, A/B comparison state, solo/export isolation and exact Studio project handoff using a DOM/audio double; does not test visual layout or browser sound |
+| `test/drop.test.mjs` | Independent scene generation, queued/audible controls, capture limits and finalization, cancellation, listen-back cleanup, project save/import recovery and handoffs using DOM/audio doubles; no browser layout or sound assessment |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
@@ -405,6 +432,9 @@ course-catalog.js               generated lesson labels and checklist sizes
 scripts/build-course-catalog.mjs catalog generator (npm run catalog)
 groove-studio.html              connected drum/bass scene editor and performance workspace
 beat-arcade.html                short listen-and-rebuild drum challenges
+drop-lab.html                  four-pad live performance and take recording
+drop/project.js                independent imports and generated performance scenes
+drop/app.js / drop.css          scene pads, live mix controls, take replay and saving
 arcade/game.js                  original targets, scoring and isolated Studio handoff data
 arcade/remix.js                 original-preserving variations, undo and A/B project data
 arcade/app.js / arcade.css      playable pads, comparison controls and local best stars

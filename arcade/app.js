@@ -103,6 +103,7 @@
     $('score-storage').textContent = unsavedScores.size ? 'Some stars are kept for this visit only. Return to those beats and use “Check my beat” to retry saving.' : storageProblem || (damaged ? 'Some scores could not be read and were left untouched. You can still play.' : 'Best stars save in this browser.');
   }
   function renderPads() {
+    $('open-drop').disabled = !G.VOICES.some(v => rows()[v.key].length) && !(remixing && remix().session.scene.bass.notes.some(Boolean));
     const result = remixing ? null : results.get(challenge().id);
     for (const { key, name } of G.VOICES) {
       const lane = result?.lanes.find(l => l.key === key);
@@ -292,18 +293,20 @@
       saveRemix(); $('remix-save-status').textContent = 'This version is saved in your Studio projects. Keep experimenting, or open it in Studio.';
     } catch { $('remix-save-status').textContent = 'Could not save this version. Your remix is still here. Free some browser storage, then try “Keep this version” again.'; }
   });
-  $('open-studio').addEventListener('click', () => {
+  function openWorkspace(destination) {
     if (opening) return;
     opening = true; stop(); $('handoff-status').textContent = '';
     try {
       if (!storage) throw new Error('Storage unavailable');
       const savedId = remixing ? saveRemix() : new P.ProjectStore(storage).save(G.createProject(banks, challenge(), rows())).id;
-      window.location.assign(`./groove-studio.html?project=${encodeURIComponent(savedId)}`);
+      window.location.assign(`./${destination}.html?project=${encodeURIComponent(savedId)}${destination === 'drop-lab' ? '&build=1' : ''}`);
     } catch {
       $('handoff-status').textContent = 'Could not save a new Studio project. Your beat is still here. Free some browser storage and try again.';
       opening = false;
     }
-  });
+  }
+  $('open-studio').addEventListener('click', () => openWorkspace('groove-studio'));
+  $('open-drop').addEventListener('click', () => { if (!$('open-drop').disabled) openWorkspace('drop-lab'); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop('Playback paused while this tab was hidden.'); });
   window.addEventListener('pagehide', () => stop());
   window.addEventListener('storage', event => { if (event.key === null || event.key?.startsWith(G.PREFIX)) refreshScores(); });

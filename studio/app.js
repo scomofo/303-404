@@ -327,6 +327,15 @@
     if (!future.length) return; stopPlayback(); history.push(P.copy(project)); project = future.pop(); undoGroup = null; changed(); renderAll();
   });
   $('save-project').addEventListener('click', () => { if (!project.updatedAt) dirty = true; if (save()) { error(''); status('Project saved in this browser.'); } });
+  $('perform-project').addEventListener('click', () => {
+    if (!canLeaveProject()) return;
+    try {
+      if (!store) throw new Error('Storage unavailable');
+      const next = P.copy(project); next.id = P.newId(); next.updatedAt = 0;
+      const saved = store.save(next); stopPlayback();
+      window.location.assign(`./drop-lab.html?project=${encodeURIComponent(saved.id)}`);
+    } catch { error('Could not save a performance copy. Your project is still here. Download a backup or try saving again.'); }
+  });
   $('copy-project').addEventListener('click', () => {
     const next = P.copy(project); next.id = P.newId(); next.name = `${next.name.slice(0, 73)} (copy)`; next.updatedAt = 0;
     useProject(next); dirty = true; save();

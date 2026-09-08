@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { readGuide } from './harness.mjs';
+import { Element, dom } from './dom-fixture.mjs';
 
 const plain = value => JSON.parse(JSON.stringify(value));
 function model() {
@@ -84,53 +85,6 @@ test('star awards cannot decrease, combine partial lanes across attempts, or ove
 
 // This DOM double exercises application events against the real HTML shells.
 // It does not measure layout, device latency, browser DSP, or sound quality.
-class Element {
-  constructor(tag, doc) {
-    this.tagName = tag.toUpperCase(); this.doc = doc; this.children = []; this.dataset = {}; this.attributes = {};
-    this.listeners = new Map(); this.textContent = ''; this.hidden = false; this.disabled = false; this._value = undefined;
-  }
-  get value() { return this._value ?? (this.tagName === 'SELECT' ? this.children[0]?.value || '' : this.textContent); }
-  set value(value) { this._value = String(value); }
-  append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } }
-  replaceChildren(...children) { this.children = []; this.append(...children); }
-  setAttribute(name, value) {
-    this.attributes[name] = String(value);
-    if (['id', 'type', 'href', 'value'].includes(name)) this[name] = value;
-    if (name === 'class') this.className = value;
-    if (['hidden', 'disabled'].includes(name)) this[name] = true;
-    if (name.startsWith('data-')) this.dataset[name.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = String(value);
-  }
-  getAttribute(name) { return this.attributes[name] ?? null; }
-  matches(selector) {
-    if (selector[0] === '#') return this.id === selector.slice(1);
-    if (selector[0] === '.') return (this.className || '').split(' ').includes(selector.slice(1));
-    const attr = /^\[([\w-]+)(?:="([^"]+)")?\]$/.exec(selector);
-    if (attr) {
-      const value = attr[1].startsWith('data-') ? this.dataset[attr[1].slice(5)] : this.attributes[attr[1]];
-      return value !== undefined && (attr[2] === undefined || String(value) === attr[2]);
-    }
-    return this.tagName.toLowerCase() === selector;
-  }
-  querySelectorAll(selector) { return this.children.flatMap(child => [...(child.matches(selector) ? [child] : []), ...child.querySelectorAll(selector)]); }
-  querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
-  addEventListener(type, fn) { this.listeners.set(type, [...(this.listeners.get(type) || []), fn]); }
-  async fire(type, extra = {}) { for (const fn of this.listeners.get(type) || []) await fn({ target: this, preventDefault() {}, ...extra }); }
-  focus() { this.doc.activeElement = this; this.fire('focus'); }
-}
-function dom(html) {
-  const document = { hidden: false, listeners: new Map(), addEventListener: Element.prototype.addEventListener, fire: Element.prototype.fire };
-  const root = new Element('document', document), stack = [root];
-  document.createElement = tag => new Element(tag, document);
-  document.getElementById = id => root.querySelector('#' + id);
-  for (const [, closing, tag, attributes] of html.matchAll(/<(\/?)([a-z][\w-]*)([^>]*)>/gi)) {
-    if (closing) { if (stack.at(-1).tagName.toLowerCase() === tag.toLowerCase()) stack.pop(); continue; }
-    const node = document.createElement(tag);
-    for (const [, name, value] of attributes.matchAll(/([\w-]+)(?:="([^"]*)")?/g)) node.setAttribute(name, value ?? '');
-    stack.at(-1).append(node);
-    if (!['meta', 'link', 'input', 'br', 'img', 'hr'].includes(tag.toLowerCase())) stack.push(node);
-  }
-  return document;
-}
 function app({ storage = memory(), file = 'beat-arcade.html', search = '', AudioContext } = {}) {
   const { scope, G, P, banks } = model(), document = dom(readGuide(file));
   const timers = new Map(), transports = [], previews = [];
@@ -217,6 +171,32 @@ test('failed score and project saves keep the current beat open and allow retry'
   a.storage.setItem = write; await a.$('check-beat').fire('click');
   assert.equal(a.$('total-stars').textContent, '3 / 18');
   await a.$('open-studio').fire('click'); assert.ok(a.navigated);
+});
+
+test('Arcade sends the actual remix to Drop Lab while Studio hands off exact independent scenes', async () => {
+  const a = app(); assert.equal(a.$('open-drop').disabled, true);
+  await a.$('open-drop').fire('click'); assert.equal(a.navigated, null);
+  await a.pad(0, 0).fire('click'); await a.$('start-remix').fire('click'); await a.$('remix-acid').fire('click');
+  const write = a.storage.setItem;
+  a.storage.setItem = () => { throw new Error('Quota exceeded'); };
+  await a.$('open-drop').fire('click'); assert.equal(a.navigated, null);
+  a.storage.setItem = write; await a.$('open-drop').fire('click');
+  const dropUrl = new URL(a.navigated, 'https://example.test/');
+  assert.equal(dropUrl.pathname, '/drop-lab.html'); assert.equal(dropUrl.searchParams.get('build'), '1');
+  const saved = JSON.parse(a.storage.getItem(a.P.PREFIX + dropUrl.searchParams.get('project')));
+  assert.deepEqual(saved.scenes[1].drums.rows.bd, [0]); assert.equal(saved.scenes[1].mix.muteBass, false);
+  assert.ok(saved.scenes[1].bass.notes.some(Boolean));
+  const raw = a.storage.getItem(a.P.PREFIX + saved.id);
+  const studio = app({ storage: a.storage, file: 'groove-studio.html', search: `?project=${saved.id}` });
+  a.storage.setItem = () => { throw new Error('Quota exceeded'); };
+  await studio.$('perform-project').fire('click'); assert.equal(studio.navigated, null);
+  assert.match(studio.$('error').textContent, /Your project is still here/);
+  a.storage.setItem = write; await studio.$('perform-project').fire('click');
+  const exactUrl = new URL(studio.navigated, 'https://example.test/');
+  assert.equal(exactUrl.pathname, '/drop-lab.html'); assert.equal(exactUrl.searchParams.has('build'), false);
+  const copy = JSON.parse(a.storage.getItem(a.P.PREFIX + exactUrl.searchParams.get('project')));
+  assert.notEqual(copy.id, saved.id); assert.deepEqual(copy.scenes, saved.scenes);
+  assert.equal(a.storage.getItem(a.P.PREFIX + saved.id), raw);
 });
 
 test('audio startup cancellation, comparison, solo, edits and page hiding share safe lifecycle boundaries', async () => {

@@ -1,4 +1,5 @@
 .practice-home { font-size: 16px; }
+.home-play-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
 .arcade-entry { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1.5rem; margin-bottom: 2rem; color: #f1f8f2; background: #162922; border-radius: var(--radius-md); border-left: 4px solid #d6f578; }
 .arcade-entry h2 { color: #f1f8f2; font-size: 1.5rem; }
 .arcade-entry .eyebrow { color: #d6f578; }

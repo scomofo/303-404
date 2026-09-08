@@ -254,7 +254,11 @@
       };
     }
     start() { try { this.recorder.start(1000); } catch (error) { this.done = true; this.disconnect(); this.reject(error); } return this.result; }
-    stop() { if (this.recorder.state !== 'inactive') this.recorder.stop(); return this.result; }
+    stop() {
+      try { if (this.recorder.state !== 'inactive') this.recorder.stop(); }
+      catch (error) { this.done = true; this.disconnect(); this.reject(error); }
+      return this.result;
+    }
     disconnect() { try { this.output.disconnect(this.destination); } catch {} this.destination?.stream.getTracks().forEach(track => track.stop()); }
   }
   globalThis.DCStudioAudio = { TAIL, Engine, Transport, encodeWav, renderArrangement, TakeRecorder };

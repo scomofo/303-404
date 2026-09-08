@@ -369,7 +369,12 @@ test('recording failure and unsupported APIs surface errors without leaving a co
   await assert.rejects(result, /Device failed/); assert.equal(engine.output.connections.has(take.destination), false);
   class EmptyRecorder extends recorderClass() { stop() { this.state = 'inactive'; this.onstop(); } }
   const empty = new A.TakeRecorder(ctx, engine.output, EmptyRecorder); const emptyResult = empty.start(); empty.stop();
-  await assert.rejects(emptyResult, /empty/); engine.stop();
+  await assert.rejects(emptyResult, /empty/);
+  class StopFailure extends recorderClass() { stop() { throw new Error('Stop failed'); } }
+  const failedStop = new A.TakeRecorder(ctx, engine.output, StopFailure), failedResult = failedStop.start();
+  failedStop.stop(); await assert.rejects(failedResult, /Stop failed/);
+  assert.equal(engine.output.connections.has(failedStop.destination), false);
+  assert.equal(failedStop.destination.stream.getTracks()[0].stopped, true); engine.stop();
 });
 
 

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hear a beat, rebuild it, and make it your own. Six short drum challenges in the 303–404 Beat Arcade.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
+  <title>Beat Arcade · 303–404</title>
+  <link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+  <link rel="stylesheet" href="practice-home.css">
+  <link rel="stylesheet" href="arcade/arcade.css">
+  <script defer src="studio/banks.js"></script>
+  <script defer src="studio/project.js"></script>
+  <script defer src="studio/audio.js"></script>
+  <script defer src="arcade/game.js"></script>
+  <script defer src="arcade/app.js"></script>
+</head>
+<body class="practice-home arcade-page">
+  <a class="skip-link" href="#arcade">Skip to the beat</a>
+  <header class="home-header">
+    <a class="home-brand" href="./index.html" aria-label="303–404 Home">303–404<span class="brand-caption">Your practice room</span></a>
+    <nav class="home-nav" aria-label="Main menu"><a href="./index.html">Home</a><a href="./beat-arcade.html" aria-current="page">Beat Arcade</a><a href="./groove-studio.html">Groove Studio</a><a href="./index.html#courses">Courses</a></nav>
+  </header>
+  <main class="home-main arcade-main">
+    <div class="arcade-heading"><div><p class="eyebrow">Play by ear · No hardware needed</p><h1>Beat Arcade</h1><p>Hear it. Rebuild it. Make it yours.</p></div><p class="arcade-total"><strong id="total-stars">0 / 18</strong><span>best stars</span></p></div>
+    <noscript><p>Enable JavaScript to play Beat Arcade. You can still open the <a href="./index.html#courses">courses</a>.</p></noscript>
+    <div class="arcade-layout">
+      <aside class="arcade-rounds" aria-labelledby="rounds-title"><h2 id="rounds-title">Pick a beat</h2><p class="arcade-small">Every beat is open. Start anywhere.</p><ol id="challenge-list"></ol><p id="score-storage" class="arcade-small" role="status">Best stars save in this browser.</p></aside>
+      <section id="arcade" class="beat-console" aria-labelledby="challenge-title" tabindex="-1">
+        <div class="challenge-heading"><div><p id="challenge-meta" class="console-kicker">01 / 06 · Warm-up</p><h2 id="challenge-title" tabindex="-1">Four on the floor</h2></div><span id="round-stars" class="round-stars" aria-label="Best: 0 of 3 stars">☆☆☆</span></div>
+        <p class="console-intro">Listen to the reference, then switch on the steps you hear. Each row is one instrument; every four steps make a beat.</p>
+        <div class="arcade-transport" role="group" aria-label="Listen and compare">
+          <button id="listen-target" class="arcade-primary" type="button" aria-pressed="false">▶ Hear the reference</button>
+          <button id="listen-yours" type="button" aria-pressed="false">▶ Hear your beat</button>
+          <button id="stop-audio" type="button" disabled>■ Stop</button>
+        </div>
+        <div class="listening-tools"><label>Listen to<select id="solo"><option value="all">All instruments</option><option value="bd">Kick only</option><option value="sd">Snare only</option><option value="ch">Hi-hat only</option></select></label><label>Speed<select id="speed"><option value="1">Original speed</option><option value="0.75">Slower · 75%</option></select></label><span id="beat-position" aria-live="off">108 BPM · Ready</span></div>
+        <p id="audio-status" class="console-status" role="status">Start with “Hear the reference”. Listen as many times as you like.</p>
+        <p id="audio-error" class="arcade-error" role="alert" hidden></p>
+        <div id="pattern-grid" class="pattern-grid" aria-label="Your drum pattern"></div>
+        <p class="grid-help">Tap a pad to toggle it. Keyboard: arrow keys move; Space or Enter toggles. Numbers are steps 1–16.</p>
+        <div class="challenge-actions"><button id="check-beat" class="arcade-primary" type="button">Check my beat</button><button id="show-pattern" type="button" aria-pressed="false">Show the pattern</button><button id="clear-beat" type="button">Clear your beat</button></div>
+        <p id="challenge-tip" class="challenge-tip">Find the four steady kicks first. The snare answers on beats 2 and 4.</p>
+        <div id="result" class="beat-result" aria-live="polite" aria-atomic="true"><h3 id="result-title">Three instruments. Three stars to find.</h3><p id="result-detail">One star for each instrument that matches exactly. No timer, no lost stars. Hints are always welcome.</p><ul id="lane-results"></ul></div>
+        <div class="arcade-finish"><button id="next-beat" type="button" hidden>Next beat →</button><button id="open-studio" type="button">Make this yours in Studio ↗</button></div>
+        <p id="handoff-status" class="console-status" role="status"></p>
+        <p class="grid-help">Your beats stay here while this page is open. Open a beat in Studio to save it as a new project and add bass, variations, or a recording.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

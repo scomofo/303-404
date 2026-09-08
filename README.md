@@ -5,6 +5,41 @@ Six single-page interactive courses share one runtime and design system: the **T
 **Groove Studio** connects the lessons to a creative workspace: build a drum
 and bass groove, make variations, perform an arrangement and keep the result.
 
+## Beat Arcade
+
+Open **Beat Arcade** from Home or Groove Studio for six short, original
+drum-pattern challenges. Hear a reference loop, rebuild it on three rows of
+16 pads, then **Check my beat**. Each exactly matching instrument earns one
+star; missing and extra hits receive text and pad feedback. This checks the
+programmed pattern, not performance timing or a recording of your playing.
+
+- All six beats are open immediately. Solo the kick, snare or hi-hat, slow both
+  playback modes to 75%, or reveal the reference with **Show the pattern**.
+  Hints carry no penalty. No timer, daily streak or course-completion credit.
+- Listen to the reference and your beat through the existing Studio synthesis
+  and transport. Edit your pads while your loop plays; target playback remains
+  independent. Stop, round changes, listening-setting changes and hiding the
+  tab cancel playback and pending audio starts.
+- Best stars persist under immutable `303-404/arcade/v1/<beat-id>/<stars>`
+  award keys. Lesser attempts cannot replace a better score. Unreadable values
+  remain untouched; failed saves keep stars for the current visit with a notice
+  and retry through **Check my beat**. Course and guided-practice saves stay separate.
+- Draft beats survive switching rounds while the page is open, but not a
+  reload. **Make this yours in Studio** saves the player's current steps as a
+  separate project and opens that exact project. All four scenes contain the
+  player's drums, with bass empty and muted; the initial arrangement loops B
+  for four bars. Other projects remain intact. Failed saving keeps the player
+  on the Arcade page with the beat available for retry.
+- Pads support touch, Space/Enter, arrow keys and Home/End. Playhead changes
+  do not flood screen readers, and celebrations respect reduced motion.
+
+No new runtime dependency or engine migration is required. Godot remains an
+option for a future standalone game, but this feature reuses the app's existing
+browser audio, Studio project format and course navigation. Godot's default
+web sample playback does not support procedural synthesis; stream playback
+supports more features with latency trade-offs. See the official
+[Godot web audio documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html#audio-playback).
+
 ## Groove Studio
 
 Open `groove-studio.html` from the practice home or any course. **Use in Groove
@@ -323,6 +358,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/practice-sessions.test.mjs` | Listening-goal completion, local practice dates, repeat deduplication, corrupt-save isolation, quota failure, cross-tab conflicts, recent-draft recommendations and legacy record compatibility |
 | `test/practice-path.test.mjs` | Home resume, partial saves, in-page session switching, failed-save navigation guards and retries, final course links and free-play fallback against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
+| `test/arcade.test.mjs` | Exact-lane scoring, target/draft isolation, solo playback data, immutable best scores, failed-save recovery, keyboard events, pending-audio cancellation and Arcade → Studio project selection using a DOM/audio double; does not test visual layout or browser sound |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
@@ -338,6 +374,9 @@ practice-path.css / .js         shared guided-practice interface for Home and St
 course-catalog.js               generated lesson labels and checklist sizes
 scripts/build-course-catalog.mjs catalog generator (npm run catalog)
 groove-studio.html              connected drum/bass scene editor and performance workspace
+beat-arcade.html                short listen-and-rebuild drum challenges
+arcade/game.js                  original targets, scoring and isolated Studio handoff data
+arcade/app.js / arcade.css      playable pads, comparison controls and local best stars
 studio/project.js              portable project schema and browser-local project store
 studio/audio.js                shared playback/export synthesis and live capture
 studio/app.js / studio.css      studio controls and responsive styling

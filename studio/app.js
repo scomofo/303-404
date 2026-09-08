@@ -251,10 +251,19 @@
   const params = new URLSearchParams(window.location.search);
   const selections = { bass: params.get('bass'), drums: params.get('drums') };
   const fromBank = banks.bass.some(c => c.id === selections.bass) || banks.drums.some(c => c.id === selections.drums);
+  const requestedProject = params.get('project');
+  if (requestedProject && !fromBank) {
+    const requested = projects.get(requestedProject);
+    if (requested) {
+      project = P.copy(requested);
+      status('Your saved beat is ready. Press Play scene, then add bass or make a variation.');
+      try { const url = new URL(window.location.href); url.searchParams.delete('project'); window.history.replaceState(null, '', url); } catch {}
+    } else error('That project could not be found in this browser. Your latest available project or the starter is open.');
+  }
   if (!project || fromBank) project = P.createProject(banks, selections);
   if (fromBank) {
     status('A new project is ready with your bank pattern. Your previous projects are preserved.');
-    try { const url = new URL(window.location.href); url.searchParams.delete('bass'); url.searchParams.delete('drums'); window.history.replaceState(null, '', url); } catch {}
+    try { const url = new URL(window.location.href); url.searchParams.delete('bass'); url.searchParams.delete('drums'); url.searchParams.delete('project'); window.history.replaceState(null, '', url); } catch {}
   }
   $('drum-bank').append(...banks.drums.map(card => option(card.id, card.title)));
   $('bass-bank').append(...banks.bass.map(card => option(card.id, card.title)));
@@ -318,6 +327,15 @@
     if (!future.length) return; stopPlayback(); history.push(P.copy(project)); project = future.pop(); undoGroup = null; changed(); renderAll();
   });
   $('save-project').addEventListener('click', () => { if (!project.updatedAt) dirty = true; if (save()) { error(''); status('Project saved in this browser.'); } });
+  $('perform-project').addEventListener('click', () => {
+    if (!canLeaveProject()) return;
+    try {
+      if (!store) throw new Error('Storage unavailable');
+      const next = P.copy(project); next.id = P.newId(); next.updatedAt = 0;
+      const saved = store.save(next); stopPlayback();
+      window.location.assign(`./drop-lab.html?project=${encodeURIComponent(saved.id)}`);
+    } catch { error('Could not save a performance copy. Your project is still here. Download a backup or try saving again.'); }
+  });
   $('copy-project').addEventListener('click', () => {
     const next = P.copy(project); next.id = P.newId(); next.name = `${next.name.slice(0, 73)} (copy)`; next.updatedAt = 0;
     useProject(next); dirty = true; save();

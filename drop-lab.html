@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Perform your grooves with four scene pads, live mutes and filter moves. Record and replay a short set in Drop Lab.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self';">
+  <title>Drop Lab · 303–404</title>
+  <link rel="stylesheet" href="_ds/organic-a1ee2274-b5d1-4b02-b801-60a22fb5cbe6/styles.css">
+  <link rel="stylesheet" href="practice-home.css">
+  <link rel="stylesheet" href="arcade/arcade.css">
+  <link rel="stylesheet" href="drop/drop.css">
+  <script defer src="studio/banks.js"></script>
+  <script defer src="studio/project.js"></script>
+  <script defer src="studio/audio.js"></script>
+  <script defer src="drop/project.js"></script>
+  <script defer src="drop/app.js"></script>
+</head>
+<body class="practice-home drop-page">
+  <a class="skip-link" href="#stage">Skip to scene pads</a>
+  <header class="home-header"><a class="home-brand" href="./index.html">303–404<span class="brand-caption">Your practice room</span></a><nav class="home-nav" aria-label="Main menu"><a href="./index.html">Home</a><a href="./beat-arcade.html">Beat Arcade</a><a href="./drop-lab.html" aria-current="page">Drop Lab</a><a href="./groove-studio.html">Groove Studio</a></nav></header>
+  <main class="home-main">
+    <div class="drop-heading"><div><p class="eyebrow">Perform · Record · Play it back</p><h1>Drop Lab</h1></div><p>Four scenes. Your timing. Your set.</p></div>
+    <noscript><p>Enable JavaScript to use Drop Lab. Your <a href="./index.html#courses">courses</a> are still available.</p></noscript>
+    <section id="stage" class="beat-console drop-stage" tabindex="-1" aria-labelledby="set-name">
+      <div class="drop-title"><div><p class="console-kicker">On the decks</p><h2 id="set-name">First drop</h2><p id="set-source" class="console-status">A drum-and-bass starter, ready to perform.</p></div><span id="position" class="drop-position" aria-live="off">Ready</span></div>
+      <div id="scene-pads" class="scene-pads" role="group" aria-label="Launch a scene"></div>
+      <p id="launch-status" class="console-status" role="status">Tap Intro to start. While playing, scene changes land on the next bar.</p>
+      <div class="drop-transport"><button id="play" type="button" class="arcade-primary">Play</button><button id="stop" type="button" disabled>Stop</button><label>Tempo<input id="tempo" type="number" min="40" max="240" step="1" value="128"> BPM</label></div>
+      <div class="drop-mix"><div><p id="mix-heading" class="console-kicker">Controls for A · Intro</p><div class="mute-controls"><button id="mute-drums" type="button" aria-pressed="false">Mute drums</button><button id="mute-bass" type="button" aria-pressed="false">Mute bass</button><button id="reset-controls" type="button">Reset this scene</button></div></div><label class="filter-control">Bass filter<input id="filter" type="range" min="100" max="6000" step="10" value="600"><span id="filter-value">600 Hz</span></label></div>
+      <p id="mix-note" class="console-status">Controls affect the scene you hear. A queued scene keeps its own settings.</p>
+      <p class="grid-help">Keyboard: 1–4 launch scenes. Try holding a groove for four bars before making a change.</p>
+      <div class="drop-record"><div><h3>Keep the performance</h3><p>Record up to 60 seconds of scene changes, mutes and filter moves.</p></div><button id="record" type="button" aria-pressed="false">Record a take</button><span id="record-time" aria-live="off">0:00 / 1:00</span></div>
+      <p id="record-status" class="console-status" role="status">Recording captures the app’s sound. No microphone is needed.</p>
+      <div id="take-result" class="take-result" hidden><label for="take-preview">Listen to your take</label><audio id="take-preview" controls preload="metadata"></audio><a id="download-take" class="home-action">Download take</a><p class="grid-help">Download to keep the recording. Audio takes do not survive a reload.</p></div>
+      <p id="error" class="arcade-error" role="alert" hidden></p>
+    </section>
+    <section class="drop-bottom" aria-label="Performance ideas and projects">
+      <div class="drop-prompt"><p class="eyebrow">Try this</p><h2 id="prompt-title">Leave some space</h2><p id="prompt-text">Play the intro, let the groove settle, then make room with the breakdown. Bring the full groove back when it feels right.</p><button id="next-prompt" type="button" class="home-action">Another idea</button></div>
+      <div class="drop-projects"><h2>Your scenes</h2><label>Saved Studio project<select id="project-list"></select></label><div class="drop-project-actions"><button id="load-project" type="button" class="home-action">Load scenes</button><button id="starter" type="button" class="home-action">Use starter</button><button id="save-set" type="button" class="home-action">Keep scene settings</button><button id="open-studio" type="button" class="home-action">Edit in Studio ↗</button></div><p id="save-status" class="home-note" role="status">Keeping settings saves a new project. Your live performance is saved with Download take.</p></div>
+    </section>
+  </main>
+</body>
+</html>

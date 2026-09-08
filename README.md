@@ -5,6 +5,97 @@ Six single-page interactive courses share one runtime and design system: the **T
 **Groove Studio** connects the lessons to a creative workspace: build a drum
 and bass groove, make variations, perform an arrangement and keep the result.
 
+## Beat Arcade
+
+Open **Beat Arcade** from Home or Groove Studio for six short, original
+drum-pattern challenges. Hear a reference loop, rebuild it on three rows of
+16 pads, then **Check my beat**. Each exactly matching instrument earns one
+star; missing and extra hits receive text and pad feedback. This checks the
+programmed pattern, not performance timing or a recording of your playing.
+
+- All six beats are open immediately. Solo the kick, snare or hi-hat, slow both
+  playback modes to 75%, or reveal the reference with **Show the pattern**.
+  Hints carry no penalty. No timer, daily streak or course-completion credit.
+- Listen to the reference and your beat through the existing Studio synthesis
+  and transport. Edit your pads while your loop plays; target playback remains
+  independent. Stop, round changes, listening-setting changes and hiding the
+  tab cancel playback and pending audio starts.
+- Best stars persist under immutable `303-404/arcade/v1/<beat-id>/<stars>`
+  award keys. Lesser attempts cannot replace a better score. Unreadable values
+  remain untouched; failed saves keep stars for the current visit with a notice
+  and retry through **Check my beat**. Course and guided-practice saves stay separate.
+- Draft beats survive switching rounds while the page is open, but not a
+  reload. **Make this yours in Studio** saves the player's current steps as a
+  separate project and opens that exact project. All four scenes contain the
+  player's drums, with bass empty and muted; the initial arrangement loops B
+  for four bars. Other projects remain intact. Failed saving keeps the player
+  on the Arcade page with the beat available for retry.
+- Pads support touch, Space/Enter, arrow keys and Home/End. Playhead changes
+  do not flood screen readers, and celebrations respect reduced motion.
+
+### Remix Mode
+
+Switch on a few pads, then choose **Remix this beat**. You can remix any
+attempt; completing a challenge is optional. The player's current drum pattern
+becomes **A · Your original**, with an independent copy in **B · Your remix**.
+The original Arcade draft and its checked result stay intact.
+
+- **Add a fill** puts snare and hi-hat hits on the last beat. **Make it sparse**
+  removes alternate existing hats while retaining the kick and snare. **Add acid
+  bass** cycles through three original C-minor phrases with rests, accents and
+  slides. The bass is audible immediately in B; A remains the starting drum beat.
+- Edit B with the pads, compare A/B using the existing bar-queued transport,
+  and use **Undo**, **Redo**, or **Reset to your original**. Undo restores the
+  entire remix scene, including bass and mix, for up to 40 changes. Applying an
+  already-present fill or thinning a single remaining hat uses no undo slot.
+  The controls distinguish queued requests from the version actually playing.
+- Remix mode also offers **Bass only** listening. Solo and 75% listening speed
+  apply to playback copies and never change the saved musical settings.
+- **Keep this version** saves both A and B in a new Studio project without
+  leaving the Arcade. Keep experimenting to save other versions. Repeated saves
+  of unchanged music reuse its saved project; if that project was changed,
+  removed or damaged in Studio, keeping it again saves a fresh copy. Existing
+  projects are never replaced. A failed save keeps the remix available for retry.
+- **Open remix in Studio** opens that exact version for deeper editing and
+  recording. Its arrangement plays four bars of A, then four of B; C and D hold
+  independent copies of A and B. Project backups use the existing v1 format.
+- Return to the beat challenge or switch rounds without losing your remix
+  during this visit. Unsaved remixes and undo history do not survive a reload.
+  Remix actions award no stars and do not claim to judge creative quality.
+
+No new runtime dependency or engine migration is required. Godot remains an
+option for a future standalone game, but this feature reuses the app's existing
+browser audio, Studio project format and course navigation. Godot's default
+web sample playback does not support procedural synthesis; stream playback
+supports more features with latency trade-offs. See the official
+[Godot web audio documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html#audio-playback).
+
+## Drop Lab
+
+Open **Drop Lab** from Home for a ready-to-play intro, groove, breakdown and
+return. Tap the four large scene pads or keys **1–4** to perform; changes queue
+on the next bar, with separate indicators for the scene you hear and the one
+coming next. Mute drums or bass, sweep the bass filter, or reset the current
+scene's controls. Optional prompts suggest a few live moves to try.
+
+- **Build a Drop Lab set** in Arcade builds four contrasting scenes from your
+  current beat or remix B. **Perform in Drop Lab** in Studio and **Load scenes**
+  in Drop Lab preserve your existing four scenes exactly. Every import is an
+  independent copy and retains pattern lengths and source notes.
+- **Record a take** captures the live output for up to 60 seconds, including
+  scene launches, mutes and filter moves. Finish early, listen back, and download
+  the recording in the browser-supported format. Live playback and listen-back
+  pause each other. Stop or hiding the tab finishes an active recording.
+- A successful new recording replaces the previous take; failed recordings keep
+  it available. Download each take you want to keep before recording again or
+  leaving. Audio takes are held only for this visit and are not stored in projects.
+- **Keep scene settings** saves a separate Studio project; repeated unchanged
+  saves reuse the saved copy. **Edit in Studio** opens that exact project. These
+  saves retain the final scene settings and arrangement, not a replay of live
+  gestures. Storage failures keep your set available for retry or audio capture.
+- Tempo changes stop playback, and tempo/project changes wait until recording
+  finishes. Playback and pending audio starts stop when the tab hides.
+
 ## Groove Studio
 
 Open `groove-studio.html` from the practice home or any course. **Use in Groove
@@ -323,6 +414,8 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/practice-sessions.test.mjs` | Listening-goal completion, local practice dates, repeat deduplication, corrupt-save isolation, quota failure, cross-tab conflicts, recent-draft recommendations and legacy record compatibility |
 | `test/practice-path.test.mjs` | Home resume, partial saves, in-page session switching, failed-save navigation guards and retries, final course links and free-play fallback against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
+| `test/arcade.test.mjs` | Exact-lane scoring, target/draft isolation, immutable best scores, failed-save recovery, keyboard events, pending-audio cancellation, remix variations and full-scene undo, A/B comparison state, solo/export isolation and exact Studio project handoff using a DOM/audio double; does not test visual layout or browser sound |
+| `test/drop.test.mjs` | Independent scene generation, queued/audible controls, capture limits and finalization, cancellation, listen-back cleanup, project save/import recovery and handoffs using DOM/audio doubles; no browser layout or sound assessment |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
@@ -338,6 +431,13 @@ practice-path.css / .js         shared guided-practice interface for Home and St
 course-catalog.js               generated lesson labels and checklist sizes
 scripts/build-course-catalog.mjs catalog generator (npm run catalog)
 groove-studio.html              connected drum/bass scene editor and performance workspace
+beat-arcade.html                short listen-and-rebuild drum challenges
+drop-lab.html                  four-pad live performance and take recording
+drop/project.js                independent imports and generated performance scenes
+drop/app.js / drop.css          scene pads, live mix controls, take replay and saving
+arcade/game.js                  original targets, scoring and isolated Studio handoff data
+arcade/remix.js                 original-preserving variations, undo and A/B project data
+arcade/app.js / arcade.css      playable pads, comparison controls and local best stars
 studio/project.js              portable project schema and browser-local project store
 studio/audio.js                shared playback/export synthesis and live capture
 studio/app.js / studio.css      studio controls and responsive styling

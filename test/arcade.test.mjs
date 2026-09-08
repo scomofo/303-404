@@ -7,8 +7,8 @@ import { readGuide } from './harness.mjs';
 const plain = value => JSON.parse(JSON.stringify(value));
 function model() {
   const scope = {};
-  for (const file of ['studio/banks.js', 'studio/project.js', 'arcade/game.js']) runInNewContext(readGuide(file), scope);
-  return { scope, G: scope.DCBeatArcade, P: scope.DCStudioProject, banks: scope.DCStudioBanks };
+  for (const file of ['studio/banks.js', 'studio/project.js', 'arcade/game.js', 'arcade/remix.js']) runInNewContext(readGuide(file), scope);
+  return { scope, G: scope.DCBeatArcade, P: scope.DCStudioProject, R: scope.DCArcadeRemix, banks: scope.DCStudioBanks };
 }
 function memory() {
   const data = new Map();
@@ -140,8 +140,9 @@ function app({ storage = memory(), file = 'beat-arcade.html', search = '', Audio
     listeners: new Map(), addEventListener: Element.prototype.addEventListener, fire: Element.prototype.fire };
   class Transport {
     constructor(ctx, getProject, events) { this.getProject = getProject; this.events = events; transports.push(this); }
-    start() { this.project = P.validateProject(this.getProject()); this.running = true; }
-    stop() { if (this.running) { this.running = false; this.events.onStop(); } }
+    start(mode, sceneId) { this.project = P.validateProject(this.getProject()); this.sceneId = sceneId; this.running = true; }
+    queueScene(id) { this.pending = id; }
+    stop() { this.pending = null; if (this.running) { this.running = false; this.events.onStop(); } }
   }
   class Engine {
     constructor() { this.closed = false; this.hits = []; previews.push(this); }
@@ -255,4 +256,175 @@ test('Arcade assets and home routes exist without adding runtime dependencies or
   }
   assert.doesNotMatch(html, /unsafe-eval|unsafe-inline|support\.js/);
   for (const file of ['index.html', 'groove-studio.html']) assert.match(readGuide(file), /href="\.\/beat-arcade\.html"/);
+});
+
+test('remix variations preserve the player original, skip no-ops, and undo full musical settings', () => {
+  const { G, P, R, banks } = model();
+  for (const c of G.CHALLENGES) {
+    const draft = G.copyRows(c.rows); draft.bd.push(15);
+    const session = new R.Session(banks, c, draft), before = JSON.stringify(draft), original = JSON.stringify(session.project.scenes[0]);
+    const baseline = P.copy(session.scene);
+    assert.equal(session.vary('fill'), true);
+    for (const voice of ['bd', 'sd', 'ch']) assert.deepEqual(plain(session.scene.drums.rows[voice].filter(i => i < 12)), plain(baseline.drums.rows[voice].filter(i => i < 12)));
+    assert.equal(session.vary('fill'), false); assert.equal(session.history.length, 1);
+    const fill = P.copy(session.scene);
+    assert.equal(session.vary('sparse'), true);
+    assert.deepEqual(plain(session.scene.drums.rows.bd), plain(fill.drums.rows.bd));
+    assert.deepEqual(plain(session.scene.drums.rows.sd), plain(fill.drums.rows.sd));
+    assert.ok(session.scene.drums.rows.ch.length > 0);
+    const sparse = P.copy(session.scene);
+    session.vary('acid'); assert.equal(session.scene.mix.muteBass, false);
+    session.undo(); assert.deepEqual(plain(session.scene), plain(sparse));
+    session.redo(); assert.equal(session.scene.mix.muteBass, false);
+    const acid = P.copy(session.scene);
+    session.reset(); assert.deepEqual(plain(session.scene), plain(baseline));
+    session.undo(); assert.deepEqual(plain(session.scene), plain(acid));
+    session.toggle('bd', 13); assert.equal(session.future.length, 0);
+    assert.equal(JSON.stringify(session.project.scenes[0]), original);
+    assert.equal(JSON.stringify(draft), before);
+  }
+  const session = new R.Session(banks, G.CHALLENGES[0], { bd: [0], sd: [], ch: [2, 6, 10, 14] });
+  while (session.vary('sparse')) {}
+  assert.deepEqual(plain(session.scene.drums.rows.ch), [2]);
+  assert.deepEqual(plain(session.scene.drums.rows.sd), []);
+  assert.throws(() => session.toggle('bass', 0)); assert.throws(() => session.toggle('bd', 16));
+});
+
+test('three original acid phrases retain valid accents and slides, and audition settings never leak into saved music', () => {
+  const { G, P, R, banks } = model(), c = G.CHALLENGES[0];
+  const session = new R.Session(banks, c, c.rows), phrases = [];
+  for (let i = 0; i < 3; i++) {
+    session.vary('acid'); const bass = session.scene.bass;
+    phrases.push(JSON.stringify(bass.notes));
+    assert.equal(bass.source.type, 'original_practice'); assert.match(bass.source.detail, /written for Beat Arcade/);
+    assert.ok(bass.notes.some(n => n === null));
+    assert.ok(bass.notes.filter(Boolean).every(n => [0, 3, 5, 7, 10].includes(P.noteMidi(n) % 12)));
+    assert.ok(bass.accent.every(i => bass.notes[i] !== null));
+    assert.ok(bass.slide.every(i => bass.notes[i] !== null && bass.notes[(i + 1) % 16] !== null));
+  }
+  assert.equal(new Set(phrases).size, 3);
+  session.vary('acid'); assert.equal(JSON.stringify(session.scene.bass.notes), phrases[0]);
+  const musical = JSON.stringify(session.project);
+  for (const solo of ['bd', 'sd', 'ch', 'bass']) {
+    const audition = R.forPlayback(session.project, { solo, bpm: 81 });
+    assert.equal(audition.bpm, 81);
+    assert.equal(audition.scenes[0].mix.muteBass, true);
+    assert.equal(audition.scenes[1].mix.muteBass, solo !== 'bass');
+    for (const v of P.VOICES) if (v !== solo) assert.equal(audition.scenes[1].drums.rows[v].length, 0);
+  }
+  assert.equal(JSON.stringify(session.project), musical);
+  const exported = R.forStudio(session.project);
+  assert.notEqual(exported.id, session.project.id); assert.equal(exported.bpm, c.bpm);
+  assert.deepEqual(plain(exported.arrangement), [{ scene: 'A', bars: 4 }, { scene: 'B', bars: 4 }]);
+  assert.deepEqual(plain(exported.scenes[1].bass), plain(session.scene.bass));
+  assert.deepEqual(plain(exported.scenes[3].bass), plain(session.scene.bass));
+  exported.scenes[3].bass.notes[0] = null; assert.equal(session.scene.bass.notes[0], 'C2');
+});
+
+test('Remix UI keeps challenge scores and drafts intact through edits, undo, mode and round switches', async () => {
+  const a = app();
+  await a.$('start-remix').fire('click'); assert.equal(a.$('remix-tools').hidden, true);
+  await solve(a); const scores = JSON.stringify([...a.storage.data]);
+  await a.$('start-remix').fire('click');
+  assert.equal(a.$('remix-tools').hidden, false); assert.equal(a.$('result').hidden, true);
+  assert.equal(a.$('next-beat').hidden, true);
+  await a.$('remix-fill').fire('click'); assert.equal(a.pad(1, 15).getAttribute('aria-pressed'), 'true');
+  await a.$('remix-acid').fire('click'); assert.match(a.$('remix-bass').textContent, /Acid answer 1/);
+  await a.$('remix-undo').fire('click'); assert.match(a.$('remix-bass').textContent, /Bass is silent/);
+  await a.$('remix-redo').fire('click'); assert.match(a.$('remix-bass').textContent, /Acid answer 1/);
+  await a.$('check-beat').fire('click'); assert.equal(JSON.stringify([...a.storage.data]), scores);
+  await a.$('back-to-challenge').fire('click');
+  assert.equal(a.pad(1, 15).getAttribute('aria-pressed'), 'false'); assert.equal(a.$('next-beat').hidden, false);
+  assert.equal(a.$('total-stars').textContent, '3 / 18'); assert.equal(a.$('result').hidden, false);
+  await a.$('challenge-list').children[1].children[0].fire('click');
+  await a.$('challenge-list').children[0].children[0].fire('click');
+  assert.match(a.$('start-remix').textContent, /Continue/);
+  await a.$('start-remix').fire('click');
+  assert.equal(a.pad(1, 15).getAttribute('aria-pressed'), 'true'); assert.match(a.$('remix-bass').textContent, /Acid answer 1/);
+  await a.$('remix-reset').fire('click'); assert.equal(a.pad(1, 15).getAttribute('aria-pressed'), 'false');
+  await a.$('remix-undo').fire('click'); assert.equal(a.pad(1, 15).getAttribute('aria-pressed'), 'true');
+  assert.equal(JSON.stringify([...a.storage.data]), scores);
+});
+
+test('remix comparison queues A/B on one transport and follows audible events while editing B', async () => {
+  class AudioContext { constructor() { this.state = 'running'; this.currentTime = 0; } }
+  const a = app({ AudioContext });
+  await a.pad(0, 0).fire('click'); await a.$('start-remix').fire('click');
+  await a.$('listen-target').fire('click');
+  const t = a.transports[0]; assert.equal(t.sceneId, 'A');
+  assert.equal(a.$('listen-target').getAttribute('aria-pressed'), 'false');
+  t.events.onVisual({ sceneId: 'A', tick: 0 });
+  assert.equal(a.$('listen-target').getAttribute('aria-pressed'), 'true');
+  const original = JSON.stringify(t.getProject().scenes[0]);
+  await a.$('remix-fill').fire('click'); await a.$('remix-acid').fire('click');
+  assert.equal(JSON.stringify(t.getProject().scenes[0]), original);
+  assert.equal(t.getProject().scenes[1].mix.muteBass, false);
+  await a.$('listen-yours').fire('click'); assert.equal(t.pending, 'B');
+  assert.equal(a.$('listen-target').getAttribute('aria-pressed'), 'true'); assert.equal(a.$('listen-yours').dataset.queued, true);
+  await a.$('listen-target').fire('click'); assert.equal(t.pending, 'A');
+  await a.$('listen-yours').fire('click'); assert.equal(t.pending, 'B');
+  assert.equal(a.transports.length, 1);
+  t.events.onVisual({ sceneId: 'B', tick: 0 });
+  assert.equal(a.$('listen-yours').getAttribute('aria-pressed'), 'true'); assert.equal(a.$('listen-yours').dataset.queued, false);
+  await a.$('listen-target').fire('click');
+  await a.$('back-to-challenge').fire('click'); assert.equal(t.running, false); assert.equal(t.pending, null);
+  assert.equal(a.$('listen-yours').getAttribute('aria-pressed'), 'false');
+});
+
+test('leaving Remix while audio is resuming cancels both a new loop and its pending comparison', async () => {
+  const contexts = [];
+  class AudioContext {
+    constructor() { this.state = 'suspended'; this.currentTime = 0; contexts.push(this); }
+    resume() { return new Promise(resolve => { this.release = () => { this.state = 'running'; resolve(); }; }); }
+  }
+  const a = app({ AudioContext });
+  await a.pad(0, 0).fire('click'); await a.$('start-remix').fire('click');
+  const start = a.$('listen-target').fire('click');
+  const switchSide = a.$('listen-yours').fire('click');
+  await a.$('challenge-list').children[1].children[0].fire('click');
+  contexts[0].release(); await Promise.all([start, switchSide]);
+  assert.equal(a.transports.length, 0); assert.equal(a.$('remix-tools').hidden, true);
+  assert.equal(a.$('stop-audio').disabled, true);
+});
+
+test('keeping remix versions is retryable, preserves existing projects, and hands full A/B music to Studio', async () => {
+  const a = app(); await solve(a); await a.$('start-remix').fire('click');
+  await a.$('remix-fill').fire('click'); await a.$('remix-acid').fire('click');
+  const original = a.P.createProject(a.banks); new a.P.ProjectStore(a.storage).save(original);
+  const untouched = a.storage.getItem(a.P.PREFIX + original.id), write = a.storage.setItem;
+  a.$('solo').value = 'bass'; a.$('speed').value = '.75';
+  a.storage.setItem = () => { throw new Error('Quota'); };
+  await a.$('keep-remix').fire('click'); assert.match(a.$('remix-save-status').textContent, /Could not save/);
+  await a.$('open-studio').fire('click'); assert.equal(a.navigated, null);
+  assert.match(a.$('remix-bass').textContent, /Acid answer 1/);
+  a.storage.setItem = write;
+  await a.$('keep-remix').fire('click'); assert.equal(a.navigated, null);
+  assert.match(a.$('remix-save-status').textContent, /saved in your Studio/);
+  const kept = new a.P.ProjectStore(a.storage).list().projects.find(p => p.id !== original.id);
+  assert.ok(kept); assert.equal(kept.bpm, 108); assert.equal(kept.scenes[1].mix.muteBass, false);
+  assert.equal(kept.scenes[0].mix.muteBass, true);
+  assert.deepEqual(plain(kept.scenes[0].drums.rows.sd), [4, 12]);
+  assert.deepEqual(plain(kept.scenes[1].drums.rows.sd), [4, 12, 14, 15]);
+  const count = a.storage.length;
+  await a.$('keep-remix').fire('click'); assert.equal(a.storage.length, count);
+  await a.$('open-studio').fire('click'); assert.match(a.navigated, new RegExp(kept.id));
+  assert.equal(a.storage.length, count); assert.equal(a.storage.getItem(a.P.PREFIX + original.id), untouched);
+  const studio = app({ storage: a.storage, file: 'groove-studio.html', search: new URL(a.navigated, 'https://example.test/').search });
+  assert.equal(studio.$('project-name').value, kept.name);
+  assert.equal(studio.$('mute-bass').getAttribute('aria-pressed'), 'false');
+});
+
+test('a changed, mismatched or deleted saved remix produces a fresh copy without overwriting the existing entry', async () => {
+  for (const change of ['edited', 'mismatched', 'deleted']) {
+    const a = app(); await a.pad(0, 0).fire('click'); await a.$('start-remix').fire('click'); await a.$('keep-remix').fire('click');
+    const project = new a.P.ProjectStore(a.storage).list().projects[0], key = a.P.PREFIX + project.id;
+    if (change === 'edited') { project.scenes[1].drums.rows.bd = [4]; a.storage.setItem(key, JSON.stringify(project)); }
+    if (change === 'mismatched') { project.id = 'different-id'; a.storage.setItem(key, JSON.stringify(project)); }
+    if (change === 'deleted') a.storage.removeItem(key);
+    const raw = a.storage.getItem(key);
+    await a.$('keep-remix').fire('click');
+    const valid = new a.P.ProjectStore(a.storage).list().projects.filter(p => a.P.PREFIX + p.id !== key);
+    assert.equal(valid.length, 1); assert.deepEqual(plain(valid[0].scenes[1].drums.rows.bd), [0]);
+    assert.equal(a.storage.getItem(key), raw);
+  }
 });

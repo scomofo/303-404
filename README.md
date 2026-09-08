@@ -33,6 +33,36 @@ programmed pattern, not performance timing or a recording of your playing.
 - Pads support touch, Space/Enter, arrow keys and Home/End. Playhead changes
   do not flood screen readers, and celebrations respect reduced motion.
 
+### Remix Mode
+
+Switch on a few pads, then choose **Remix this beat**. You can remix any
+attempt; completing a challenge is optional. The player's current drum pattern
+becomes **A · Your original**, with an independent copy in **B · Your remix**.
+The original Arcade draft and its checked result stay intact.
+
+- **Add a fill** puts snare and hi-hat hits on the last beat. **Make it sparse**
+  removes alternate existing hats while retaining the kick and snare. **Add acid
+  bass** cycles through three original C-minor phrases with rests, accents and
+  slides. The bass is audible immediately in B; A remains the starting drum beat.
+- Edit B with the pads, compare A/B using the existing bar-queued transport,
+  and use **Undo**, **Redo**, or **Reset to your original**. Undo restores the
+  entire remix scene, including bass and mix, for up to 40 changes. Applying an
+  already-present fill or thinning a single remaining hat uses no undo slot.
+  The controls distinguish queued requests from the version actually playing.
+- Remix mode also offers **Bass only** listening. Solo and 75% listening speed
+  apply to playback copies and never change the saved musical settings.
+- **Keep this version** saves both A and B in a new Studio project without
+  leaving the Arcade. Keep experimenting to save other versions. Repeated saves
+  of unchanged music reuse its saved project; if that project was changed,
+  removed or damaged in Studio, keeping it again saves a fresh copy. Existing
+  projects are never replaced. A failed save keeps the remix available for retry.
+- **Open remix in Studio** opens that exact version for deeper editing and
+  recording. Its arrangement plays four bars of A, then four of B; C and D hold
+  independent copies of A and B. Project backups use the existing v1 format.
+- Return to the beat challenge or switch rounds without losing your remix
+  during this visit. Unsaved remixes and undo history do not survive a reload.
+  Remix actions award no stars and do not claim to judge creative quality.
+
 No new runtime dependency or engine migration is required. Godot remains an
 option for a future standalone game, but this feature reuses the app's existing
 browser audio, Studio project format and course navigation. Godot's default
@@ -358,7 +388,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/practice-sessions.test.mjs` | Listening-goal completion, local practice dates, repeat deduplication, corrupt-save isolation, quota failure, cross-tab conflicts, recent-draft recommendations and legacy record compatibility |
 | `test/practice-path.test.mjs` | Home resume, partial saves, in-page session switching, failed-save navigation guards and retries, final course links and free-play fallback against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
-| `test/arcade.test.mjs` | Exact-lane scoring, target/draft isolation, solo playback data, immutable best scores, failed-save recovery, keyboard events, pending-audio cancellation and Arcade → Studio project selection using a DOM/audio double; does not test visual layout or browser sound |
+| `test/arcade.test.mjs` | Exact-lane scoring, target/draft isolation, immutable best scores, failed-save recovery, keyboard events, pending-audio cancellation, remix variations and full-scene undo, A/B comparison state, solo/export isolation and exact Studio project handoff using a DOM/audio double; does not test visual layout or browser sound |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
 The test harness loads each guide's inline component logic against a stub runtime and stub Web Audio API. Timing tests wait for the data they need instead of depending on a fixed wall-clock window, and every engine started by a test is disposed during cleanup.
@@ -376,6 +406,7 @@ scripts/build-course-catalog.mjs catalog generator (npm run catalog)
 groove-studio.html              connected drum/bass scene editor and performance workspace
 beat-arcade.html                short listen-and-rebuild drum challenges
 arcade/game.js                  original targets, scoring and isolated Studio handoff data
+arcade/remix.js                 original-preserving variations, undo and A/B project data
 arcade/app.js / arcade.css      playable pads, comparison controls and local best stars
 studio/project.js              portable project schema and browser-local project store
 studio/audio.js                shared playback/export synthesis and live capture

@@ -59,6 +59,20 @@
 .beat-result ul { padding-left: 1.25rem; margin-bottom: 0; }
 .beat-result[data-complete="true"] h3 { color: var(--console-lime); animation: beat-win .45s ease-out; }
 .arcade-finish { justify-content: space-between; }
+.remix-entry { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin-bottom: 1rem; }
+.remix-entry span { font-size: .875rem; color: var(--console-muted); flex: 1 1 190px; }
+.beat-console[data-remix="true"] { border-color: #8ddde1; }
+.remix-tools { margin-top: 1.5rem; padding-block: 1rem; border-block: 1px solid var(--console-line); margin-bottom: 1rem; }
+.remix-tools h3 { font-size: 1.125rem; margin: 0 0 .8rem; }
+.remix-ideas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+.remix-ideas button { text-align: left; padding: .85rem; }
+.remix-ideas strong, .remix-ideas span { display: block; }
+.remix-ideas strong { color: #8ddde1; font-size: 1rem; margin-bottom: .4rem; }
+.remix-ideas span { color: var(--console-muted); font-size: .875rem; font-weight: 400; }
+.remix-bass { font: 400 .875rem var(--font-mono); color: #8ddde1; overflow-wrap: anywhere; padding-block: .5rem; }
+.remix-history { display: flex; flex-wrap: wrap; gap: .5rem; }
+.arcade-transport button[data-queued="true"] { border-color: #8ddde1; border-style: dashed; }
+@media (max-width: 640px) { .remix-ideas { grid-template-columns: minmax(0, 1fr); } }
 @keyframes beat-win { from { transform: translateY(4px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
 @media (max-width: 960px) { .arcade-layout { grid-template-columns: minmax(0, 1fr); } .arcade-rounds { min-width: 0; } .arcade-rounds ol { grid-template-columns: repeat(6, 195px); overflow-x: auto; padding: .3rem; margin: .5rem -.3rem; scroll-snap-type: x proximity; } .arcade-rounds li { scroll-snap-align: start; } .arcade-rounds > p { margin-bottom: .5rem; } }
 @media (max-width: 640px) { .lane-pads { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; } .arcade-heading { align-items: start; } .round-stars { font-size: 1.2rem; } .challenge-heading { align-items: start; } .home-header, .home-main { padding-inline: 1rem; } .beat-console { padding: 1rem; } .arcade-total strong { font-size: 1.35rem; } }

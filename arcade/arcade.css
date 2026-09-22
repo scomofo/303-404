@@ -72,6 +72,27 @@
 .remix-bass { font: 400 .875rem var(--font-mono); color: #8ddde1; overflow-wrap: anywhere; padding-block: .5rem; }
 .remix-history { display: flex; flex-wrap: wrap; gap: .5rem; }
 .arcade-transport button[data-queued="true"] { border-color: #8ddde1; border-style: dashed; }
+.mission-entry { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; padding: 1rem; margin-bottom: 1rem; border: 1px dashed var(--console-line); border-radius: var(--radius-sm); }
+.mission-entry strong { color: #8ddde1; }
+.mission-entry p { font-size: .875rem; margin: .3rem 0 0; color: var(--console-muted); }
+.remix-mission { margin: 0 0 1.25rem; padding: clamp(.85rem, 2vw, 1.2rem); border: 1px solid #8ddde1; border-radius: var(--radius-sm); background: #1d342c; }
+.mission-heading { display: flex; justify-content: space-between; align-items: start; gap: .75rem; flex-wrap: wrap; }
+.mission-heading h3 { font-size: 1.15rem; margin: 0; }
+.mission-progress { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .4rem; list-style: none; padding: 0; margin: 1rem 0; counter-reset: mission; }
+.mission-progress li { counter-increment: mission; color: var(--console-muted); font-size: .75rem; padding: .4rem 0; border-top: 3px solid var(--console-line); overflow-wrap: anywhere; }
+.mission-progress li::before { content: counter(mission) ' · '; }
+.mission-progress li[data-done="true"] { color: var(--console-lime); border-color: var(--console-lime); }
+.mission-progress li[aria-current="step"] { color: #8ddde1; border-color: #8ddde1; font-weight: 700; }
+.mission-step { color: var(--console-lime); font-weight: 700; margin: .5rem 0; }
+.mission-instruction, .mission-notice { font-size: .95rem; color: var(--console-text); }
+.mission-notice { border-left: 3px solid #ffad6c; padding-left: .75rem; }
+.mission-reflection { display: grid; gap: .5rem; margin: 1rem 0; font-size: .9rem; }
+.mission-reflection select { width: 100%; padding: .65rem; }
+.mission-reflection span, .mission-footnote { color: var(--console-muted); font-size: .8rem; }
+.mission-footnote { margin: .85rem 0 0; }
+.drum-lane[data-mission="true"] .lane-heading::after { content: 'Your next change'; color: #8ddde1; font-size: .75rem; }
+.drum-lane[data-mission="true"] .lane-heading { flex-wrap: wrap; }
+.beat-console .beat-pad[data-suggestion="true"] { outline: 2px dashed #8ddde1; outline-offset: 2px; }
 @media (max-width: 640px) { .remix-ideas { grid-template-columns: minmax(0, 1fr); } }
 @keyframes beat-win { from { transform: translateY(4px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
 @media (max-width: 960px) { .arcade-layout { grid-template-columns: minmax(0, 1fr); } .arcade-rounds { min-width: 0; } .arcade-rounds ol { grid-template-columns: repeat(6, 195px); overflow-x: auto; padding: .3rem; margin: .5rem -.3rem; scroll-snap-type: x proximity; } .arcade-rounds li { scroll-snap-align: start; } .arcade-rounds > p { margin-bottom: .5rem; } }

@@ -70,6 +70,33 @@ web sample playback does not support procedural synthesis; stream playback
 supports more features with latency trade-offs. See the official
 [Godot web audio documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html#audio-playback).
 
+### Guided remix: change the hats, hear the feel
+
+Choose **Guide my remix** inside Remix Mode for a short, optional listening
+experiment. Hear A, change a hi-hat pad while keeping the other sounds in place,
+hear B, reflect on the difference, and **Keep mission version**. The pad hint
+adapts to your original: remove a hat from a busy pattern or add an offbeat hat
+to a sparse one. Any hat change qualifies; there is no prescribed answer.
+
+- The guide shows one next action. It tracks one uninterrupted bar of each
+  version through the playback events, with all instruments selected. A queued
+  version or a listen button click does not count as playback.
+- During the guide, a musical edit stops playback and clears the remix listen
+  and reflection. Listen again after edits, Undo or Reset to compare the version
+  you are actually keeping. Changing listening speed asks you to compare A and
+  B again at the new speed. Free Remix retains the usual live editing behavior.
+- **More space**, **More movement**, and **Still exploring** are equally valid
+  reflections. The app checks the hat edit and playback, not hearing, taste,
+  musical quality or physical performance. No stars or course credit are added.
+- Completion appears only after the A/B project saves successfully. A failed
+  save leaves the mission ready for retry. The existing Studio/Drop Lab handoff
+  preserves both versions and keeps listening speed and solo settings separate.
+- **Free remix** leaves the guide without changing your music. The guide and
+  its reflection last for this visit, including switching beats and returning;
+  kept projects survive reload. Starting the guide again starts a fresh comparison.
+
+See `docs/HANDOFF_REMIX_MISSION.md` for validation and the short browser check.
+
 ## Drop Lab
 
 Open **Drop Lab** from Home for a ready-to-play intro, groove, breakdown and
@@ -415,6 +442,7 @@ There is no install step. The suite uses Node's built-in `node:test` and `node:a
 | `test/practice-path.test.mjs` | Home resume, partial saves, in-page session switching, failed-save navigation guards and retries, final course links and free-play fallback against a small DOM double; does not test browser layout or audio |
 | `test/studio.test.mjs` | Bank fidelity and handoff links, portable project validation and isolation, quota and cross-tab recovery, shared musical timing, slides/rests, drum switch pairs and hat choking, transport cleanup, rendered WAV data and live recording connections |
 | `test/arcade.test.mjs` | Exact-lane scoring, target/draft isolation, immutable best scores, failed-save recovery, keyboard events, pending-audio cancellation, remix variations and full-scene undo, A/B comparison state, solo/export isolation and exact Studio project handoff using a DOM/audio double; does not test visual layout or browser sound |
+| `test/mission.test.mjs` | Guided remix progression, hats-only edits, uninterrupted comparison bars, stale-listen invalidation, adaptive hints, ungraded reflections and save-gated completion |
 | `test/drop.test.mjs` | Independent scene generation, queued/audible controls, capture limits and finalization, cancellation, listen-back cleanup, project save/import recovery and handoffs using DOM/audio doubles; no browser layout or sound assessment |
 | `test/boot.test.mjs` | Optional Playwright boot check; skipped when Playwright is not installed, including in the dependency-free CI job |
 
@@ -437,6 +465,7 @@ drop/project.js                independent imports and generated performance sce
 drop/app.js / drop.css          scene pads, live mix controls, take replay and saving
 arcade/game.js                  original targets, scoring and isolated Studio handoff data
 arcade/remix.js                 original-preserving variations, undo and A/B project data
+arcade/mission.js               optional guided remix and listening-state checks
 arcade/app.js / arcade.css      playable pads, comparison controls and local best stars
 studio/project.js              portable project schema and browser-local project store
 studio/audio.js                shared playback/export synthesis and live capture

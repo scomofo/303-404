@@ -14,6 +14,7 @@
   <script defer src="studio/audio.js"></script>
   <script defer src="arcade/game.js"></script>
   <script defer src="arcade/remix.js"></script>
+  <script defer src="arcade/mission.js"></script>
   <script defer src="arcade/app.js"></script>
 </head>
 <body class="practice-home arcade-page">
@@ -31,6 +32,17 @@
         <div class="challenge-heading"><div><p id="challenge-meta" class="console-kicker">01 / 06 · Warm-up</p><h2 id="challenge-title" tabindex="-1">Four on the floor</h2></div><span id="round-stars" class="round-stars" aria-label="Best: 0 of 3 stars">☆☆☆</span></div>
         <p id="console-intro" class="console-intro">Listen to the reference, then switch on the steps you hear. Each row is one instrument; every four steps make a beat.</p>
         <div id="remix-entry" class="remix-entry" hidden><button id="back-to-challenge" type="button" hidden>← Back to the beat challenge</button><span id="remix-entry-note">The pads edit your remix. Your original is kept for comparison.</span></div>
+        <div id="mission-entry" class="mission-entry" hidden><div><strong>What changes when the hats change?</strong><p>Try a short guided remix. One change, two versions, your ears.</p></div><button id="start-mission" type="button">Guide my remix</button></div>
+        <section id="remix-mission" class="remix-mission" aria-labelledby="mission-title" hidden>
+          <div class="mission-heading"><div><p class="console-kicker">A few minutes · Guided remix</p><h3 id="mission-title">Change the hats, hear the feel</h3></div><button id="exit-mission" type="button">Free remix</button></div>
+          <ol id="mission-progress" class="mission-progress" aria-label="Remix mission progress"><li>Original</li><li>Change hats</li><li>Compare</li><li>Reflect</li><li>Keep</li></ol>
+          <p id="mission-step" class="mission-step" role="status" aria-live="polite">Step 1 of 5 · Hear your original</p>
+          <p id="mission-instruction" class="mission-instruction">Let A play for a full bar. Listen to how the hats sit around the kick and snare.</p>
+          <p id="mission-notice" class="mission-notice" hidden></p>
+          <label id="mission-reflection-label" class="mission-reflection" for="mission-reflection" hidden>What changed for you?<select id="mission-reflection"><option value="">Choose what you noticed</option><option value="space">More space</option><option value="movement">More movement</option><option value="exploring">Still exploring</option></select><span>There is no wrong answer. You decide what feels right.</span></label>
+          <button id="mission-action" class="arcade-primary" type="button">Hear original A</button>
+          <p class="mission-footnote">Playback steps track a full bar with all instruments. You judge the sound. This guide stays for this visit; kept music saves in Studio.</p>
+        </section>
         <div class="arcade-transport" role="group" aria-label="Listen and compare">
           <button id="listen-target" class="arcade-primary" type="button" aria-pressed="false">▶ Hear the reference</button>
           <button id="listen-yours" type="button" aria-pressed="false">▶ Hear your beat</button>

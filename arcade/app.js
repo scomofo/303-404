@@ -2,6 +2,7 @@
   const G = globalThis.DCBeatArcade, P = globalThis.DCStudioProject;
   const A = globalThis.DCStudioAudio, banks = globalThis.DCStudioBanks;
   const R = globalThis.DCArcadeRemix;
+  const M = globalThis.DCArcadeMission;
   const $ = id => document.getElementById(id);
   const make = (tag, text, props = {}) => Object.assign(document.createElement(tag), { textContent: text, ...props });
   const drafts = new Map(G.CHALLENGES.map(c => [c.id, G.emptyRows()]));
@@ -14,6 +15,7 @@
   let audioToken = 0, playing = null, playbackProject = null, opening = false;
   const challenge = () => G.CHALLENGES[index];
   const remix = () => remixes.get(challenge().id);
+  const mission = () => remix()?.mission;
   const rows = () => remixing ? remix().session.scene.drums.rows : drafts.get(challenge().id);
   const tempo = () => Math.round(challenge().bpm * Number($('speed').value));
   const starsText = count => '★'.repeat(count) + '☆'.repeat(3 - count);
@@ -39,6 +41,48 @@
     $('solo').replaceChildren(...choices.map(([value, label]) => make('option', label, { value })));
     $('solo').value = choices.some(([key]) => key === solo) ? solo : 'all';
     if (remixing) renderRemixControls();
+    renderMission();
+  }
+  function renderMission() {
+    const view = remixing ? mission().view(remix().session.project) : null;
+    const active = !!view?.active;
+    $('mission-entry').hidden = !remixing || active;
+    $('remix-mission').hidden = !active;
+    for (const lane of $('pattern-grid').children) lane.dataset.mission = active && view.step === 2 && lane.dataset.voice === 'ch';
+    for (const pad of pads.get('ch') || []) pad.dataset.suggestion = active && view.step === 2 && Number(pad.dataset.step) === view.hintStep;
+    if (!active) return;
+    const titles = ['Hear your original', 'Change the hats', 'Hear the difference', 'Name what you notice', 'Keep your version'];
+    const instructions = [
+      'Let A play for a full bar. Listen to how the hats sit around the kick and snare.',
+      `${view.hint} Keep the kick, snare and bass as they were so you can hear what one change does.`,
+      'Let B play for a full bar with all instruments. Does it feel more open, busier, or simply different? You can replay A as often as you like.',
+      'Choose what you noticed. This is your listening decision; every answer is welcome.',
+      'Save both versions together. You can keep exploring in Studio or perform your remix in Drop Lab.',
+    ];
+    const text = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
+    text('mission-step', view.complete ? 'Mission complete · Your remix is kept' : `Step ${view.step} of 5 · ${titles[view.step - 1]}`);
+    text('mission-instruction', view.complete ? 'You changed a musical detail, compared it, and kept a version. Take your idea into a performance, or return to free remixing.' : instructions[view.step - 1]);
+    const done = [view.originalHeard, view.changed, view.remixHeard, !!view.reflection, view.complete];
+    [...$('mission-progress').children].forEach((item, i) => {
+      item.dataset.done = done[i];
+      item.setAttribute('aria-current', !view.complete && view.step === i + 1 ? 'step' : 'false');
+      item.setAttribute('aria-label', `${titles[i]}: ${done[i] ? 'done' : 'not yet'}`);
+    });
+    const notice = remix().missionError || view.notice || (view.step === 2 ? 'The outlined pad is one idea. Any hi-hat change works; use Undo whenever you like.' : '');
+    text('mission-notice', notice); $('mission-notice').hidden = !notice;
+    $('mission-reflection-label').hidden = view.step < 4;
+    $('mission-reflection').disabled = view.complete;
+    if ($('mission-reflection').value !== (view.reflection || '')) $('mission-reflection').value = view.reflection || '';
+    text('mission-action', view.complete ? 'Perform this in Drop Lab ↗' : ['Hear original A', 'Go to hi-hats', 'Hear remix B', 'Choose what you noticed', 'Keep mission version'][view.step - 1]);
+    $('mission-action').disabled = false;
+  }
+  function missionEdited() {
+    if (!remixing || !mission().view(remix().session.project).active) return;
+    // End lookahead audio before crediting a listen to newly edited music.
+    stop('Your remix changed. Press a listen button to hear this version.');
+    remix().missionError = '';
+    mission().changed(remix().session.project);
+    renderMission();
   }
   function renderRemixControls() {
     const session = remix().session, bass = session.scene.bass;
@@ -54,6 +98,7 @@
     if ($('remix-save-status').textContent !== message) $('remix-save-status').textContent = message;
   }
   function remixChanged(message) {
+    missionEdited();
     updateRemixPlayback(); renderPads(); renderRemixControls();
     $('remix-feedback').textContent = message;
     markRemixUnsaved();
@@ -62,7 +107,8 @@
   function setRemixMode(enabled) {
     if (enabled && !remix()) {
       if (!G.VOICES.some(v => drafts.get(challenge().id)[v.key].length)) return;
-      remixes.set(challenge().id, { session: new R.Session(banks, challenge(), drafts.get(challenge().id)), saved: new Map() });
+      const session = new R.Session(banks, challenge(), drafts.get(challenge().id));
+      remixes.set(challenge().id, { session, mission: new M.Session(session.project), missionError: '', saved: new Map() });
     }
     stop(); remixing = enabled; hint = false; audioError('');
     $('handoff-status').textContent = '';
@@ -131,6 +177,10 @@
     $('lane-results').replaceChildren(...(result?.lanes || []).map(lane => make('li', lane.matched ? `${lane.name}: matched ★` : `${lane.name}: ${lane.missing.length} missing ${lane.missing.length === 1 ? 'hit' : 'hits'}, ${lane.extra.length} extra ${lane.extra.length === 1 ? 'hit' : 'hits'}.`)));
   }
   function paintPosition(event) {
+    if (remixing && event && mission().view(remix().session.project).active) {
+      mission().observe(remix().session.project, event, { solo: $('solo').value });
+      renderMission();
+    }
     if (remixing && event && audibleSide !== event.sceneId) { audibleSide = event.sceneId; renderComparison(); }
     for (const lane of pads.values()) lane.forEach((pad, step) => { pad.dataset.current = !!event && step === event.tick % 16; });
     $('beat-position').textContent = event ? `${tempo()} BPM · Beat ${Math.floor(event.tick % 16 / 4) + 1} · Step ${event.tick % 16 + 1}` : `${tempo()} BPM · Ready`;
@@ -145,6 +195,7 @@
     $('audio-status').textContent = audibleSide ? `Playing ${label(audibleSide)}.${requestedSide !== audibleSide ? ` ${requestedSide === 'A' ? 'Original' : 'Remix'} queued for the next bar.` : ''}` : `Starting ${label(requestedSide)}…`;
   }
   function stopped(message = '') {
+    mission()?.stop();
     playing = null; requestedSide = null; audibleSide = null; paintPosition(null);
     $('listen-target').setAttribute('aria-pressed', 'false'); $('listen-yours').setAttribute('aria-pressed', 'false');
     $('listen-target').dataset.queued = false; $('listen-yours').dataset.queued = false;
@@ -199,7 +250,7 @@
     } catch (err) { if (request === audioToken) audioError(err.message); }
   }
   function edited() {
-    if (remixing) { updateRemixPlayback(); renderPads(); renderRemixControls(); markRemixUnsaved(); $('handoff-status').textContent = ''; return; }
+    if (remixing) { missionEdited(); updateRemixPlayback(); renderPads(); renderRemixControls(); markRemixUnsaved(); $('handoff-status').textContent = ''; return; }
     const hadResult = results.delete(challenge().id); $('handoff-status').textContent = '';
     if (playing === 'yours') {
       // Only musical data is updated; the transport keeps its audio clock.
@@ -231,6 +282,7 @@
     const grid = make('div', '', { className: 'lane-pads' }); grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', `${voice.name} pattern`);
     const buttons = Array.from({ length: 16 }, (_, step) => {
       const pad = make('button', '', { type: 'button', className: 'beat-pad', tabIndex: step === 0 ? 0 : -1 });
+      pad.dataset.step = step;
       pad.append(make('span', '·'), make('small', String(step + 1)));
       pad.children[0].setAttribute('aria-hidden', 'true');
       pad.addEventListener('focus', () => { for (const other of pads.get(voice.key)) other.tabIndex = other === pad ? 0 : -1; });
@@ -259,7 +311,13 @@
   $('listen-target').addEventListener('click', () => play('target'));
   $('listen-yours').addEventListener('click', () => play('yours'));
   $('stop-audio').addEventListener('click', () => stop('Stopped.'));
-  for (const id of ['solo', 'speed']) $(id).addEventListener('change', () => stop('Listening settings changed. Press a listen button to continue.'));
+  for (const id of ['solo', 'speed']) $(id).addEventListener('change', () => {
+    stop('Listening settings changed. Press a listen button to continue.');
+    if (id === 'speed' && remixing && mission().view(remix().session.project).active) {
+      // Compare the same tempo on both sides of this listening experiment.
+      mission().start(remix().session.project); remix().missionError = ''; renderMission();
+    }
+  });
   $('show-pattern').addEventListener('click', () => { hint = !hint; renderPads(); });
   $('clear-beat').addEventListener('click', () => { stop('Your beat is clear.'); drafts.set(challenge().id, G.emptyRows()); edited(); });
   $('check-beat').addEventListener('click', () => {
@@ -276,6 +334,30 @@
   $('next-beat').addEventListener('click', () => { selectRound((index + 1) % G.CHALLENGES.length); $('challenge-title').focus(); });
   $('start-remix').addEventListener('click', () => setRemixMode(true));
   $('back-to-challenge').addEventListener('click', () => setRemixMode(false));
+  $('start-mission').addEventListener('click', () => {
+    if (!remixing) return;
+    stop(); remix().missionError = ''; mission().start(remix().session.project); renderMission(); $('mission-action').focus();
+  });
+  $('exit-mission').addEventListener('click', () => {
+    if (!remixing) return;
+    mission().exit(); renderMission(); $('start-mission').focus();
+  });
+  $('mission-reflection').addEventListener('change', () => {
+    if (!remixing) return;
+    mission().reflect($('mission-reflection').value); renderMission();
+  });
+  $('mission-action').addEventListener('click', async () => {
+    if (!remixing) return;
+    const view = mission().view(remix().session.project);
+    if (!view.active) return;
+    if (view.complete) { openWorkspace('drop-lab'); return; }
+    if (view.step === 1 || view.step === 3) {
+      if ($('solo').value !== 'all') { stop(); $('solo').value = 'all'; }
+      await play(view.step === 1 ? 'target' : 'yours');
+    } else if (view.step === 2) pads.get('ch')[view.hintStep].focus();
+    else if (view.step === 4) $('mission-reflection').focus();
+    else if (view.canKeep) keepRemix();
+  });
   for (const [kind, message, unchanged] of [
     ['fill', 'A snare and hat fill now leads into the next loop.', 'That fill is already in place. Try moving a pad, or compare A and B.'],
     ['sparse', 'The hats have more space. Your kick and snare stay in place.', 'The hats are already sparse. Add a few hat pads to try a different feel.'],
@@ -287,12 +369,18 @@
   for (const [kind, message] of [['undo', 'Last remix change undone.'], ['redo', 'Remix change restored.'], ['reset', 'Back to your original beat. Undo brings the remix back.']]) $(`remix-${kind}`).addEventListener('click', () => {
     if (remixing && remix().session[kind]()) remixChanged(message);
   });
-  $('keep-remix').addEventListener('click', () => {
+  function keepRemix() {
     if (!remixing) return;
     try {
       saveRemix(); $('remix-save-status').textContent = 'This version is saved in your Studio projects. Keep experimenting, or open it in Studio.';
-    } catch { $('remix-save-status').textContent = 'Could not save this version. Your remix is still here. Free some browser storage, then try “Keep this version” again.'; }
-  });
+      remix().missionError = ''; mission().kept(remix().session.project); renderMission();
+    } catch {
+      const message = 'Could not save this version. Your remix is still here. Free some browser storage, then try keeping it again.';
+      $('remix-save-status').textContent = message;
+      if (mission().view(remix().session.project).active) { remix().missionError = message; renderMission(); }
+    }
+  }
+  $('keep-remix').addEventListener('click', keepRemix);
   function openWorkspace(destination) {
     if (opening) return;
     opening = true; stop(); $('handoff-status').textContent = '';

@@ -8,7 +8,7 @@ import { Element, dom } from './dom-fixture.mjs';
 const plain = value => JSON.parse(JSON.stringify(value));
 function model() {
   const scope = {};
-  for (const file of ['studio/banks.js', 'studio/project.js', 'arcade/game.js', 'arcade/remix.js']) runInNewContext(readGuide(file), scope);
+  for (const file of ['studio/banks.js', 'studio/project.js', 'arcade/game.js', 'arcade/remix.js', 'arcade/mission.js']) runInNewContext(readGuide(file), scope);
   return { scope, G: scope.DCBeatArcade, P: scope.DCStudioProject, R: scope.DCArcadeRemix, banks: scope.DCStudioBanks };
 }
 function memory() {
@@ -407,4 +407,223 @@ test('a changed, mismatched or deleted saved remix produces a fresh copy without
     assert.equal(valid.length, 1); assert.deepEqual(plain(valid[0].scenes[1].drums.rows.bd), [0]);
     assert.equal(a.storage.getItem(key), raw);
   }
+});
+
+class MissionAudioContext {
+  constructor() { this.state = 'running'; this.currentTime = 0; }
+}
+function visualBar(transport, sceneId, from = 0, to = 15) {
+  for (let tick = from; tick <= to; tick++) transport.events.onVisual({ sceneId, tick });
+}
+async function startGuidedRemix(a) {
+  await solve(a);
+  await a.$('start-remix').fire('click');
+  assert.equal(a.$('mission-entry').hidden, false);
+  assert.equal(a.$('remix-mission').hidden, true);
+  await a.$('start-mission').fire('click');
+  assert.equal(a.$('mission-entry').hidden, true);
+  assert.equal(a.$('remix-mission').hidden, false);
+  assert.match(a.$('mission-step').textContent, /^Step 1 of 5/);
+}
+async function compareGuidedHats(a) {
+  await a.$('mission-action').fire('click');
+  const original = a.transports.at(-1);
+  assert.equal(original.sceneId, 'A');
+  visualBar(original, 'A');
+  assert.match(a.$('mission-step').textContent, /^Step 2 of 5/);
+  await a.pad(2, 1).fire('click');
+  assert.equal(original.running, false, 'editing ends lookahead playback of the earlier version');
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/);
+  await a.$('mission-action').fire('click');
+  const edited = a.transports.at(-1);
+  assert.notEqual(edited, original);
+  assert.equal(edited.sceneId, 'B');
+  visualBar(edited, 'B');
+  assert.match(a.$('mission-step').textContent, /^Step 4 of 5/);
+  return edited;
+}
+
+test('guided Remix UI follows A/B playback events, saves both versions, and opens that project in Drop Lab', async () => {
+  const a = app({ AudioContext: MissionAudioContext });
+  await startGuidedRemix(a);
+  const scores = JSON.stringify([...a.storage.data]);
+  const originalRows = plain(a.G.CHALLENGES[0].rows);
+  const edited = await compareGuidedHats(a);
+  await a.$('mission-action').fire('click');
+  assert.equal(a.document.activeElement, a.$('mission-reflection'));
+  a.$('mission-reflection').value = 'movement';
+  await a.$('mission-reflection').fire('change');
+  assert.match(a.$('mission-step').textContent, /^Step 5 of 5/);
+  assert.equal(new a.P.ProjectStore(a.storage).list().projects.length, 0);
+  const expected = plain(edited.getProject());
+  await a.$('mission-action').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Mission complete/);
+  assert.equal(a.$('mission-reflection').disabled, true);
+  assert.equal(a.navigated, null, 'keeping a version does not move the learner away');
+  const projects = new a.P.ProjectStore(a.storage).list().projects;
+  assert.equal(projects.length, 1);
+  const kept = projects[0];
+  assert.notEqual(kept.id, expected.id);
+  assert.deepEqual(plain(kept.scenes.slice(0, 2)), expected.scenes.slice(0, 2));
+  for (const voice of a.G.VOICES) assert.deepEqual(plain(kept.scenes[0].drums.rows[voice.key]), originalRows[voice.key]);
+  assert.equal(kept.scenes[1].drums.rows.ch.includes(1), true);
+  assert.equal(a.$('total-stars').textContent, '3 / 18');
+  assert.equal(JSON.stringify([...a.storage.data].filter(([key]) => key.startsWith(a.G.PREFIX))), scores);
+  await a.$('mission-action').fire('click');
+  const url = new URL(a.navigated, 'https://example.test/');
+  assert.equal(url.pathname, '/drop-lab.html');
+  assert.equal(url.searchParams.get('project'), kept.id);
+  assert.equal(url.searchParams.get('build'), '1');
+  assert.equal(new a.P.ProjectStore(a.storage).list().projects.length, 1);
+});
+
+test('failed mission saves retain the reflection and visible error until a successful retry saves the exact music', async () => {
+  const a = app({ AudioContext: MissionAudioContext });
+  const existing = a.P.createProject(a.banks);
+  new a.P.ProjectStore(a.storage).save(existing);
+  const existingRaw = a.storage.getItem(a.P.PREFIX + existing.id);
+  await startGuidedRemix(a);
+  const edited = await compareGuidedHats(a), expected = plain(edited.getProject());
+  a.$('mission-reflection').value = 'exploring';
+  await a.$('mission-reflection').fire('change');
+  const write = a.storage.setItem;
+  a.storage.setItem = () => { throw new Error('Quota exceeded'); };
+  await a.$('mission-action').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Step 5 of 5/);
+  assert.match(a.$('mission-notice').textContent, /Could not save/);
+  assert.equal(a.$('mission-notice').hidden, false);
+  assert.equal(a.$('mission-reflection').value, 'exploring');
+  assert.equal(a.$('mission-reflection').disabled, false);
+  assert.equal(new a.P.ProjectStore(a.storage).list().projects.length, 1);
+  edited.events.onVisual({ sceneId: 'B', tick: 16 });
+  assert.match(a.$('mission-notice').textContent, /Could not save/, 'a playback repaint must not hide the recovery instruction');
+  assert.equal(a.navigated, null);
+  a.storage.setItem = write;
+  await a.$('mission-action').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Mission complete/);
+  assert.doesNotMatch(a.$('mission-notice').textContent, /Could not save/);
+  const kept = new a.P.ProjectStore(a.storage).list().projects.filter(p => p.id !== existing.id);
+  assert.equal(kept.length, 1);
+  assert.deepEqual(plain(kept[0].scenes.slice(0, 2)), expected.scenes.slice(0, 2));
+  assert.equal(a.storage.getItem(a.P.PREFIX + existing.id), existingRaw);
+  assert.equal(a.$('total-stars').textContent, '3 / 18');
+});
+
+test('guided edits, undo and reset revoke old listening and completion without changing the challenge beat', async () => {
+  const a = app({ AudioContext: MissionAudioContext });
+  await startGuidedRemix(a);
+  await compareGuidedHats(a);
+  a.$('mission-reflection').value = 'space';
+  await a.$('mission-reflection').fire('change');
+  await a.$('mission-action').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Mission complete/);
+  await a.pad(2, 3).fire('click');
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/);
+  assert.equal(a.$('mission-reflection-label').hidden, true);
+  await a.$('remix-undo').fire('click');
+  assert.equal(a.pad(2, 3).getAttribute('aria-pressed'), 'false');
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/, 'undo does not revive the old listening credit');
+  await a.$('remix-reset').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Step 2 of 5/);
+  assert.equal(a.pad(2, 1).getAttribute('aria-pressed'), 'false');
+  await a.$('mission-action').fire('click');
+  assert.ok(a.$('pattern-grid').children[2].children[1].children.includes(a.document.activeElement));
+  await a.$('back-to-challenge').fire('click');
+  assert.equal(a.$('remix-mission').hidden, true);
+  assert.equal(a.$('total-stars').textContent, '3 / 18');
+  for (const [lane, voice] of a.G.VOICES.entries()) {
+    for (let step = 0; step < 16; step++) assert.equal(a.pad(lane, step).getAttribute('aria-pressed'), String(a.G.CHALLENGES[0].rows[voice.key].includes(step)));
+  }
+});
+
+test('round changes retain guided progress and free remix exits preserve the music', async () => {
+  const a = app({ AudioContext: MissionAudioContext });
+  await startGuidedRemix(a);
+  await compareGuidedHats(a);
+  a.$('mission-reflection').value = 'space';
+  await a.$('mission-reflection').fire('change');
+  await a.$('challenge-list').children[1].children[0].fire('click');
+  assert.equal(a.$('remix-mission').hidden, true);
+  await a.$('challenge-list').children[0].children[0].fire('click');
+  await a.$('start-remix').fire('click');
+  assert.equal(a.$('remix-mission').hidden, false);
+  assert.match(a.$('mission-step').textContent, /^Step 5 of 5/);
+  assert.equal(a.$('mission-reflection').value, 'space');
+  assert.equal(a.pad(2, 1).getAttribute('aria-pressed'), 'true');
+  await a.$('exit-mission').fire('click');
+  assert.equal(a.$('remix-mission').hidden, true);
+  assert.equal(a.$('mission-entry').hidden, false);
+  assert.equal(a.document.activeElement, a.$('start-mission'));
+  assert.equal(a.pad(2, 1).getAttribute('aria-pressed'), 'true');
+  await a.$('remix-acid').fire('click');
+  assert.match(a.$('remix-bass').textContent, /Acid answer 1/);
+  await a.$('start-mission').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Step 1 of 5/);
+  assert.equal(a.pad(2, 1).getAttribute('aria-pressed'), 'true');
+  assert.match(a.$('remix-bass').textContent, /Acid answer 1/);
+  assert.match(a.$('mission-notice').textContent, /Another sound changed/);
+  await a.$('mission-action').fire('click');
+  visualBar(a.transports.at(-1), 'A');
+  assert.match(a.$('mission-step').textContent, /^Step 2 of 5/);
+  await a.$('listen-yours').fire('click');
+  visualBar(a.transports.at(-1), 'B');
+  assert.match(a.$('mission-step').textContent, /^Step 2 of 5/);
+  assert.equal(a.$('mission-reflection-label').hidden, true);
+  await a.$('remix-reset').fire('click');
+  assert.match(a.$('remix-bass').textContent, /Bass is silent/);
+  assert.doesNotMatch(a.$('mission-notice').textContent, /Another sound changed/);
+});
+
+test('guided playback credits the audible full mix, never a solo or queued comparison', async () => {
+  const a = app({ AudioContext: MissionAudioContext });
+  await startGuidedRemix(a);
+  a.$('solo').value = 'ch';
+  await a.$('solo').fire('change');
+  await a.$('listen-target').fire('click');
+  visualBar(a.transports.at(-1), 'A');
+  assert.match(a.$('mission-step').textContent, /^Step 1 of 5/);
+  await a.$('mission-action').fire('click');
+  assert.equal(a.$('solo').value, 'all', 'the guided listen restores the complete groove');
+  visualBar(a.transports.at(-1), 'A');
+  assert.match(a.$('mission-step').textContent, /^Step 2 of 5/);
+  await a.pad(2, 1).fire('click');
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/);
+  await a.$('listen-target').fire('click');
+  const transport = a.transports.at(-1), count = a.transports.length;
+  await a.$('listen-yours').fire('click');
+  assert.equal(transport.pending, 'B');
+  assert.equal(a.transports.length, count);
+  visualBar(transport, 'A');
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/);
+  visualBar(transport, 'B', 0, 14);
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/);
+  visualBar(transport, 'B', 15, 15);
+  assert.match(a.$('mission-step').textContent, /^Step 4 of 5/);
+  assert.equal(a.$('mission-reflection-label').hidden, false);
+});
+
+test('changing guided listening speed requires a new A/B comparison and preserves musical settings', async () => {
+  const a = app({ AudioContext: MissionAudioContext });
+  await startGuidedRemix(a);
+  const prior = await compareGuidedHats(a);
+  a.$('mission-reflection').value = 'space';
+  await a.$('mission-reflection').fire('change');
+  a.$('speed').value = '0.75';
+  await a.$('speed').fire('change');
+  assert.equal(prior.running, false);
+  assert.match(a.$('mission-step').textContent, /^Step 1 of 5/);
+  assert.equal(a.$('mission-reflection').value, '');
+  assert.equal(a.pad(2, 1).getAttribute('aria-pressed'), 'true');
+  await a.$('mission-action').fire('click');
+  const current = a.transports.at(-1);
+  assert.equal(current.getProject().bpm, 81);
+  visualBar(current, 'A');
+  assert.match(a.$('mission-step').textContent, /^Step 3 of 5/);
+  await a.$('mission-action').fire('click');
+  visualBar(current, 'B');
+  a.$('mission-reflection').value = 'movement';
+  await a.$('mission-reflection').fire('change');
+  await a.$('mission-action').fire('click');
+  assert.match(a.$('mission-step').textContent, /^Mission complete/);
+  assert.equal(new a.P.ProjectStore(a.storage).list().projects[0].bpm, 108);
 });

@@ -4,7 +4,7 @@
   const make = (tag, text, props = {}) => Object.assign(document.createElement(tag), { textContent: text, ...props });
   let project = D.starter(banks), defaults = P.copy(project), storage = null, projects = new Map();
   const savedCopies = new Map(), pads = new Map();
-  let selected = 'A', audible = null, requested = null, ctx = null, resumePromise = null, transport = null, audioEpoch = 0;
+  let selected = 'A', audible = null, requested = null, ctx = null, transport = null, audioEpoch = 0;
   let recordEpoch = 0, phase = 'idle', recorder = null, limitTimer = null, elapsedTimer = null, recordStarted = 0;
   let takeUrl = null, takeDownloaded = true, opening = false, disposed = false;
   const activeScene = () => project.scenes.find(s => s.id === (audible || selected));
@@ -54,16 +54,13 @@
     transport?.stop(); stopped(message);
   }
   async function audioReady() {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) throw new Error('Audio is unavailable in this browser. Try a current browser to perform this set.');
-    if (!ctx || ctx.state === 'closed') {
-      ctx = new Context(); ctx.addEventListener?.('statechange', () => { if (ctx.state !== 'running') stopAll('Audio paused. Press a scene pad to resume.'); });
-    }
-    if (ctx.state !== 'running') {
-      if (!resumePromise) resumePromise = ctx.resume().finally(() => { resumePromise = null; });
-      await resumePromise;
-    }
-    if (ctx.state !== 'running') throw new Error('Audio is paused. Tap a scene pad to try again.');
+    await A.ensureAudioContext({
+      get: () => ctx,
+      set: next => { ctx = next; },
+      onPaused: () => stopAll('Audio paused. Press a scene pad to resume.'),
+      unavailableMessage: 'Audio is unavailable in this browser. Try a current browser to perform this set.',
+      pausedMessage: 'Audio is paused. Tap a scene pad to try again.',
+    });
   }
   async function launch(id) {
     if (!P.SCENES.includes(id)) return false;

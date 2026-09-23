@@ -103,7 +103,14 @@ function app({ storage = memory(), file = 'beat-arcade.html', search = '', Audio
     drum(...args) { this.hits.push(args); }
     stop() { this.closed = true; }
   }
-  Object.assign(scope, { window, document, URL, URLSearchParams, DCStudioAudio: { Transport, Engine },
+  // The pages under test open audio through the real shared bootstrap from
+  // studio/audio.js, loaded into this same sandbox; the stub namespace keeps
+  // the fake Transport/Engine but uses the real ensureAudioContext. Like a
+  // browser, the sandbox exposes the constructor on the global object as well
+  // as on window.
+  runInNewContext(readGuide('studio/audio.js'), scope);
+  Object.assign(scope.DCStudioAudio, { Transport, Engine });
+  Object.assign(scope, { window, document, URL, URLSearchParams, AudioContext,
     setTimeout: fn => { timers.set(++timerId, fn); return timerId; }, clearTimeout: id => timers.delete(id) });
   runInNewContext(readGuide(file === 'beat-arcade.html' ? 'arcade/app.js' : 'studio/app.js'), scope);
   const $ = id => document.getElementById(id);

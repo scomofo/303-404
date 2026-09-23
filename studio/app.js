@@ -193,12 +193,13 @@
     const request = ++audioRequest; starting = true; error('');
     $('play-scene').disabled = true; $('play-arrangement').disabled = true;
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) throw new Error('Web Audio is unavailable in this browser. You can still edit and download a project.');
-      if (!ctx || ctx.state === 'closed') ctx = new AudioContext();
-      if (ctx.state !== 'running') await ctx.resume();
+      ctx = await A.ensureAudioContext({
+        get: () => ctx,
+        set: next => { ctx = next; },
+        unavailableMessage: 'Web Audio is unavailable in this browser. You can still edit and download a project.',
+        pausedMessage: 'Audio could not start. Check browser audio permissions and try Play again.',
+      });
       if (request !== audioRequest) return false;
-      if (ctx.state !== 'running') throw new Error('Audio could not start. Check browser audio permissions and try Play again.');
       transport = new A.Transport(ctx, () => project, {
         onVisual: event => { lastEvent = event; renderPlayhead(event); },
         onStop: stopped, onError: err => error(err.message),

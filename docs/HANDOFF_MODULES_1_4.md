@@ -143,6 +143,8 @@ Exactly six chart entries currently carry `needsAccentSlideReview: true`:
 
 These flags are transparent provenance warnings. Do not remove, hide, or set them to false without revalidating the original accent and slide rows and updating the corresponding tests.
 
+*Status 2026-09-23:* re-checked during the `scout/quick-wins` pass. The source comments in `Behringer Setup Guide.dc.html` confirm these six accent/slide arrays were merged from scanned "ML-303 Pattern Chart" worksheets whose lower ●/○/— row is now understood as note/tie/rest — and the scans are not stored anywhere in this repo. The correct rows cannot be determined from any in-repo source, so per the Safe-Change Rules (preserve source omissions instead of inventing Song or Drum Bank facts) the flags stay as-is. To resolve: obtain the original ML-303 Pattern Chart worksheet images, revalidate each card's accent/slide rows against them, clear the flags, and update the `test/songbank.test.mjs` / `test/studio.test.mjs` expectations.
+
 ### Drum Bank: `DRUM_CARDS`
 
 Current card count: **11**.

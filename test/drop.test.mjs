@@ -45,7 +45,14 @@ function app({ storage = memory(), search = '', AudioContext = RunningContext, f
     static createObjectURL(blob) { const url = `blob:take-${urls.length}`; urls.push({ url, blob }); return url; }
     static revokeObjectURL(url) { revoked.push(url); }
   }
-  Object.assign(scope, { window, document, URL: TestURL, URLSearchParams, DCStudioAudio: { Transport, TakeRecorder },
+  // The page under test opens audio through the real shared bootstrap from
+  // studio/audio.js, loaded into this same sandbox; the stub namespace keeps
+  // the fake Transport/TakeRecorder but uses the real ensureAudioContext.
+  // Like a browser, the sandbox exposes the constructor on the global object
+  // as well as on window.
+  runInNewContext(readGuide('studio/audio.js'), scope);
+  Object.assign(scope.DCStudioAudio, { Transport, TakeRecorder });
+  Object.assign(scope, { window, document, URL: TestURL, URLSearchParams, AudioContext,
     setTimeout: (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; }, clearTimeout: id => timers.delete(id) });
   runInNewContext(readGuide('drop/app.js'), scope);
   const $ = id => document.getElementById(id), pad = id => $('scene-pads').children[P.SCENES.indexOf(id)];

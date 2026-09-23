@@ -11,7 +11,7 @@
   const remixes = new Map();
   let remixing = false, requestedSide = null, audibleSide = null;
   let index = 0, hint = false, storage = null, storageProblem = '';
-  let ctx = null, resumePromise = null, transport = null, preview = null, previewTimer = null;
+  let ctx = null, transport = null, preview = null, previewTimer = null;
   let audioToken = 0, playing = null, playbackProject = null, opening = false;
   const challenge = () => G.CHALLENGES[index];
   const remix = () => remixes.get(challenge().id);
@@ -207,18 +207,13 @@
     preview?.stop(); preview = null; stopped(message);
   }
   async function ensureAudio() {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) throw new Error('Audio is unavailable in this browser. Try a current browser. You can still edit pads and save your music.');
-    if (!ctx || ctx.state === 'closed') {
-      ctx = new AudioContext();
-      ctx.addEventListener?.('statechange', () => { if (ctx.state !== 'running') stop('Audio paused. Press a listen button to resume.'); });
-    }
-    if (ctx.state !== 'running') {
-      if (!resumePromise) resumePromise = ctx.resume().finally(() => { resumePromise = null; });
-      await resumePromise;
-    }
-    if (ctx.state !== 'running') throw new Error('Audio is paused. Press a listen button to try again.');
-    return ctx;
+    return A.ensureAudioContext({
+      get: () => ctx,
+      set: next => { ctx = next; },
+      onPaused: () => stop('Audio paused. Press a listen button to resume.'),
+      unavailableMessage: 'Audio is unavailable in this browser. Try a current browser. You can still edit pads and save your music.',
+      pausedMessage: 'Audio is paused. Press a listen button to try again.',
+    });
   }
   async function play(mode) {
     const side = mode === 'target' ? 'A' : 'B';

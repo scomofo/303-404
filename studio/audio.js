@@ -261,5 +261,33 @@
     }
     disconnect() { try { this.output.disconnect(this.destination); } catch {} this.destination?.stream.getTracks().forEach(track => track.stop()); }
   }
-  globalThis.DCStudioAudio = { TAIL, Engine, Transport, encodeWav, renderArrangement, TakeRecorder };
+  /* Shared AudioContext bootstrap for the studio, arcade, and drop pages.
+     Returns a running context: creates one when none is stored (or the stored
+     one was closed), resumes a suspended one, and throws with the caller's
+     messages when audio is unavailable or cannot start. `get`/`set` bridge the
+     caller's stored context; `onPaused` is wired to statechange on each newly
+     created context so the page can stop itself when the browser pauses audio.
+     Concurrent resumes share one promise, matching the previous per-page
+     resumePromise coalescing. */
+  let sharedResume = null;
+  async function ensureAudioContext({ get, set, onPaused, unavailableMessage, pausedMessage }) {
+    const Ctor = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (!Ctor) throw new Error(unavailableMessage || 'Audio is unavailable in this browser.');
+    let ctx = get();
+    if (!ctx || ctx.state === 'closed') {
+      ctx = new Ctor();
+      if (onPaused) {
+        const opened = ctx;
+        opened.addEventListener?.('statechange', () => { if (opened.state !== 'running') onPaused(); });
+      }
+      set(ctx);
+    }
+    if (ctx.state !== 'running') {
+      if (!sharedResume) sharedResume = ctx.resume().finally(() => { sharedResume = null; });
+      await sharedResume;
+    }
+    if (ctx.state !== 'running') throw new Error(pausedMessage || 'Audio could not start.');
+    return ctx;
+  }
+  globalThis.DCStudioAudio = { TAIL, Engine, Transport, encodeWav, renderArrangement, TakeRecorder, ensureAudioContext };
 })();

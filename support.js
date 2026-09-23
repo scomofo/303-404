@@ -1,4 +1,6 @@
-// GENERATED from dc-runtime/src/*.ts — do not edit. Rebuild with `cd dc-runtime && bun run build`.
+// GENERATED from dc-runtime/src/*.ts — do not edit. Rebuild with `cd dc-runtime && bun run build`
+// (bun is required). dc-runtime is an external repo; its location is not recorded in this repo,
+// so confirm which checkout the build comes from before regenerating.
 // EXCEPTION: the DCCourseLogic block between the __DC_COURSE_SHARED_START__/__END__ markers
 // below is hand-maintained in this repo (the guides and test/harness.mjs both load it).
 // A rebuild from dc-runtime would drop it — re-insert the marked block after regenerating.

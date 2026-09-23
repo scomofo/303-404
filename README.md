@@ -488,3 +488,5 @@ package.json                    test script and Node engine requirement
 ```
 
 The six guides keep independent component state but share the runtime and design system. Prefer the design-system tokens in `_ds/.../styles.css` over hard-coded visual values. Maintainer notes live in `docs/HANDOFF_MODULES_1_4.md`, `docs/HANDOFF_SAMPLE_CIRCUIT.md`, and `docs/HANDOFF_DJ_404.md`.
+
+**`support.js` provenance:** the file is generated from the external `dc-runtime` TypeScript repo (rebuild with `cd dc-runtime && bun run build`; the repo's location is not recorded here, so confirm the source checkout before regenerating). The `DCCourseLogic` block between the `__DC_COURSE_SHARED_START__`/`__END__` markers is hand-maintained in this repo and must be re-inserted after any rebuild — a blind regeneration drops it.

@@ -1,5 +1,5 @@
 (() => {
-  const P = globalThis.DCStudioProject, A = globalThis.DCStudioAudio, D = globalThis.DCDropProject;
+  const P = globalThis.DCStudioProject, A = globalThis.DCStudioAudio, D = globalThis.DCDropProject, M = globalThis.DCDropMission;
   const banks = globalThis.DCStudioBanks, $ = id => document.getElementById(id);
   const make = (tag, text, props = {}) => Object.assign(document.createElement(tag), { textContent: text, ...props });
   let project = D.starter(banks), defaults = P.copy(project), storage = null, projects = new Map();
@@ -7,6 +7,7 @@
   let selected = 'A', audible = null, requested = null, ctx = null, transport = null, audioEpoch = 0;
   let recordEpoch = 0, phase = 'idle', recorder = null, limitTimer = null, elapsedTimer = null, recordStarted = 0;
   let takeUrl = null, takeDownloaded = true, opening = false, disposed = false;
+  const challenge = new M.Session();
   const activeScene = () => project.scenes.find(s => s.id === (audible || selected));
   const status = message => { $('launch-status').textContent = message; };
   const error = message => { $('error').textContent = message; $('error').hidden = !message; };
@@ -29,6 +30,35 @@
     $('filter').value = scene.mix.cutoff; $('filter-value').textContent = `${scene.mix.cutoff} Hz`;
     $('mix-note').textContent = scene.bass.notes.some(Boolean) ? 'Controls affect the scene you hear. A queued scene keeps its own settings.' : 'This scene has no bass notes. The bass filter and bass mute will be silent; add bass in Studio or Remix Mode.';
   }
+  function renderChallenge() {
+    const view = challenge.view(project);
+    $('challenge-start').hidden = view.active;
+    $('challenge-run').hidden = !view.active;
+    $('challenge-steps').replaceChildren(...M.SCENES.map((id, index) => {
+      const scene = project.scenes.find(item => item.id === id);
+      const item = make('li', '', { className: 'guided-set-step' });
+      const current = view.active && !view.complete && index === view.completed;
+      item.dataset.done = String(index < view.completed);
+      if (current) item.setAttribute('aria-current', 'step');
+      item.append(
+        make('strong', scene?.name || 'Scene ' + (index + 1)),
+        make('span', index < view.completed ? 'Bar played' : current ? 'Play one full bar' : 'Up next'),
+      );
+      return item;
+    }));
+    const playing = view.active && transport?.running && audible === view.sceneId;
+    const queued = view.active && requested === view.sceneId && audible !== view.sceneId;
+    $('challenge-status').textContent = view.complete
+      ? 'Full four-scene arc played. Record a take if you want to keep this performance.'
+      : playing
+        ? 'Step ' + (view.completed + 1) + ' of ' + view.total + ' · ' + view.sceneName + ' is playing. Let one full bar finish.'
+        : queued
+          ? 'Step ' + (view.completed + 1) + ' of ' + view.total + ' · ' + view.sceneName + ' is queued. Let one full bar play.'
+          : 'Step ' + (view.completed + 1) + ' of ' + view.total + ' · Launch ' + view.sceneName + ' and let one full bar play.';
+    $('challenge-action').hidden = view.complete;
+    $('challenge-action').disabled = view.complete || playing || queued;
+    $('challenge-action').textContent = playing ? 'Playing ' + view.sceneName : queued ? 'Queued ' + view.sceneName : 'Launch ' + view.sceneName;
+  }
   function renderRecord() {
     $('record').textContent = ({ idle: 'Record a take', preparing: 'Opening recorder…', recording: 'Finish take', finishing: 'Finishing take…' })[phase];
     $('record').disabled = phase === 'preparing' || phase === 'finishing';
@@ -37,15 +67,18 @@
     if (!projects.size) $('load-project').disabled = true;
   }
   function visual(event) {
+    const previousCompleted = challenge.completed, previousAudible = audible;
     if (audible !== event.sceneId) {
       audible = event.sceneId; selected = audible; renderPads(); renderMix();
       const scene = activeScene(); status(`Playing ${scene.name}.${requested && requested !== audible ? ' Your next scene is queued.' : ''}`);
     }
     $('position').textContent = `Bar ${event.bar + 1} · Beat ${Math.floor(event.tick % 16 / 4) + 1}`;
+    challenge.observe(event);
+    if (challenge.active && (challenge.completed !== previousCompleted || audible !== previousAudible)) renderChallenge();
   }
   function stopped(message = '') {
-    audible = null; requested = null; $('stop').disabled = true; $('position').textContent = 'Stopped';
-    renderPads(); renderMix(); finishTake();
+    audible = null; requested = null; challenge.stop(); $('stop').disabled = true; $('position').textContent = 'Stopped';
+    renderPads(); renderMix(); finishTake(); renderChallenge();
     if (message) status(message);
   }
   function stopAll(message = '') {
@@ -65,8 +98,8 @@
   async function launch(id) {
     if (!P.SCENES.includes(id)) return false;
     $('take-preview').pause(); error('');
-    if (transport?.running) { requested = id; transport.queueScene(id); renderPads(); status(`${project.scenes.find(s => s.id === id).name} queued for the next bar.`); return true; }
-    const request = ++audioEpoch; selected = id; requested = id; renderPads(); renderMix();
+    if (transport?.running) { requested = id; transport.queueScene(id); renderPads(); renderChallenge(); status(`${project.scenes.find(s => s.id === id).name} queued for the next bar.`); return true; }
+    const request = ++audioEpoch; selected = id; requested = id; renderPads(); renderMix(); renderChallenge();
     $('stop').disabled = false; status('Opening audio…');
     try {
       await audioReady(); if (request !== audioEpoch || document.hidden) return false;
@@ -130,11 +163,11 @@
     renderRecord();
   }
   function useProject(source, build = false) {
-    stopAll(); project = build ? D.buildSet(source) : D.copyProject(source); defaults = P.copy(project); selected = 'A';
+    stopAll(); challenge.exit(); project = build ? D.buildSet(source) : D.copyProject(source); defaults = P.copy(project); selected = 'A';
     $('set-name').textContent = project.name; $('tempo').value = project.bpm;
     $('set-source').textContent = build ? `Four performance scenes built from scene B of “${source.name}”.` : `Performing a copy of “${source.name}”.`;
     $('save-status').textContent = 'Keep scene settings to save a new project. Live moves are captured in your audio take.';
-    status('Tap a scene to start. While playing, scene changes land on the next bar.'); renderPads(); renderMix();
+    status('Tap a scene to start. While playing, scene changes land on the next bar.'); renderPads(); renderMix(); renderChallenge();
   }
   function saveCopy() {
     if (!storage) throw new Error('Storage unavailable');
@@ -153,6 +186,12 @@
   }
   $('play').addEventListener('click', () => launch(selected)); $('stop').addEventListener('click', () => stopAll('Stopped.'));
   $('record').addEventListener('click', record);
+  $('challenge-start').addEventListener('click', () => { challenge.start(); renderChallenge(); $('challenge-action').focus(); });
+  $('challenge-action').addEventListener('click', () => {
+    const view = challenge.view(project);
+    if (view.active && !view.complete) launch(view.sceneId);
+  });
+  $('challenge-exit').addEventListener('click', () => { challenge.exit(); renderChallenge(); $('challenge-start').focus(); });
   for (const [part, key] of [['drums', 'muteDrums'], ['bass', 'muteBass']]) $(`mute-${part}`).addEventListener('click', () => { activeScene().mix[key] = !activeScene().mix[key]; renderMix(); $('save-status').textContent = 'Scene settings changed. Keep them to save a new Studio project.'; });
   $('filter').addEventListener('input', event => {
     const value = Number(event.target.value); if (!Number.isFinite(value) || value < 100 || value > 6000) return;

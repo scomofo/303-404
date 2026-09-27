@@ -14,6 +14,7 @@
   <script defer src="studio/project.js"></script>
   <script defer src="studio/audio.js"></script>
   <script defer src="drop/project.js"></script>
+  <script defer src="drop/mission.js"></script>
   <script defer src="drop/app.js"></script>
 </head>
 <body class="practice-home drop-page">
@@ -26,6 +27,15 @@
       <div class="drop-title"><div><p class="console-kicker">On the decks</p><h2 id="set-name">First drop</h2><p id="set-source" class="console-status">A drum-and-bass starter, ready to perform.</p></div><span id="position" class="drop-position" aria-live="off">Ready</span></div>
       <div id="scene-pads" class="scene-pads" role="group" aria-label="Launch a scene"></div>
       <p id="launch-status" class="console-status" role="status">Tap Intro to start. While playing, scene changes land on the next bar.</p>
+      <section class="guided-set" aria-labelledby="challenge-title">
+        <div class="guided-set-heading"><p class="console-kicker">Guided performance · no score</p><h3 id="challenge-title">Make the return land</h3><p>Play the scenes in order for one full bar each. Follow the transport; record a take if you want to keep your performance.</p></div>
+        <button id="challenge-start" class="home-action" type="button">Start guided set</button>
+        <div id="challenge-run" class="guided-set-run" hidden>
+          <ol id="challenge-steps" class="guided-set-steps" aria-label="Scene performance steps"></ol>
+          <p id="challenge-status" class="guided-set-status" role="status" aria-live="polite"></p>
+          <div class="guided-set-actions"><button id="challenge-action" class="arcade-primary" type="button">Launch Intro</button><button id="challenge-exit" type="button">Free play</button></div>
+        </div>
+      </section>
       <div class="drop-transport"><button id="play" type="button" class="arcade-primary">Play</button><button id="stop" type="button" disabled>Stop</button><label>Tempo<input id="tempo" type="number" min="40" max="240" step="1" value="128"> BPM</label></div>
       <div class="drop-mix"><div><p id="mix-heading" class="console-kicker">Controls for A · Intro</p><div class="mute-controls"><button id="mute-drums" type="button" aria-pressed="false">Mute drums</button><button id="mute-bass" type="button" aria-pressed="false">Mute bass</button><button id="reset-controls" type="button">Reset this scene</button></div></div><label class="filter-control">Bass filter<input id="filter" type="range" min="100" max="6000" step="10" value="600"><span id="filter-value">600 Hz</span></label></div>
       <p id="mix-note" class="console-status">Controls affect the scene you hear. A queued scene keeps its own settings.</p>

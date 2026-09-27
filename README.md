@@ -103,7 +103,7 @@ Open **Drop Lab** from Home for a ready-to-play intro, groove, breakdown and
 return. Tap the four large scene pads or keys **1–4** to perform; changes queue
 on the next bar, with separate indicators for the scene you hear and the one
 coming next. Mute drums or bass, sweep the bass filter, or reset the current
-scene's controls. Optional prompts suggest a few live moves to try.
+scene's controls. Optional prompts suggest a few live moves to try. **Make the return land** is a guided four-scene challenge: play each scene in order for one full bar. It follows playback events, adds no score or saved progress, and uses the current scene names. Record a take afterward if you want to keep the performance; see `docs/HANDOFF_DROP_LAB_GUIDED_SET.md` for the progression contract and browser acceptance steps.
 
 - **Build a Drop Lab set** in Arcade builds four contrasting scenes from your
   current beat or remix B. **Perform in Drop Lab** in Studio and **Load scenes**

@@ -9,8 +9,8 @@ const plain = x => JSON.parse(JSON.stringify(x));
 const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
 function model() {
   const scope = {};
-  for (const file of ['studio/banks.js', 'studio/project.js', 'drop/project.js']) runInNewContext(readGuide(file), scope);
-  return { scope, P: scope.DCStudioProject, D: scope.DCDropProject, banks: scope.DCStudioBanks };
+  for (const file of ['studio/banks.js', 'studio/project.js', 'drop/project.js', 'drop/mission.js']) runInNewContext(readGuide(file), scope);
+  return { scope, P: scope.DCStudioProject, D: scope.DCDropProject, M: scope.DCDropMission, banks: scope.DCStudioBanks };
 }
 function memory() {
   const data = new Map();
@@ -52,12 +52,17 @@ function app({ storage = memory(), search = '', AudioContext = RunningContext, f
   // as well as on window.
   runInNewContext(readGuide('studio/audio.js'), scope);
   Object.assign(scope.DCStudioAudio, { Transport, TakeRecorder });
+  runInNewContext(readGuide('drop/mission.js'), scope);
   Object.assign(scope, { window, document, URL: TestURL, URLSearchParams, AudioContext,
     setTimeout: (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; }, clearTimeout: id => timers.delete(id) });
   runInNewContext(readGuide('drop/app.js'), scope);
   const $ = id => document.getElementById(id), pad = id => $('scene-pads').children[P.SCENES.indexOf(id)];
   const runTimer = delay => { const item = [...timers].find(([, t]) => t.delay === delay); assert.ok(item, `Timer ${delay}`); timers.delete(item[0]); item[1].fn(); };
-  return { P, D, banks, $, pad, document, window, storage, transports, recorders, timers, runTimer, urls, revoked, get navigated() { return navigated; } };
+  return { P, D, M: scope.DCDropMission, banks, $, pad, document, window, storage, transports, recorders, timers, runTimer, urls, revoked, get navigated() { return navigated; } };
+}
+
+function fullBar(transport, sceneId) {
+  for (let tick = 0; tick < 16; tick++) transport.visual(sceneId, tick);
 }
 
 test('Drop sets derive four independent scenes while retaining source patterns, cycles and provenance', () => {
@@ -103,6 +108,55 @@ test('scene pads follow sounding events, the final queued request wins, and cont
   t.visual('D'); assert.equal(a.pad('D').dataset.playing, true); assert.match(a.$('mix-heading').textContent, /D/);
   await a.$('stop').fire('click'); assert.equal(t.running, false); assert.equal(t.pending, null);
   assert.equal(a.pad('D').dataset.queued, false);
+});
+
+
+test('guided performance advances only after complete bars of each scene in order', async () => {
+  const a = app();
+  await a.$('challenge-start').fire('click');
+  assert.equal(a.$('challenge-run').hidden, false);
+  assert.match(a.$('challenge-status').textContent, /Step 1 of 4/);
+  await a.$('challenge-action').fire('click');
+  let transport = a.transports.at(-1);
+  for (let tick = 0; tick < 8; tick++) transport.visual('A', tick);
+  assert.match(a.$('challenge-status').textContent, /Step 1 of 4/, 'a partial bar earns no progress');
+  await a.$('stop').fire('click');
+  await a.$('challenge-action').fire('click');
+  transport = a.transports.at(-1);
+  fullBar(transport, 'A');
+  assert.match(a.$('challenge-status').textContent, /Step 2 of 4/);
+
+  await a.pad('D').fire('click');
+  fullBar(transport, 'D');
+  assert.match(a.$('challenge-status').textContent, /Step 2 of 4/, 'an out-of-order scene earns no progress');
+
+  for (const [scene, step] of [['B', 3], ['C', 4], ['D', 5]]) {
+    await a.$('challenge-action').fire('click');
+    transport = a.transports.at(-1);
+    fullBar(transport, scene);
+    if (scene === 'D') assert.match(a.$('challenge-status').textContent, /Full four-scene arc played/);
+    else assert.match(a.$('challenge-status').textContent, new RegExp('Step ' + step + ' of 4'));
+  }
+  assert.equal(a.$('challenge-action').hidden, true);
+  assert.equal(a.$('challenge-steps').children.length, 4);
+  assert.equal(a.$('challenge-steps').children[3].dataset.done, 'true');
+  assert.equal(a.storage.length, 0, 'practice does not create scores or saved projects');
+  await a.$('challenge-exit').fire('click');
+  assert.equal(a.$('challenge-run').hidden, true);
+  assert.equal(a.$('challenge-start').hidden, false);
+});
+
+test('guided performance uses loaded scene names and resets when the set changes', async () => {
+  const { P, banks } = model(), storage = memory(), source = P.createProject(banks);
+  source.scenes[0].name = 'Opening';
+  new P.ProjectStore(storage).save(source);
+  const a = app({ storage, search: '?project=' + encodeURIComponent(source.id) });
+  await a.$('challenge-start').fire('click');
+  assert.match(a.$('challenge-status').textContent, /Opening/);
+  assert.equal(a.$('challenge-steps').children[0].children[0].textContent, 'Opening');
+  await a.$('starter').fire('click');
+  assert.equal(a.$('challenge-run').hidden, true);
+  assert.equal(a.$('challenge-start').hidden, false);
 });
 
 test('recording captures the live output, stops at 60 seconds, and stays busy until its take settles', async () => {

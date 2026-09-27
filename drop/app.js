@@ -7,7 +7,14 @@
   let selected = 'A', audible = null, requested = null, ctx = null, transport = null, audioEpoch = 0;
   let recordEpoch = 0, phase = 'idle', recorder = null, limitTimer = null, elapsedTimer = null, recordStarted = 0;
   let takeUrl = null, takeDownloaded = true, opening = false, disposed = false;
-  const challenge = new M.Session();
+  // The guided set is optional: if drop/mission.js failed to load, the page still
+  // works and the guide section stays hidden instead of throwing at startup.
+  const challenge = M ? new M.Session() : {
+    active: false, completed: 0, partial: null, resetCause: null,
+    start() {}, exit() {}, stop() { return false; }, observe() { return false; },
+    view: () => ({ active: false, complete: false, completed: 0, total: 0, sceneId: null, sceneName: '' }),
+  };
+  if (!M) $('guided-set').hidden = true;
   const activeScene = () => project.scenes.find(s => s.id === (audible || selected));
   const status = message => { $('launch-status').textContent = message; };
   const error = message => { $('error').textContent = message; $('error').hidden = !message; };
@@ -34,7 +41,7 @@
     const view = challenge.view(project);
     $('challenge-start').hidden = view.active;
     $('challenge-run').hidden = !view.active;
-    $('challenge-steps').replaceChildren(...M.SCENES.map((id, index) => {
+    $('challenge-steps').replaceChildren(...(M ? M.SCENES : []).map((id, index) => {
       const scene = project.scenes.find(item => item.id === id);
       const item = make('li', '', { className: 'guided-set-step' });
       const current = view.active && !view.complete && index === view.completed;
@@ -68,13 +75,19 @@
   }
   function visual(event) {
     const previousCompleted = challenge.completed, previousAudible = audible;
+    const hadPartial = !!challenge.partial;
     if (audible !== event.sceneId) {
       audible = event.sceneId; selected = audible; renderPads(); renderMix();
       const scene = activeScene(); status(`Playing ${scene.name}.${requested && requested !== audible ? ' Your next scene is queued.' : ''}`);
     }
     $('position').textContent = `Bar ${event.bar + 1} · Beat ${Math.floor(event.tick % 16 / 4) + 1}`;
     challenge.observe(event);
-    if (challenge.active && (challenge.completed !== previousCompleted || audible !== previousAudible)) renderChallenge();
+    // A dropped visual tick (throttled tab, hiccup) clears the partial bar just
+    // like a wrong scene does; say so instead of silently restarting the bar.
+    const missedTick = challenge.active && hadPartial && !challenge.partial
+      && challenge.completed === previousCompleted && challenge.resetCause === 'missed-tick';
+    if (challenge.active && (challenge.completed !== previousCompleted || audible !== previousAudible || missedTick)) renderChallenge();
+    if (missedTick) $('challenge-status').textContent = 'A tick was missed, so this bar restarted. Keep playing one clean bar to advance the step.';
   }
   function stopped(message = '') {
     audible = null; requested = null; challenge.stop(); $('stop').disabled = true; $('position').textContent = 'Stopped';

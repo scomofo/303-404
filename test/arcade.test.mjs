@@ -6,9 +6,11 @@ import { readGuide } from './harness.mjs';
 import { Element, dom } from './dom-fixture.mjs';
 
 const plain = value => JSON.parse(JSON.stringify(value));
-function model() {
+function model({ noMission = false } = {}) {
   const scope = {};
-  for (const file of ['studio/banks.js', 'studio/project.js', 'arcade/game.js', 'arcade/remix.js', 'arcade/mission.js']) runInNewContext(readGuide(file), scope);
+  const files = ['studio/banks.js', 'studio/project.js', 'arcade/game.js', 'arcade/remix.js'];
+  if (!noMission) files.push('arcade/mission.js');
+  for (const file of files) runInNewContext(readGuide(file), scope);
   return { scope, G: scope.DCBeatArcade, P: scope.DCStudioProject, R: scope.DCArcadeRemix, banks: scope.DCStudioBanks };
 }
 function memory() {
@@ -85,8 +87,8 @@ test('star awards cannot decrease, combine partial lanes across attempts, or ove
 
 // This DOM double exercises application events against the real HTML shells.
 // It does not measure layout, device latency, browser DSP, or sound quality.
-function app({ storage = memory(), file = 'beat-arcade.html', search = '', AudioContext } = {}) {
-  const { scope, G, P, banks } = model(), document = dom(readGuide(file));
+function app({ storage = memory(), file = 'beat-arcade.html', search = '', AudioContext, noMission = false } = {}) {
+  const { scope, G, P, banks } = model({ noMission }), document = dom(readGuide(file));
   const timers = new Map(), transports = [], previews = [];
   let timerId = 0, navigated = null;
   const window = { localStorage: storage, AudioContext, location: { search, href: `https://example.test/${file}${search}`, assign: url => { navigated = url; } },
@@ -633,4 +635,17 @@ test('changing guided listening speed requires a new A/B comparison and preserve
   await a.$('mission-action').fire('click');
   assert.match(a.$('mission-step').textContent, /^Mission complete/);
   assert.equal(new a.P.ProjectStore(a.storage).list().projects[0].bpm, 108);
+});
+
+test('remix mode works with the mission module missing: free-form, mission UI hidden', async () => {
+  const a = app({ noMission: true });
+  await a.pad(0, 0).fire('click');
+  await a.$('start-remix').fire('click');
+  assert.equal(a.$('remix-tools').hidden, false, 'remix tools still open without the mission module');
+  assert.equal(a.$('mission-entry').hidden, true, 'the mission entry stays hidden');
+  assert.match(a.$('remix-feedback').textContent, /free-form/);
+  await a.$('remix-fill').fire('click');
+  assert.equal(a.pad(1, 15).getAttribute('aria-pressed'), 'true', 'remix edits still work');
+  await a.$('back-to-challenge').fire('click');
+  assert.equal(a.$('remix-tools').hidden, true);
 });

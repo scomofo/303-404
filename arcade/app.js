@@ -3,6 +3,12 @@
   const A = globalThis.DCStudioAudio, banks = globalThis.DCStudioBanks;
   const R = globalThis.DCArcadeRemix;
   const M = globalThis.DCArcadeMission;
+  // The guided mission is optional: if arcade/mission.js failed to load,
+  // remixing still works free-form and the mission UI stays hidden.
+  const NullMission = {
+    view: () => ({ active: false, complete: false }),
+    start() {}, exit() {}, changed() {}, kept() {}, reflect() {}, stop() {}, observe() {},
+  };
   const $ = id => document.getElementById(id);
   const make = (tag, text, props = {}) => Object.assign(document.createElement(tag), { textContent: text, ...props });
   const drafts = new Map(G.CHALLENGES.map(c => [c.id, G.emptyRows()]));
@@ -46,7 +52,7 @@
   function renderMission() {
     const view = remixing ? mission().view(remix().session.project) : null;
     const active = !!view?.active;
-    $('mission-entry').hidden = !remixing || active;
+    $('mission-entry').hidden = !M || !remixing || active;
     $('remix-mission').hidden = !active;
     for (const lane of $('pattern-grid').children) lane.dataset.mission = active && view.step === 2 && lane.dataset.voice === 'ch';
     for (const pad of pads.get('ch') || []) pad.dataset.suggestion = active && view.step === 2 && Number(pad.dataset.step) === view.hintStep;
@@ -108,12 +114,13 @@
     if (enabled && !remix()) {
       if (!G.VOICES.some(v => drafts.get(challenge().id)[v.key].length)) return;
       const session = new R.Session(banks, challenge(), drafts.get(challenge().id));
-      remixes.set(challenge().id, { session, mission: new M.Session(session.project), missionError: '', saved: new Map() });
+      remixes.set(challenge().id, { session, mission: M ? new M.Session(session.project) : NullMission, missionError: '', saved: new Map() });
     }
     stop(); remixing = enabled; hint = false; audioError('');
     $('handoff-status').textContent = '';
     $('audio-status').textContent = remixing ? 'Compare your original and remix. Try a twist below, or edit the pads.' : 'Your beat challenge is just as you left it.';
     $('remix-feedback').textContent = 'Try one idea, then compare the two versions.';
+    if (enabled && !M) $('remix-feedback').textContent = 'The guided mission could not load, so remixing is free-form. Everything else works as usual.';
     $('remix-save-status').textContent = 'Keep a version to save it as a new Studio project.';
     renderMode(); renderPads(); renderResult(); $('challenge-title').focus();
   }

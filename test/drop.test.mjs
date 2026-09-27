@@ -7,9 +7,11 @@ import { Element, dom } from './dom-fixture.mjs';
 
 const plain = x => JSON.parse(JSON.stringify(x));
 const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
-function model() {
+function model({ noMission = false } = {}) {
   const scope = {};
-  for (const file of ['studio/banks.js', 'studio/project.js', 'drop/project.js', 'drop/mission.js']) runInNewContext(readGuide(file), scope);
+  const files = ['studio/banks.js', 'studio/project.js', 'drop/project.js'];
+  if (!noMission) files.push('drop/mission.js');
+  for (const file of files) runInNewContext(readGuide(file), scope);
   return { scope, P: scope.DCStudioProject, D: scope.DCDropProject, M: scope.DCDropMission, banks: scope.DCStudioBanks };
 }
 function memory() {
@@ -18,8 +20,8 @@ function memory() {
     getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, String(value)), removeItem: key => data.delete(key) };
 }
 class RunningContext { constructor() { this.state = 'running'; this.currentTime = 0; } }
-function app({ storage = memory(), search = '', AudioContext = RunningContext, failRecorder = false } = {}) {
-  const { scope, P, D, banks } = model(), document = dom(readGuide('drop-lab.html'));
+function app({ storage = memory(), search = '', AudioContext = RunningContext, failRecorder = false, noMission = false } = {}) {
+  const { scope, P, D, banks } = model({ noMission }), document = dom(readGuide('drop-lab.html'));
   const transports = [], recorders = [], timers = new Map(), revoked = [], urls = [];
   let timerId = 0, navigated = null;
   const window = { localStorage: storage, AudioContext, location: { search, href: `https://example.test/drop-lab.html${search}`, assign: url => { navigated = url; } },
@@ -52,7 +54,7 @@ function app({ storage = memory(), search = '', AudioContext = RunningContext, f
   // as well as on window.
   runInNewContext(readGuide('studio/audio.js'), scope);
   Object.assign(scope.DCStudioAudio, { Transport, TakeRecorder });
-  runInNewContext(readGuide('drop/mission.js'), scope);
+  if (!noMission) runInNewContext(readGuide('drop/mission.js'), scope);
   Object.assign(scope, { window, document, URL: TestURL, URLSearchParams, AudioContext,
     setTimeout: (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; }, clearTimeout: id => timers.delete(id) });
   runInNewContext(readGuide('drop/app.js'), scope);
@@ -251,4 +253,41 @@ test('Drop Lab static assets and links exist with no inline script or new runtim
   }
   assert.doesNotMatch(html, /unsafe-eval|unsafe-inline|support\.js/);
   assert.match(readGuide('index.html'), /href="\.\/drop-lab\.html"/);
+});
+
+test('reset causes distinguish missed ticks from wrong scenes', () => {
+  const { M } = model();
+  const s = new M.Session(); s.start();
+  s.observe({ sceneId: 'A', tick: 0 }); s.observe({ sceneId: 'A', tick: 1 });
+  assert.equal(s.resetCause, null, 'clean progress reports no cause');
+  s.observe({ sceneId: 'A', tick: 3 });
+  assert.equal(s.resetCause, 'missed-tick');
+  s.observe({ sceneId: 'B', tick: 4 });
+  assert.equal(s.resetCause, 'wrong-scene');
+  s.start();
+  assert.equal(s.resetCause, null, 'a new run clears the cause');
+});
+
+test('a missed tick restarts the bar with an explanatory status, not silence', async () => {
+  const a = app();
+  await a.$('challenge-start').fire('click');
+  await a.$('challenge-action').fire('click');
+  const transport = a.transports.at(-1);
+  for (let tick = 0; tick < 8; tick++) transport.visual('A', tick);
+  assert.match(a.$('challenge-status').textContent, /Step 1 of 4/);
+  transport.visual('A', 10); // tick 9 never arrived: throttled tab, hiccup
+  assert.match(a.$('challenge-status').textContent, /tick was missed/i);
+  assert.match(a.$('challenge-status').textContent, /bar restarted/i);
+  // Recovery still works: one clean bar advances the step.
+  for (let tick = 0; tick < 16; tick++) transport.visual('A', tick);
+  assert.match(a.$('challenge-status').textContent, /Step 2 of 4/);
+});
+
+test('Drop Lab works with the mission module missing: guide hidden, page functional', async () => {
+  const a = app({ noMission: true });
+  assert.equal(a.$('guided-set').hidden, true, 'the guide section hides instead of throwing');
+  await a.pad('A').fire('click');
+  const t = a.transports[0]; t.visual('A');
+  assert.equal(a.pad('A').dataset.playing, true);
+  assert.match(a.$('launch-status').textContent, /Playing/);
 });

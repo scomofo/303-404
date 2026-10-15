@@ -79,7 +79,7 @@ test('a last-page visit does not count as completed practice', () => {
 
 test('progress counts only existing checklist items explicitly checked true', () => {
   const summary = summarizeProgress(course, save({ step: 2, checks: {
-    'w1-1': [true, 'true', true, true], 'w1-2': [1, false, true],
+    'w1-1': [true, 'true', false, true], 'w1-2': [1, false, true],
     'old-removed-lesson': [true, true], 'w2-1': 'bad',
   } }));
   assert.equal(summary.checked, 2);
@@ -167,10 +167,10 @@ test('all six guides recover malformed checklist state and fractional lesson pos
 
 test('hydration drops removed checklist rows, overflow entries and inherited state keys', t => {
   const storage = storageForTest(t);
-  storage.set(course.storageKey, '{"version":1,"state":{"step":2,"checks":{"w1-1":[true,"true",true],"removed":[true]},"__proto__":{"unexpected":true},"constructor":"bad","unexpected":true}}');
+  storage.set(course.storageKey, '{"version":1,"state":{"step":2,"checks":{"w1-1":[true,"true",true,true],"removed":[true]},"__proto__":{"unexpected":true},"constructor":"bad","unexpected":true}}');
   const { inst, dispose } = loadComponent(course.file);
   try {
-    assert.deepEqual(inst.state.checks, { 'w1-1': [true, false] });
+    assert.deepEqual(inst.state.checks, { 'w1-1': [true, false, true] });
     assert.equal(inst.state.unexpected, undefined);
     assert.equal(Object.hasOwn(inst.state, 'constructor'), false);
     assert.equal(Object.hasOwn(inst.state, '__proto__'), false);

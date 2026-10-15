@@ -157,7 +157,7 @@ not a hardware-audio input or a sample player. The existing course labs remain
 independent. Playback stops when the tab is hidden or the clock scheduler falls
 behind. Unsupported recording or offline rendering APIs show an actionable error.
 
-`studio/banks.js` is generated from the Behringer guide, preserving its source
+`studio/banks.js` is generated from the bank files in `banks/`, preserving their source
 metadata. After changing either bank, run `npm run studio:banks` and commit the
 output. The studio uses plain JavaScript and the existing design tokens, with
 no added runtime dependency. See `docs/HANDOFF_GROOVE_STUDIO.md` for the project
@@ -253,7 +253,7 @@ The Behringer guide takes an absolute beginner from wiring and basic drum sequen
 
 The Song Bank contains **31 cards by default** across three source types: **original practice patterns**, **written-out step tables**, and patterns **transcribed from real fan-made** TD-3/TB-303 charts. The common pattern-chart layout is a visualization and **does not claim that every pattern originated on a Roland sheet**.
 
-Each `SONG_CARDS` entry can include `sourceType`, `needsAccentSlideReview`, `homeOctave`, `overdrive`, tempo/provenance fields, filter settings, note names, accents and slides. Notes use names such as `C2` and `F#3`, with **`null` for a rest**. Unknown source details remain blank or explicitly estimated rather than being invented. Six legacy chart entries remain marked with `needsAccentSlideReview: true` until their original source rows can be revalidated.
+The cards live in `banks/song-cards.js`, which opens with a commented template card to copy; the guide loads them as `SONG_CARDS`. Each entry can include `sourceType`, `needsAccentSlideReview`, `homeOctave`, `overdrive`, tempo/provenance fields, filter settings, note names, accents and slides. Notes use names such as `C2` and `F#3`, with **`null` for a rest**. Unknown source details remain blank or explicitly estimated rather than being invented. Six legacy chart entries remain marked with `needsAccentSlideReview: true` until their original source rows can be revalidated.
 
 ### Drum Bank
 
@@ -263,7 +263,7 @@ Three record transcriptions come from the MIT-licensed `tr808r` package: "Sexual
 
 The Drum Bank keeps provenance explicit. Outside sources that do not record accents, machine slots or tempos do not gain invented values; unknown tempos are labelled estimates. RS/CL and CP/MA are switch pairs and a card's `pair` field controls both the printed row and the voice that sounds.
 
-Add a card in `DRUM_CARDS` with fields such as `{ id, title, artist?, sourceType, steps, bpm, bpmConfirmed?, patternNo?, variation?, preScale?, pair?, voicing, tag, source, rows }`. `sourceType` is `record`, `literature` or `practice`; `bpmConfirmed` distinguishes a stated tempo from an estimate; `voicing` explains whether the source was written for this machine or mapped onto it; and `pair` selects CL or MA where applicable.
+Add a card in `banks/drum-cards.js` — the guide loads its cards as `DRUM_CARDS`, and the file opens with a commented template — with fields such as `{ id, title, artist?, sourceType, steps, bpm, bpmConfirmed?, patternNo?, variation?, preScale?, pair?, voicing, tag, source, rows }`. `sourceType` is `record`, `literature` or `practice`; `bpmConfirmed` distinguishes a stated tempo from an estimate; `voicing` explains whether the source was written for this machine or mapped onto it; and `pair` selects CL or MA where applicable.
 
 ## TR-06 Guide
 
@@ -472,6 +472,8 @@ studio/audio.js                shared playback/export synthesis and live capture
 studio/app.js / studio.css      studio controls and responsive styling
 studio/banks.js                 generated course pattern data (npm run studio:banks)
 scripts/build-studio-banks.mjs  studio bank generator
+banks/song-cards.js             Song Bank cards the Behringer guide loads (add cards here)
+banks/drum-cards.js             Drum Bank voices and cards the Behringer guide loads
 Behringer Setup Guide.dc.html   TD-3/RD-6 course and audio engines
 TR-06 Guide.dc.html             Roland TR-06 Boutique drums course
 DDJ-FLX4 Guide.dc.html          DDJ-FLX4 course and Practice Plan

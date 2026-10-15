@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { runInThisContext } from 'node:vm';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -180,6 +181,12 @@ const makeCourseLogicBase = new Function('DCLogic',
  */
 export function loadComponent(file, { hidden = false, offline = false } = {}) {
   const html = readGuide(file);
+  // A page loads its bank data from standalone files in banks/ via ordinary
+  // <script src> tags ahead of its logic. Run those first, in document order,
+  // so the component sees the same globals the browser gives it.
+  for (const [, bankFile] of html.matchAll(/<script src="\.\/(banks\/[\w.-]+\.js)"><\/script>/g)) {
+    runInThisContext(readFileSync(join(ROOT, bankFile), 'utf8'), { filename: bankFile });
+  }
   const src = extractLogic(html, file);
   const audioCtx = makeAudioContext();
 

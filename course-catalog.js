@@ -22,7 +22,7 @@ globalThis.DCCourseCatalog = [
         "id": "w1-1",
         "title": "1. Physical Signal Setup",
         "week": "Week 1",
-        "items": 2
+        "items": 3
       },
       {
         "id": "w1-2",
@@ -112,7 +112,7 @@ globalThis.DCCourseCatalog = [
         "id": "w5-1",
         "title": "1. Pattern Banks & Programming a Fill",
         "week": "Week 5",
-        "items": 2
+        "items": 3
       },
       {
         "id": "w5-2",
@@ -124,7 +124,7 @@ globalThis.DCCourseCatalog = [
         "id": "w5-3",
         "title": "3. Shuffle & Individual Outputs",
         "week": "Week 5",
-        "items": 2
+        "items": 3
       },
       {
         "id": "w6-intro",
@@ -142,7 +142,7 @@ globalThis.DCCourseCatalog = [
         "id": "w6-2",
         "title": "2. Pattern Groups & Track Write",
         "week": "Week 6",
-        "items": 2
+        "items": 3
       },
       {
         "id": "w6-3",
@@ -166,7 +166,7 @@ globalThis.DCCourseCatalog = [
         "id": "w7-2",
         "title": "2. Backing Up & Restoring Patterns",
         "week": "Week 7",
-        "items": 2
+        "items": 3
       },
       {
         "id": "w7-3",
@@ -184,7 +184,7 @@ globalThis.DCCourseCatalog = [
         "id": "w8-1",
         "title": "1. Song Cards",
         "week": "Week 8",
-        "items": 3
+        "items": 4
       },
       {
         "id": "w9-intro",
@@ -196,13 +196,13 @@ globalThis.DCCourseCatalog = [
         "id": "w9-1",
         "title": "1. Pattern Sheets",
         "week": "Week 9",
-        "items": 5
+        "items": 12
       },
       {
         "id": "w9-2",
         "title": "2. Worked Example — Onto the RD-6",
         "week": "Week 9",
-        "items": 6
+        "items": 17
       },
       {
         "id": "w10-intro",

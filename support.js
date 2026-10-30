@@ -2687,7 +2687,7 @@
       push(name, streaming, viewportKey) {
         if (viewportKey === "dc-model") return;
         if (streaming) since.set(name, now());
-        else since.delete(n);
+        else since.delete(name);
       },
       live(name) {
         if (name !== void 0) return liveOne(name);

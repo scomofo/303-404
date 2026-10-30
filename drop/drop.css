@@ -7,13 +7,17 @@
 .drop-title > div { min-width: 0; flex: 1 1 250px; }
 .drop-position { font: 500 1.1rem var(--font-mono); color: #8ddde1; }
 .scene-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; margin-block: 1rem; }
-.scene-pads .scene-pad { text-align: left; min-height: 155px; padding: 1.15rem; display: flex; flex-direction: column; justify-content: space-between; gap: .8rem; border-width: 2px; }
+.scene-pads .scene-pad { position: relative; text-align: left; min-height: 155px; padding: 1.15rem; display: flex; flex-direction: column; justify-content: space-between; gap: .8rem; border-width: 2px; }
 .scene-pad > strong { font: 600 2rem var(--font-heading); color: #d6f578; }
 .scene-pad > span { font-size: 1.125rem; overflow-wrap: anywhere; }
 .scene-pad > small { font: 400 .875rem var(--font-mono); color: var(--console-muted); }
 .scene-pad[data-scene="D"] > strong { color: #ffad6c; }
+.scene-pads .scene-pad::after { content: ''; position: absolute; top: 1rem; right: 1rem; width: 10px; height: 10px; border-radius: 50%; background: #3e5a49; box-shadow: inset 0 1px 1px rgba(0, 0, 0, .5); }
 .scene-pads .scene-pad[data-playing="true"] { background: #36533a; border-color: #d6f578; box-shadow: inset 0 -5px #d6f578; }
+.scene-pads .scene-pad[data-playing="true"]::after { background: #d6f578; box-shadow: 0 0 10px #d6f578; animation: scene-led 1s ease-in-out infinite; }
 .scene-pads .scene-pad[data-queued="true"] { border-color: #8ddde1; border-style: dashed; }
+.scene-pads .scene-pad[data-queued="true"]::after { background: #8ddde1; box-shadow: 0 0 8px #8ddde1; }
+@keyframes scene-led { 50% { opacity: .4; } }
 .drop-transport, .mute-controls, .drop-project-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; }
 .drop-transport label { display: flex; align-items: center; gap: .5rem; font-size: .875rem; }
 .drop-stage input { color: var(--console-text); accent-color: #d6f578; font-size: 1rem; }
@@ -52,3 +56,4 @@
 .guided-set-step[aria-current="step"] { border-color: #8ddde1; box-shadow: inset 0 -3px #8ddde1; }
 .guided-set-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; }
 @media (max-width: 720px) { .guided-set-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .scene-pads .scene-pad[data-playing="true"]::after { animation: none; } }

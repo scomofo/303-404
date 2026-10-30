@@ -242,6 +242,14 @@
   document.addEventListener('keydown', event => {
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.target?.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA', 'AUDIO'].includes(event.target?.tagName)) return;
     if (/^[1-4]$/.test(event.key)) { event.preventDefault(); launch(P.SCENES[Number(event.key) - 1]); }
+    else if (event.key === ' ') {
+      // A focused button keeps its native Space activation; anywhere else Space
+      // is the transport toggle learners expect from a performance view.
+      if (event.target?.tagName === 'BUTTON') return;
+      event.preventDefault();
+      if (transport?.running) stopAll('Stopped.');
+      else launch(selected);
+    }
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { stopAll('Playback paused while this tab was hidden.'); $('take-preview').pause(); } });
   window.addEventListener('beforeunload', event => { if ((takeUrl && !takeDownloaded) || phase !== 'idle') { event.preventDefault(); event.returnValue = ''; } });

@@ -1,382 +1,392 @@
 (() => {
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const LS_KEY = '303-404/groove-studio/v1';
   const P = globalThis.DCStudioProject, A = globalThis.DCStudioAudio, banks = globalThis.DCStudioBanks;
-  const $ = id => document.getElementById(id);
-  const make = (tag, text, props = {}) => Object.assign(document.createElement(tag), { textContent: text, ...props });
-  const option = (value, label) => make('option', label, { value });
-  const filename = name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'groove';
-  let store = null, projects = new Map(), project, selectedScene = 'B', voice = 'bd', selectedNote = 0;
-  let dirty = false, saveTimer = null, history = [], future = [], undoGroup = null, lastBackup = '';
-  let ctx = null, transport = null, starting = false, audioRequest = 0, lastEvent = null;
-  let recorder = null, recordLimit = null, takeUrl = null, exporting = false, preparingTake = false;
+  let storage = null, storageProblem = '';
+  try { storage = window.localStorage; } catch { storageProblem = 'Browser storage is unavailable. You can still play, but projects will not survive a reload.'; }
+  const store = storage ? new P.ProjectStore(storage) : null;
+  let project = null, transport = null, ctx = null, selectedSceneId = null, sceneMode = true, view = 'studio';
+  const engine = () => transport?.engine;
+  const selectedScene = () => project.scenes.find(s => s.id === selectedSceneId) || project.scenes[0];
 
-  function status(message) { $('status').textContent = message; }
-  function error(message) { $('error').textContent = message; $('error').hidden = !message; }
-  function scene() { return project.scenes.find(scene => scene.id === selectedScene); }
-  function download(blob, name) {
-    const url = URL.createObjectURL(blob), link = make('a', '', { href: url, download: name });
-    document.body.append(link); link.click(); link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+  function status(message) { const el = $('#studio-status'); if (el.textContent !== message) el.textContent = message; }
+  function positionText() {
+    const el = $('#position');
+    if (!transport?.running) { el.textContent = 'Stopped'; return; }
+    const scene = engine()?.currentScene;
+    const bar = scene ? engine().sceneBar(scene.id) + 1 : 1;
+    const tick = engine()?.tick ?? 0;
+    el.textContent = `${scene ? scene.name : '—'} · Bar ${bar} · Step ${tick % 16 + 1}`;
+  }
+  function markSaved() { $('#save-state').textContent = store ? 'Saved in this browser' : storageProblem || 'Not saved — storage unavailable'; }
+  function markDirty() { $('#save-state').textContent = store ? 'Unsaved changes' : storageProblem || 'Not saved — storage unavailable'; }
   function save() {
-    clearTimeout(saveTimer); saveTimer = null;
-    if (!dirty) return true;
-    try {
-      if (!store) throw new Error('Storage unavailable');
-      store.save(project); projects.set(project.id, P.copy(project)); dirty = false;
-      $('save-state').textContent = 'Saved in this browser';
-      renderLibrary(); return true;
-    } catch (err) {
-      $('save-state').textContent = 'Not saved in this browser';
-      error(err.message.includes('another tab') ? err.message : 'Could not save in this browser. Download a project backup to keep your changes.');
-      return false;
-    }
+    if (!store) return;
+    try { store.save(project); markSaved(); } catch { status('Could not save. Your music is still here — free some browser storage and try again.'); }
   }
-  function changed() {
-    dirty = true; $('save-state').textContent = 'Unsaved changes';
-    clearTimeout(saveTimer); saveTimer = setTimeout(save, 300);
-    $('undo').disabled = !history.length; $('redo').disabled = !future.length;
+  function loadAll() {
+    if (!store) return [];
+    try { return store.list(); } catch { return []; }
   }
-  function mutate(fn, { group = null, view = 'editor', stop = false } = {}) {
-    const before = P.copy(project);
-    try {
-      if (stop) stopPlayback();
-      fn(project); project = P.validateProject(project);
-      if (group === null || undoGroup !== group) { history.push(before); if (history.length > 40) history.shift(); }
-      undoGroup = group; future = []; changed();
-      if (view === 'mix') renderMix();
-      else { renderEditor(); renderArrangement(); }
-    } catch (err) { project = before; error(err.message); renderEditor(); renderArrangement(); }
-  }
-  function canLeaveProject() {
-    if (!dirty || save() || lastBackup === JSON.stringify(project)) return true;
-    error('Keep this project first: download a project backup, or save a copy if another tab changed it.');
-    return false;
-  }
-  function useProject(next) {
-    stopPlayback(); clearTimeout(saveTimer); saveTimer = null;
-    project = P.validateProject(next); dirty = false; history = []; future = []; undoGroup = null; lastBackup = '';
-    selectedScene = 'B'; selectedNote = 0; lastEvent = null;
-    $('save-state').textContent = project.updatedAt ? 'Loaded from this browser' : 'Ready to save';
-    error(''); renderAll();
-  }
-  function renderLibrary() {
-    const select = $('project-list'), previous = select.value;
-    const items = [...projects.values()].sort((a, b) => b.updatedAt - a.updatedAt);
-    select.replaceChildren(...items.map(item => option(item.id, item.name)));
-    if (items.some(item => item.id === previous)) select.value = previous;
-    else if (items.some(item => item.id === project.id)) select.value = project.id;
-    $('open-project').disabled = !items.length; $('delete-project').disabled = !items.length;
-  }
-  function sourceLabel(source) {
-    return `${source.edited ? 'Edited from' : 'Source'}: ${source.title} · ${source.type}${source.detail ? ' · ' + source.detail : ''}${source.review ? ' · Accent/slide transcription still needs source review.' : ''}`;
-  }
-  function renderSceneTabs() {
-    const tabs = project.scenes.map(s => {
-      const button = make('button', '', { type: 'button', className: 'scene-tab' });
-      button.dataset.scene = s.id; button.setAttribute('aria-pressed', String(selectedScene === s.id));
-      button.setAttribute('aria-label', `Edit scene ${s.id}: ${s.name}`);
-      button.append(make('strong', s.id), make('span', s.name));
-      button.addEventListener('click', () => {
-        selectedScene = s.id; selectedNote = 0; undoGroup = null;
-        if (transport?.running && transport.mode === 'scene') { transport.queueScene(s.id); status(`Scene ${s.id} queued. It will launch on a bar boundary.`); }
-        renderEditor();
-        $('scene-tabs').querySelector(`[data-scene="${s.id}"]`).focus();
-      });
-      return button;
+
+  function ensureAudio() {
+    return A.ensureAudioContext({
+      get: () => ctx,
+      set: next => { ctx = next; },
+      onPaused: () => { status('Audio paused. Press Play to resume.'); paintTransport(); },
+      unavailableMessage: 'Audio is unavailable in this browser. Try a current browser. You can still edit patterns and save projects.',
+      pausedMessage: 'Audio is paused. Press Play to try again.',
     });
-    $('scene-tabs').replaceChildren(...tabs);
   }
-  function renderMix() {
-    const s = scene();
-    $('drums-level').value = s.mix.drums; $('drums-value').textContent = `${Math.round(s.mix.drums * 100)}%`;
-    $('bass-level').value = s.mix.bass; $('bass-value').textContent = `${Math.round(s.mix.bass * 100)}%`;
-    $('cutoff').value = s.mix.cutoff; $('cutoff-value').textContent = `${s.mix.cutoff} Hz`;
-    $('resonance').value = s.mix.resonance; $('resonance-value').textContent = s.mix.resonance.toFixed(1);
-    $('waveform').value = s.bass.waveform;
-    for (const [part, key] of [['drums', 'muteDrums'], ['bass', 'muteBass']]) {
-      $(`mute-${part}`).setAttribute('aria-pressed', String(s.mix[key]));
-      $(`mute-${part}`).textContent = s.mix[key] ? `Unmute ${part}` : `Mute ${part}`;
-    }
-    $('master').value = project.master; $('master-value').textContent = `${Math.round(project.master * 100)}%`;
+
+  function setView(next) {
+    view = next;
+    document.body.dataset.view = view;
+    for (const btn of $$('.view-switch button')) btn.setAttribute('aria-pressed', String(btn.dataset.view === view));
+    $('#scene-panel').hidden = view !== 'studio';
+    $('#arrange-panel').hidden = view !== 'arrange';
+    $('#view-heading').textContent = view === 'studio' ? 'Scenes' : 'Arrangement';
+    renderEditor(); renderArrange(); positionText();
   }
-  function renderEditor() {
-    const focused = document.activeElement;
-    const focusGrid = focused?.parentElement?.id, focusIndex = focused?.dataset?.index;
-    const s = scene(); selectedNote = Math.min(selectedNote, s.bass.notes.length - 1);
-    $('project-name').value = project.name; $('tempo').value = project.bpm; $('scene-name').value = s.name;
-    $('drum-length').value = s.drums.steps; $('bass-length').value = s.bass.notes.length;
-    $('drum-bank').value = s.drums.source.id; $('bass-bank').value = s.bass.source.id;
-    $('drum-source').textContent = sourceLabel(s.drums.source); $('bass-source').textContent = sourceLabel(s.bass.source);
-    $('drum-voice').replaceChildren(...banks.voices.map(v => option(v.key,
-      `${s.drums.pair[v.key] || v.label} · ${s.drums.pair[v.key] ? v.altName : v.name} (${s.drums.rows[v.key].length})`)));
-    $('drum-voice').value = voice;
-    $('drum-grid').replaceChildren(...Array.from({ length: s.drums.steps }, (_, i) => {
-      const on = s.drums.rows[voice].includes(i), button = make('button', String(i + 1), { type: 'button', className: 'step' });
-      button.dataset.index = i; button.dataset.on = on;
-      button.setAttribute('aria-label', `${voice.toUpperCase()} step ${i + 1}`); button.setAttribute('aria-pressed', String(on));
-      button.addEventListener('click', () => mutate(() => {
-        const row = scene().drums.rows[voice], index = row.indexOf(i);
-        if (index < 0) row.push(i); else row.splice(index, 1);
-        scene().drums.source.edited = true;
-      }));
-      return button;
+
+  function focusSceneTab(id) {
+    const tab = $(`.scene-tab[data-scene-id="${CSS.escape(id)}"]`);
+    if (tab) tab.focus();
+  }
+  function selectScene(id) {
+    if (!project.scenes.some(s => s.id === id)) return;
+    if (transport?.running && sceneMode) transport.queueScene(id);
+    selectedSceneId = id;
+    renderEditor();
+    focusSceneTab(id);
+  }
+
+  function renderSceneTabs() {
+    const wrap = $('#scene-tabs');
+    wrap.replaceChildren(...project.scenes.map(s => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'scene-tab';
+      btn.dataset.sceneId = s.id;
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', String(s.id === selectedSceneId));
+      btn.setAttribute('aria-label', `${s.name} scene`);
+      btn.innerHTML = `<strong>${escapeHtml(s.name)}</strong><span>${s.bars} bar${s.bars === 1 ? '' : 's'} · ${s.tempo} BPM</span>`;
+      btn.addEventListener('click', () => selectScene(s.id));
+      return btn;
     }));
-    $('bass-grid').replaceChildren(...s.bass.notes.map((note, i) => {
-      const accent = s.bass.accent.includes(i), slide = s.bass.slide.includes(i);
-      const button = make('button', '', { type: 'button', className: 'step bass-step' });
-      button.dataset.index = i; button.setAttribute('aria-pressed', String(selectedNote === i));
-      button.setAttribute('aria-label', `Bass step ${i + 1}: ${note || 'rest'}${accent ? ', accent' : ''}${slide ? ', slide' : ''}`);
-      button.append(make('small', String(i + 1)), make('span', note || '—'), make('small', `${accent ? 'AC' : ''}${accent && slide ? ' ' : ''}${slide ? 'SL' : ''}` || '·'));
-      button.addEventListener('click', () => { selectedNote = i; renderEditor(); $('bass-grid').children[i].focus(); });
-      return button;
-    }));
-    const note = s.bass.notes[selectedNote];
-    $('note-legend').textContent = `Edit bass step ${selectedNote + 1}`;
-    $('note-pitch').value = note === null ? 'rest' : note.slice(0, -1);
-    if (note !== null) $('note-octave').value = note.slice(-1);
-    $('note-octave').disabled = note === null;
-    $('note-accent').checked = s.bass.accent.includes(selectedNote); $('note-slide').checked = s.bass.slide.includes(selectedNote);
-    $('note-accent').disabled = note === null; $('note-slide').disabled = note === null;
-    renderMix(); renderSceneTabs(); renderPlayhead(lastEvent);
-    $('undo').disabled = !history.length; $('redo').disabled = !future.length;
-    if (['drum-grid', 'bass-grid'].includes(focusGrid) && focusIndex !== undefined) $(focusGrid).children[Number(focusIndex)]?.focus();
   }
-  function renderArrangement() {
-    $('arrangement-length').textContent = `${P.totalBars(project)} bars · ${P.duration(project).toFixed(1)} seconds`;
-    const active = document.activeElement, selectedPart = active?.dataset?.part, selectedField = active?.dataset?.field;
-    $('arrangement').replaceChildren(...project.arrangement.map((part, i) => {
-      const li = make('li', '', { className: 'arrangement-part' }); li.dataset.section = i;
-      const sceneLabel = make('label', `Section ${i + 1}`), select = make('select', '');
-      select.dataset.part = i; select.dataset.field = 'scene'; select.setAttribute('aria-label', `Section ${i + 1} scene`);
-      select.append(...project.scenes.map(s => option(s.id, `${s.id} · ${s.name}`))); select.value = part.scene;
-      select.addEventListener('change', () => mutate(p => { p.arrangement[i].scene = select.value; }, { stop: true })); sceneLabel.append(select);
-      const barsLabel = make('label', 'Bars'), bars = make('input', '', { type: 'number', min: '1', max: '16', step: '1', value: part.bars });
-      bars.dataset.part = i; bars.dataset.field = 'bars'; bars.setAttribute('aria-label', `Section ${i + 1} bars`);
-      bars.addEventListener('change', () => mutate(p => { p.arrangement[i].bars = Number(bars.value); }, { stop: true })); barsLabel.append(bars);
-      const actions = make('div', '', { className: 'part-actions' });
-      for (const [label, delta] of [['Move earlier', -1], ['Move later', 1]]) {
-        const button = make('button', delta < 0 ? '←' : '→', { type: 'button', disabled: i + delta < 0 || i + delta >= project.arrangement.length });
-        button.setAttribute('aria-label', `${label}: section ${i + 1}`);
-        button.addEventListener('click', () => mutate(p => { [p.arrangement[i], p.arrangement[i + delta]] = [p.arrangement[i + delta], p.arrangement[i]]; }, { stop: true })); actions.append(button);
+
+  function paintTransport() {
+    const playing = !!transport?.running;
+    $('#play-scene').setAttribute('aria-pressed', String(playing && sceneMode));
+    $('#play-scene').textContent = playing && sceneMode ? '■ Stop' : '▶ Play scene';
+    $('#play-arr').setAttribute('aria-pressed', String(playing && !sceneMode));
+    $('#play-arr').textContent = playing && !sceneMode ? '■ Stop' : '▶ Play arrangement';
+    $('#record').setAttribute('aria-pressed', String(!!engine()?.recording));
+    $('#record').classList.toggle('recording', !!engine()?.recording);
+    $('#tempo').value = String(selectedScene().tempo);
+    $('#tempo-out').textContent = `${selectedScene().tempo} BPM`;
+    positionText();
+  }
+
+  function paintStepGrid() {
+    const scene = selectedScene();
+    $('#step-grid').replaceChildren(...scene.drums.lanes.map(lane => {
+      const row = document.createElement('div');
+      row.className = 'step-lane';
+      row.dataset.lane = lane.key;
+      row.innerHTML = `<span class="lane-name">${escapeHtml(lane.name)}</span><div class="lane-steps"></div>`;
+      const steps = row.querySelector('.lane-steps');
+      for (let i = 0; i < 16; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'step';
+        btn.dataset.step = String(i);
+        btn.dataset.on = String(lane.steps.includes(i));
+        btn.setAttribute('aria-pressed', String(lane.steps.includes(i)));
+        btn.setAttribute('aria-label', `${lane.name}, step ${i + 1}, beat ${Math.floor(i / 4) + 1}`);
+        btn.addEventListener('click', () => {
+          const idx = lane.steps.indexOf(i);
+          if (idx === -1) lane.steps.push(i); else lane.steps.splice(idx, 1);
+          lane.steps.sort((a, b) => a - b);
+          updateLivePattern(scene);
+          paintStepGrid(); markDirty();
+        });
+        steps.append(btn);
       }
-      const remove = make('button', 'Remove', { type: 'button', disabled: project.arrangement.length === 1 });
-      remove.setAttribute('aria-label', `Remove section ${i + 1}`); remove.addEventListener('click', () => mutate(p => { p.arrangement.splice(i, 1); }, { stop: true })); actions.append(remove);
-      li.append(sceneLabel, barsLabel, actions); return li;
+      return row;
     }));
-    $('add-section').disabled = project.arrangement.length >= 8 || P.totalBars(project) >= 32;
-    if (selectedPart !== undefined) $('arrangement').querySelector(`[data-part="${selectedPart}"][data-field="${selectedField}"]`)?.focus();
-    renderPlayhead(lastEvent);
-  }
-  function renderPlayhead(event) {
-    const running = transport?.running && event;
-    for (const tab of $('scene-tabs').children) tab.dataset.playing = !!running && tab.dataset.scene === event.sceneId;
-    for (const part of $('arrangement').children) part.dataset.playing = !!running && transport.mode === 'arrangement' && Number(part.dataset.section) === event.section;
-    const editingPlaying = running && event.sceneId === selectedScene;
-    for (const button of $('drum-grid').children) button.dataset.current = !!editingPlaying && Number(button.dataset.index) === event.tick % scene().drums.steps;
-    for (const button of $('bass-grid').children) button.dataset.current = !!editingPlaying && Number(button.dataset.index) === event.tick % scene().bass.notes.length;
-    if (running) $('position').textContent = `${event.sceneId} · Bar ${event.bar + 1} · Step ${event.tick % 16 + 1}`;
-  }
-  function renderAll() { renderEditor(); renderArrangement(); renderLibrary(); }
-  function stopped(message = '') {
-    $('stop').disabled = true; $('position').textContent = 'Stopped'; lastEvent = null; renderPlayhead(null);
-    $('play-scene').setAttribute('aria-pressed', 'false'); $('play-arrangement').setAttribute('aria-pressed', 'false');
-    if (recorder) stopRecording();
-    if (message) status(message);
-  }
-  function stopPlayback(message = '') {
-    audioRequest++;
-    if (transport?.running) transport.stop(message); else stopped(message);
-  }
-  async function play(mode = 'scene') {
-    if (starting) return false;
-    stopPlayback();
-    const request = ++audioRequest; starting = true; error('');
-    $('play-scene').disabled = true; $('play-arrangement').disabled = true;
-    try {
-      ctx = await A.ensureAudioContext({
-        get: () => ctx,
-        set: next => { ctx = next; },
-        unavailableMessage: 'Web Audio is unavailable in this browser. You can still edit and download a project.',
-        pausedMessage: 'Audio could not start. Check browser audio permissions and try Play again.',
-      });
-      if (request !== audioRequest) return false;
-      transport = new A.Transport(ctx, () => project, {
-        onVisual: event => { lastEvent = event; renderPlayhead(event); },
-        onStop: stopped, onError: err => error(err.message),
-      });
-      transport.start(mode, selectedScene);
-      if (!transport.running) return false;
-      $('stop').disabled = false; $(`play-${mode}`).setAttribute('aria-pressed', 'true');
-      status(mode === 'arrangement' ? 'Playing the arrangement. Mix edits affect the scene you are editing.' : `Looping scene ${selectedScene}. Select another scene to queue it.`);
-      return true;
-    } catch (err) { transport?.stop(); error(err.message); return false; }
-    finally { starting = false; $('play-scene').disabled = false; $('play-arrangement').disabled = false; }
-  }
-  function stopRecording() {
-    if (!recorder) return;
-    clearTimeout(recordLimit); recordLimit = null;
-    $('record').disabled = true; $('record').textContent = 'Finishing take…'; recorder.stop();
-  }
-  async function recordTake() {
-    if (preparingTake) return;
-    if (recorder) { stopRecording(); return; }
-    preparingTake = true;
-    try {
-      if (!transport?.running && !(await play('scene'))) return;
-      $('take-preview').pause();
-      const take = new A.TakeRecorder(ctx, transport.engine.output), name = project.name;
-      recorder = take; error(''); $('record').textContent = 'Stop recording'; $('record').setAttribute('aria-pressed', 'true');
-      status('Recording the live studio output. Scene changes, mutes and sound edits are captured.');
-      take.start().then(({ blob, extension }) => {
-        if (takeUrl) URL.revokeObjectURL(takeUrl);
-        takeUrl = URL.createObjectURL(blob); $('take-preview').src = takeUrl;
-        $('download-take').href = takeUrl; $('download-take').download = `${filename(name)}-take.${extension}`;
-        $('download-take').textContent = `Download ${extension.toUpperCase()} take`;
-        $('take-result').hidden = false; status('Take ready. Listen back and download it to keep it.');
-      }).catch(err => error(err.message)).finally(() => {
-        clearTimeout(recordLimit); recordLimit = null;
-        if (recorder === take) recorder = null;
-        $('record').textContent = 'Record take'; $('record').disabled = false; $('record').setAttribute('aria-pressed', 'false');
-      });
-      recordLimit = setTimeout(() => { stopRecording(); status('The three-minute recording limit was reached. Finishing your take.'); }, 180000);
-    } catch (err) { error(err.message); }
-    finally { preparingTake = false; }
   }
 
-  try {
-    store = new P.ProjectStore(window.localStorage);
-    const saved = store.list(); projects = new Map(saved.projects.map(p => [p.id, p]));
-    project = saved.projects[0];
-    if (saved.damaged.length) error('Some saved projects could not be read. Valid projects are still available; unreadable entries were left untouched.');
-  } catch { store = null; error('Browser storage is unavailable. Download project backups to keep your work.'); }
-  const params = new URLSearchParams(window.location.search);
-  const selections = { bass: params.get('bass'), drums: params.get('drums') };
-  const fromBank = banks.bass.some(c => c.id === selections.bass) || banks.drums.some(c => c.id === selections.drums);
-  const requestedProject = params.get('project');
-  if (requestedProject && !fromBank) {
-    const requested = projects.get(requestedProject);
-    if (requested) {
-      project = P.copy(requested);
-      status('Your saved beat is ready. Press Play scene, then add bass or make a variation.');
-      try { const url = new URL(window.location.href); url.searchParams.delete('project'); window.history.replaceState(null, '', url); } catch {}
-    } else error('That project could not be found in this browser. Your latest available project or the starter is open.');
+  function paintBassLane() {
+    const scene = selectedScene();
+    const lane = $('#bass-lane');
+    lane.replaceChildren(...scene.bass.notes.map((note, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bass-step';
+      btn.dataset.on = String(!!note);
+      btn.setAttribute('aria-pressed', String(!!note));
+      btn.setAttribute('aria-label', note ? `Bass step ${i + 1}: ${note}` : `Bass step ${i + 1}: empty`);
+      btn.textContent = note || '·';
+      btn.addEventListener('click', () => {
+        const phrase = banks.randomBassPhrase(project.seed + i);
+        scene.bass.notes[i] = scene.bass.notes[i] ? '' : phrase.notes[i % phrase.notes.length];
+        updateLivePattern(scene);
+        paintBassLane(); markDirty();
+      });
+      return btn;
+    }));
   }
-  if (!project || fromBank) project = P.createProject(banks, selections);
-  if (fromBank) {
-    status('A new project is ready with your bank pattern. Your previous projects are preserved.');
-    try { const url = new URL(window.location.href); url.searchParams.delete('bass'); url.searchParams.delete('drums'); url.searchParams.delete('project'); window.history.replaceState(null, '', url); } catch {}
-  }
-  $('drum-bank').append(...banks.drums.map(card => option(card.id, card.title)));
-  $('bass-bank').append(...banks.bass.map(card => option(card.id, card.title)));
-  renderAll();
-  if (project.updatedAt) $('save-state').textContent = 'Loaded from this browser';
-  if (fromBank) { dirty = true; save(); }
 
-  $('project-name').addEventListener('change', event => mutate(p => { p.name = event.target.value; }));
-  $('scene-name').addEventListener('change', event => mutate(() => { scene().name = event.target.value; }));
-  $('tempo').addEventListener('change', event => mutate(p => { p.bpm = Number(event.target.value); }, { stop: true }));
-  $('master').addEventListener('input', event => mutate(p => { p.master = Number(event.target.value); transport?.engine?.setMaster(p.master); }, { group: 'master', view: 'mix' }));
-  for (const [id, key] of [['drums-level', 'drums'], ['bass-level', 'bass'], ['cutoff', 'cutoff'], ['resonance', 'resonance']]) {
-    $(id).addEventListener('input', event => mutate(() => { scene().mix[key] = Number(event.target.value); }, { group: `${selectedScene}-${id}`, view: 'mix' }));
-    $(id).addEventListener('blur', () => { undoGroup = null; });
-  }
-  $('master').addEventListener('blur', () => { undoGroup = null; });
-  $('waveform').addEventListener('change', event => mutate(() => { scene().bass.waveform = event.target.value; scene().bass.source.edited = true; }));
-  for (const [id, key] of [['mute-drums', 'muteDrums'], ['mute-bass', 'muteBass']]) $(id).addEventListener('click', () => mutate(() => { scene().mix[key] = !scene().mix[key]; }, { view: 'mix' }));
-  $('drum-voice').addEventListener('change', event => { voice = event.target.value; renderEditor(); });
-  $('clear-drum').addEventListener('click', () => mutate(() => { scene().drums.rows[voice] = []; scene().drums.source.edited = true; }));
-  $('load-drums').addEventListener('click', () => {
-    const card = banks.drums.find(card => card.id === $('drum-bank').value);
-    if (card) mutate(() => { scene().drums = P.drumsFromCard(card); });
-  });
-  $('load-bass').addEventListener('click', () => {
-    const card = banks.bass.find(card => card.id === $('bass-bank').value);
-    if (card) mutate(() => { scene().bass = P.bassFromCard(card); if (card.filter?.cutoff !== undefined) scene().mix.cutoff = Math.round(200 + card.filter.cutoff * 2600); });
-  });
-  $('drum-length').addEventListener('change', event => mutate(() => {
-    const drums = scene().drums; drums.steps = Number(event.target.value);
-    for (const key of P.VOICES) drums.rows[key] = drums.rows[key].filter(i => i < drums.steps);
-    drums.source.edited = true;
-  }));
-  $('bass-length').addEventListener('change', event => mutate(() => {
-    const length = Number(event.target.value);
-    if (!Number.isInteger(length) || length < 2 || length > 32) throw new Error('Bass patterns need 2–32 steps.');
-    const bass = scene().bass;
-    bass.notes = Array.from({ length }, (_, i) => bass.notes[i] ?? null);
-    bass.accent = bass.accent.filter(i => i < length); bass.slide = bass.slide.filter(i => i < length); bass.source.edited = true;
-  }));
-  for (const id of ['note-pitch', 'note-octave', 'note-accent', 'note-slide']) $(id).addEventListener('change', () => mutate(() => {
-    const bass = scene().bass, pitch = $('note-pitch').value;
-    bass.notes[selectedNote] = pitch === 'rest' ? null : pitch + $('note-octave').value;
-    for (const key of ['accent', 'slide']) {
-      bass[key] = bass[key].filter(i => i !== selectedNote);
-      if (pitch !== 'rest' && $(`note-${key}`).checked) bass[key].push(selectedNote);
+  function paintMixer() {
+    const scene = selectedScene();
+    for (const lane of scene.drums.lanes) {
+      const input = $(`#mix-${lane.key}`);
+      if (input) input.value = String(lane.level);
     }
-    bass.source.edited = true;
-  }));
-  $('copy-scene').addEventListener('click', () => {
-    const id = $('copy-target').value;
-    if (id === selectedScene) { status('Choose a different scene to copy into.'); return; }
-    mutate(p => { const index = p.scenes.findIndex(s => s.id === id), name = p.scenes[index].name; p.scenes[index] = { ...P.copy(scene()), id, name }; });
-    status(`Copied scene ${selectedScene} into ${id}. Undo restores the previous version.`);
-  });
-  $('add-section').addEventListener('click', () => mutate(p => { p.arrangement.push({ scene: selectedScene, bars: 1 }); }, { stop: true }));
-  $('undo').addEventListener('click', () => {
-    if (!history.length) return; stopPlayback(); future.push(P.copy(project)); project = history.pop(); undoGroup = null; changed(); renderAll();
-  });
-  $('redo').addEventListener('click', () => {
-    if (!future.length) return; stopPlayback(); history.push(P.copy(project)); project = future.pop(); undoGroup = null; changed(); renderAll();
-  });
-  $('save-project').addEventListener('click', () => { if (!project.updatedAt) dirty = true; if (save()) { error(''); status('Project saved in this browser.'); } });
-  $('perform-project').addEventListener('click', () => {
-    if (!canLeaveProject()) return;
+    const bassLevel = $('#mix-bass');
+    if (bassLevel) bassLevel.value = String(scene.bass.level);
+  }
+
+  function renderEditor() {
+    renderSceneTabs();
+    paintStepGrid();
+    paintBassLane();
+    paintMixer();
+    paintTransport();
+  }
+
+  function renderArrange() {
+    const list = $('#scene-list');
+    list.replaceChildren(...project.scenes.map(s => {
+      const item = document.createElement('li');
+      item.className = 'arrange-item';
+      item.innerHTML = `
+        <div class="arrange-row">
+          <button type="button" class="arrange-name" data-scene-id="${escapeHtml(s.id)}">${escapeHtml(s.name)}</button>
+          <span class="arrange-meta">${s.bars} bar${s.bars === 1 ? '' : 's'} · ${s.tempo} BPM</span>
+          <span class="arrange-order" aria-label="Scene order">${project.scenes.indexOf(s) + 1} / ${project.scenes.length}</span>
+        </div>
+        <div class="arrange-controls">
+          <label>Bars <input type="number" min="1" max="16" value="${s.bars}" data-bars="${escapeHtml(s.id)}"></label>
+          <label>Tempo <input type="number" min="60" max="180" value="${s.tempo}" data-tempo="${escapeHtml(s.id)}"></label>
+        </div>`;
+      return item;
+    }));
+    for (const input of $$('#scene-list input[data-bars]')) {
+      input.addEventListener('change', () => {
+        const scene = project.scenes.find(s => s.id === input.dataset.bars);
+        scene.bars = Math.max(1, Math.min(16, Number(input.value) || 1));
+        input.value = String(scene.bars);
+        updateLivePattern(scene);
+        renderSceneTabs(); renderArrange(); markDirty();
+      });
+    }
+    for (const input of $$('#scene-list input[data-tempo]')) {
+      input.addEventListener('change', () => {
+        const scene = project.scenes.find(s => s.id === input.dataset.tempo);
+        scene.tempo = Math.max(60, Math.min(180, Number(input.value) || scene.tempo));
+        input.value = String(scene.tempo);
+        updateLivePattern(scene);
+        renderSceneTabs(); renderArrange(); paintTransport(); markDirty();
+      });
+    }
+    for (const btn of $$('#scene-list .arrange-name')) {
+      btn.addEventListener('click', () => { selectScene(btn.dataset.sceneId); setView('studio'); });
+    }
+  }
+
+  function updateLivePattern(scene) {
+    if (engine()) engine().applyScene(project, scene.id);
+  }
+
+  async function play(mode) {
+    sceneMode = mode === 'scene';
+    if (transport?.running) {
+      transport.stop();
+      status('Stopped.');
+      paintTransport();
+      return;
+    }
     try {
-      if (!store) throw new Error('Storage unavailable');
-      const next = P.copy(project); next.id = P.newId(); next.updatedAt = 0;
-      const saved = store.save(next); stopPlayback();
-      window.location.assign(`./drop-lab.html?project=${encodeURIComponent(saved.id)}`);
-    } catch { error('Could not save a performance copy. Your project is still here. Download a backup or try saving again.'); }
-  });
-  $('copy-project').addEventListener('click', () => {
-    const next = P.copy(project); next.id = P.newId(); next.name = `${next.name.slice(0, 73)} (copy)`; next.updatedAt = 0;
-    useProject(next); dirty = true; save();
-  });
-  $('new-project').addEventListener('click', () => { if (canLeaveProject()) useProject(P.createProject(banks)); });
-  $('open-project').addEventListener('click', () => { const next = projects.get($('project-list').value); if (next && canLeaveProject()) useProject(P.copy(next)); });
-  $('delete-project').addEventListener('click', () => {
-    const id = $('project-list').value, saved = projects.get(id);
-    if (!saved || !window.confirm(`Delete “${saved.name}” from this browser? Download a project backup first if you want to keep it.`)) return;
-    try { store.remove(id); projects.delete(id); if (project.id === id) useProject(P.createProject(banks)); else renderLibrary(); status('Project deleted from this browser.'); }
-    catch (err) { error(err.message || 'The project could not be deleted.'); }
-  });
-  $('export-project').addEventListener('click', () => {
-    try { const data = P.validateProject(project); download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `${filename(data.name)}.groove.json`); lastBackup = JSON.stringify(project); status('Project backup downloaded. It contains patterns and arrangement settings; live takes are separate.'); }
-    catch (err) { error(err.message); }
-  });
-  $('import-project').addEventListener('change', async event => {
-    const file = event.target.files[0]; event.target.value = ''; if (!file) return;
-    try {
-      if (file.size > 512 * 1024) throw new Error('Project files must be smaller than 512 KB.');
-      const next = P.validateProject(JSON.parse(await file.text()));
-      if (!canLeaveProject()) return;
-      next.id = P.newId(); next.updatedAt = 0; useProject(next); dirty = true; save(); status('Project imported as a new copy.');
-    } catch (err) { error(`Could not import project: ${err.message}`); }
-  });
-  $('play-scene').addEventListener('click', () => play('scene'));
-  $('play-arrangement').addEventListener('click', () => play('arrangement'));
-  $('stop').addEventListener('click', () => stopPlayback('Stopped.'));
-  $('record').addEventListener('click', recordTake);
-  $('export-wav').addEventListener('click', async () => {
-    if (exporting) return;
-    exporting = true; $('export-wav').disabled = true; stopPlayback();
-    const snapshot = P.copy(project); error(''); status('Rendering your arrangement…');
-    try { const result = await A.renderArrangement(snapshot); download(new Blob([result.buffer], { type: 'audio/wav' }), `${filename(snapshot.name)}-arrangement.wav`); status(`Exported ${result.musicDuration.toFixed(1)} seconds of music plus release tails as a stereo WAV.`); }
-    catch (err) { error(err.message); }
-    finally { exporting = false; $('export-wav').disabled = false; }
-  });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { stopPlayback('Playback stopped while this tab was hidden.'); if (dirty) save(); } });
-  window.addEventListener('pagehide', event => { stopPlayback(); if (dirty) save(); if (!event.persisted && takeUrl) URL.revokeObjectURL(takeUrl); });
-  window.addEventListener('beforeunload', event => {
-    if (dirty && !save() && lastBackup !== JSON.stringify(project)) { event.preventDefault(); event.returnValue = ''; }
-  });
+      await ensureAudio();
+      transport = new A.Transport(ctx, () => project, {
+        sceneMode: () => sceneMode,
+        onScene: id => { selectedSceneId = id; renderEditor(); },
+        onVisual: () => positionText(),
+        onStop: () => { paintTransport(); positionText(); },
+        onError: err => status(err.message),
+      });
+      transport.start(mode);
+      status(sceneMode ? 'Playing the selected scene on a loop.' : 'Playing the full arrangement in scene order.');
+      paintTransport();
+    } catch (err) {
+      status(err.message || 'Audio could not start. Press Play to try again.');
+    }
+  }
+  function stopPlayback(message = 'Stopped.') {
+    transport?.stop();
+    status(message);
+    paintTransport();
+  }
+
+  function buildMixer() {
+    const wrap = $('#mixer');
+    const lanes = [...banks.voices.map(v => ({ key: v.key, name: v.name, level: 0.8 })), { key: 'bass', name: 'Bass', level: 0.7 }];
+    wrap.replaceChildren(...lanes.map(lane => {
+      const label = document.createElement('label');
+      label.className = 'mix-channel';
+      label.innerHTML = `<span>${escapeHtml(lane.name)}</span><input id="mix-${lane.key}" type="range" min="0" max="100" value="${Math.round(lane.level * 100)}" aria-label="${escapeHtml(lane.name)} level">`;
+      label.querySelector('input').addEventListener('input', event => {
+        const scene = selectedScene();
+        if (lane.key === 'bass') scene.bass.level = Number(event.target.value) / 100;
+        else scene.drums.lanes.find(l => l.key === lane.key).level = Number(event.target.value) / 100;
+        updateLivePattern(scene);
+        markDirty();
+      });
+      return label;
+    }));
+  }
+
+  function initProjectFromQuery() {
+    const params = new URLSearchParams(location.search);
+    const projectId = params.get('project');
+    if (projectId && store) {
+      try {
+        const saved = store.load(projectId);
+        if (saved) { project = saved; status('Loaded your saved project. Press Play to hear it.'); }
+      } catch {
+        status('That saved project could not be opened, so a fresh one was started.');
+      }
+    }
+    if (!project) {
+      const rows = banks.patternRows('starter', 0);
+      project = P.createProject('My first groove', banks, rows);
+      const seedScene = project.scenes[0];
+      seedScene.bass.notes = banks.randomBassPhrase(7).notes.map((n, i) => (i % 4 === 0 ? n : ''));
+      status('A starter groove is loaded. Press Play, then tap pads to make it yours.');
+    }
+    selectedSceneId = project.scenes[0].id;
+    renderEditor(); renderArrange(); buildMixer(); markSaved();
+    document.title = `${project.name} · Groove Studio · 303–404`;
+    $('#project-name').value = project.name;
+    renderProjectList();
+  }
+
+  function renderProjectList() {
+    const list = $('#project-list');
+    const items = loadAll();
+    list.replaceChildren(...items.map(item => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'project-item';
+      btn.setAttribute('aria-pressed', String(item.id === project.id));
+      btn.innerHTML = `<strong>${escapeHtml(item.name)}</strong><span>${new Date(item.updatedAt).toLocaleString()}</span>`;
+      btn.addEventListener('click', () => {
+        if (item.id === project.id) return;
+        stopPlayback('Switched project.');
+        try {
+          const next = store.load(item.id);
+          if (!next) throw new Error('missing');
+          project = next;
+          selectedSceneId = project.scenes[0].id;
+          renderEditor(); renderArrange(); markSaved();
+          document.title = `${project.name} · Groove Studio · 303–404`;
+          $('#project-name').value = project.name;
+          status(`Opened “${project.name}”.`);
+        } catch {
+          status('That project could not be opened. It may have been saved by a different version.');
+        }
+        renderProjectList();
+      });
+      li.append(btn);
+      return li;
+    }));
+    if (!items.length) {
+      const li = document.createElement('li');
+      li.className = 'project-empty';
+      li.textContent = store ? 'No saved projects yet — your keeps from Beat Arcade land here.' : storageProblem;
+      list.append(li);
+    }
+  }
+
+  function bindGlobal() {
+    $('#project-name').addEventListener('change', event => {
+      project.name = event.target.value.trim() || 'Untitled groove';
+      event.target.value = project.name;
+      document.title = `${project.name} · Groove Studio · 303–404`;
+      markDirty(); save(); renderProjectList();
+    });
+    $('#save-project').addEventListener('click', () => { save(); status('Saved. This project is stored in this browser.'); });
+    $('#new-project').addEventListener('click', () => {
+      stopPlayback('New project ready.');
+      project = P.createProject('Untitled groove', banks, banks.patternRows('starter', 0));
+      selectedSceneId = project.scenes[0].id;
+      renderEditor(); renderArrange(); markSaved();
+      document.title = `${project.name} · Groove Studio · 303–404`;
+      $('#project-name').value = project.name;
+      save(); renderProjectList();
+      status('Started a new project. Press Play to hear the starter groove.');
+    });
+    $('#tempo').addEventListener('input', event => {
+      const scene = selectedScene();
+      scene.tempo = Number(event.target.value);
+      $('#tempo-out').textContent = `${scene.tempo} BPM`;
+      updateLivePattern(scene);
+      markDirty();
+    });
+    $('#play-scene').addEventListener('click', () => play('scene'));
+    $('#play-arr').addEventListener('click', () => play('arrange'));
+    $('#record').addEventListener('click', async () => {
+      if (!transport?.running) { status('Press Play first — recording captures what is playing.'); return; }
+      try {
+        await ensureAudio();
+        if (!engine()?.recording) {
+          const take = await engine().record(4);
+          status(`Recording… ${take.sceneName} will export when the take finishes.`);
+        } else {
+          engine().stopRecording();
+        }
+        paintTransport();
+      } catch (err) {
+        status(err.message || 'Recording could not start.');
+      }
+    });
+    $('#stop').addEventListener('click', () => stopPlayback());
+    for (const btn of $$('.view-switch button')) {
+      btn.addEventListener('click', () => setView(btn.dataset.view));
+    }
+    // Keyboard: Space toggles playback (anywhere except on a button, where it
+    // keeps its native meaning), and 1–4 jump to scenes. While playing, a
+    // scene switch queues on the next bar boundary so the groove never drops.
+    document.addEventListener('keydown', event => {
+      if (event.defaultPrevented || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target || {}, tag = target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) return;
+      if (event.key === ' ') {
+        if (tag === 'BUTTON') return;
+        event.preventDefault();
+        if (transport?.running) stopPlayback('Stopped.');
+        else play('scene');
+        return;
+      }
+      if (/^[1-4]$/.test(event.key)) {
+        const next = project.scenes[Number(event.key) - 1];
+        if (next) { event.preventDefault(); selectScene(next.id); }
+      }
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) transport?.stop(); });
+    window.addEventListener('pagehide', () => transport?.stop());
+  }
+
+  bindGlobal();
+  initProjectFromQuery();
+  setView('studio');
 })();

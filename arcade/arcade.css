@@ -7,8 +7,11 @@
 .arcade-layout { display: grid; grid-template-columns: 215px minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .arcade-rounds h2 { font-size: 1.125rem; margin-bottom: .5rem; }
 .arcade-rounds ol { display: grid; gap: .6rem; padding: 0; list-style: none; margin: 1.25rem 0; }
-.arcade-round { width: 100%; text-align: left; padding: .9rem; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); color: var(--color-text); background: var(--color-surface); cursor: pointer; }
+.arcade-round { position: relative; width: 100%; text-align: left; padding: .9rem; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); color: var(--color-text); background: var(--color-surface); cursor: pointer; }
 .arcade-round[aria-pressed="true"] { border-color: var(--color-accent-700); box-shadow: inset 3px 0 var(--color-accent-700); }
+.arcade-round[data-complete="true"] { border-color: color-mix(in srgb, var(--color-accent-2-500) 55%, transparent); }
+.arcade-round[data-complete="true"]::after { content: 'Solved'; display: block; margin-top: .4rem; font: 500 .7rem var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent-2-600); }
+.arcade-round[data-complete="true"] span { color: var(--color-accent-2-600); }
 .arcade-round strong, .arcade-round span { display: block; }
 .arcade-round strong { font: 600 .95rem var(--font-body); margin-bottom: .3rem; }
 .arcade-round span { font: 400 .875rem var(--font-mono); color: var(--color-accent-700); }
@@ -18,6 +21,7 @@
 .challenge-heading h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0; }
 .console-kicker { font: 500 .875rem var(--font-mono); color: var(--console-lime); margin: 0 0 .5rem; }
 .round-stars { color: var(--console-lime); font-size: 1.6rem; white-space: nowrap; letter-spacing: .1em; }
+.round-stars[data-complete="true"] { text-shadow: 0 0 14px color-mix(in srgb, var(--console-lime) 65%, transparent); }
 .console-intro { margin: 1rem 0 1.25rem; color: var(--console-muted); }
 .beat-console button, .beat-console select { min-height: 44px; color: var(--console-text); background: var(--console-panel); border: 1px solid var(--console-line); border-radius: var(--radius-sm); font: 500 .875rem var(--font-body); }
 .beat-console button { cursor: pointer; padding: .7rem 1rem; }
@@ -41,14 +45,19 @@
 .lane-heading strong { color: var(--lane-color); font-size: 1rem; }
 .lane-heading span { font-size: .875rem; color: var(--console-muted); }
 .lane-pads { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 4px; }
-.beat-console .beat-pad { padding: .35rem 0; min-width: 0; min-height: 52px; display: grid; gap: .2rem; justify-items: center; align-content: center; border-color: #486254; background: #233b30; box-shadow: inset 0 -3px #0003; font-family: var(--font-mono); }
+.beat-console .beat-pad { padding: .35rem 0; min-width: 0; min-height: 52px; display: grid; gap: .2rem; justify-items: center; align-content: center; border-color: #486254; background: #233b30; box-shadow: inset 0 -3px #0003; font-family: var(--font-mono); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background-color .12s ease; }
 .beat-pad span { font-size: .875rem; line-height: 1; }
 .beat-pad small { font: 400 .75rem var(--font-mono); }
+.beat-console .beat-pad:hover { border-color: var(--lane-color); }
+.beat-console .beat-pad:active { transform: scale(.93); }
+.beat-console .beat-pad.pad-pop { animation: pad-pop .18s ease-out; }
 .beat-console .beat-pad[data-on="true"] { background: var(--lane-color); color: #17231c; border-color: var(--lane-color); }
 .beat-console .beat-pad:nth-child(4n + 1) { border-left: 3px solid #a6baac; }
-.beat-console .beat-pad[data-current="true"] { outline: 2px solid white; outline-offset: 1px; transform: translateY(-2px); }
+.beat-console .beat-pad[data-current="true"] { outline: 2px solid white; outline-offset: 1px; transform: translateY(-2px); background-image: linear-gradient(color-mix(in srgb, #fff 12%, transparent), color-mix(in srgb, #fff 12%, transparent)); }
+.beat-console .beat-pad[data-on="true"][data-current="true"] { background-image: linear-gradient(color-mix(in srgb, #fff 22%, transparent), color-mix(in srgb, #fff 22%, transparent)); box-shadow: 0 0 12px color-mix(in srgb, var(--lane-color) 55%, transparent), inset 0 -3px #0003; }
 .beat-console .beat-pad[data-hint="true"] { box-shadow: inset 0 3px var(--lane-color); }
 .beat-console .beat-pad[data-wrong="true"] { border: 2px dashed #ffad6c; }
+.drum-lane[data-matched="true"] .lane-heading::after { content: 'Matched ★'; font: 500 .72rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--console-lime); }
 .challenge-actions { margin-top: 1.4rem; }
 .challenge-tip { color: var(--console-muted); font-size: .875rem; margin: .9rem 0 1.25rem; }
 .beat-result { border-block: 1px solid #4e6659; padding: 1.15rem 0; margin-bottom: 1rem; }
@@ -95,6 +104,7 @@
 .beat-console .beat-pad[data-suggestion="true"] { outline: 2px dashed #8ddde1; outline-offset: 2px; }
 @media (max-width: 640px) { .remix-ideas { grid-template-columns: minmax(0, 1fr); } }
 @keyframes beat-win { from { transform: translateY(4px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
+@keyframes pad-pop { 0% { transform: scale(.88); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
 @media (max-width: 960px) { .arcade-layout { grid-template-columns: minmax(0, 1fr); } .arcade-rounds { min-width: 0; } .arcade-rounds ol { grid-template-columns: repeat(6, 195px); overflow-x: auto; padding: .3rem; margin: .5rem -.3rem; scroll-snap-type: x proximity; } .arcade-rounds li { scroll-snap-align: start; } .arcade-rounds > p { margin-bottom: .5rem; } }
 @media (max-width: 640px) { .lane-pads { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; } .arcade-heading { align-items: start; } .round-stars { font-size: 1.2rem; } .challenge-heading { align-items: start; } .home-header, .home-main { padding-inline: 1rem; } .beat-console { padding: 1rem; } .arcade-total strong { font-size: 1.35rem; } }
-@media (prefers-reduced-motion: reduce) { .beat-result[data-complete="true"] h3 { animation: none; } .beat-console .beat-pad[data-current="true"] { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .beat-result[data-complete="true"] h3 { animation: none; } .beat-console .beat-pad[data-current="true"] { transform: none; } .beat-console .beat-pad.pad-pop { animation: none; } }

@@ -149,10 +149,12 @@
       button.setAttribute('aria-pressed', String(c.id === challenge().id));
       button.setAttribute('aria-label', `${c.title}. Best: ${best} of 3 stars.`);
       button.children[1].textContent = `${starsText(best)} · ${c.level}`;
+      button.dataset.complete = String(best === 3);
     }
     $('total-stars').textContent = `${total} / 18`;
     const best = bests.get(challenge().id) || 0;
     $('round-stars').textContent = starsText(best); $('round-stars').setAttribute('aria-label', `Best: ${best} of 3 stars`);
+    $('round-stars').dataset.complete = String(best === 3);
     $('score-storage').textContent = unsavedScores.size ? 'Some stars are kept for this visit only. Return to those beats and use “Check my beat” to retry saving.' : storageProblem || (damaged ? 'Some scores could not be read and were left untouched. You can still play.' : 'Best stars save in this browser.');
   }
   function renderPads() {
@@ -168,6 +170,10 @@
         pad.setAttribute('aria-label', `${name}, step ${step + 1}, beat ${Math.floor(step / 4) + 1}${hint && target ? ', reference hit' : ''}${wrong ? (on ? ', extra hit' : ', missing hit') : ''}`);
         pad.children[0].textContent = hint && target ? '◆' : on ? '●' : '·';
       });
+    }
+    for (const laneEl of $('pattern-grid').children) {
+      const matched = result?.lanes.find(l => l.key === laneEl.dataset.voice);
+      laneEl.dataset.matched = String(!!matched?.matched);
     }
     $('show-pattern').setAttribute('aria-pressed', String(hint));
     $('show-pattern').textContent = hint ? 'Hide the pattern' : 'Show the pattern';
@@ -282,18 +288,26 @@
     const lane = make('div', '', { className: 'drum-lane' }); lane.dataset.voice = voice.key;
     const heading = make('div', '', { className: 'lane-heading' }); heading.append(make('strong', voice.name), make('span', voice.cue));
     const grid = make('div', '', { className: 'lane-pads' }); grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', `${voice.name} pattern`);
+    // One toggle path for pointer and keyboard so both audition and announce identically.
+    const toggleAt = (key, at) => {
+      const row = rows()[key], indexOf = row.indexOf(at);
+      if (remixing) remix().session.toggle(key, at);
+      else if (indexOf === -1) row.push(at); else row.splice(indexOf, 1);
+      edited();
+      return indexOf === -1;
+    };
+    // The press feedback is decorative; skip it in DOM doubles without classList.
+    const pop = pad => { if (!pad.classList) return; pad.classList.remove('pad-pop'); void pad.offsetWidth; pad.classList.add('pad-pop'); };
+    // Shift+digit on the top row: US layouts report the shifted symbol, others
+    // report the digit itself with shiftKey set. Either way steps 9–16 answer to 1–8.
+    const SHIFT_DIGITS = { '!': 1, '@': 2, '#': 3, '$': 4, '%': 5, '^': 6, '&': 7, '*': 8 };
     const buttons = Array.from({ length: 16 }, (_, step) => {
       const pad = make('button', '', { type: 'button', className: 'beat-pad', tabIndex: step === 0 ? 0 : -1 });
       pad.dataset.step = step;
       pad.append(make('span', '·'), make('small', String(step + 1)));
       pad.children[0].setAttribute('aria-hidden', 'true');
       pad.addEventListener('focus', () => { for (const other of pads.get(voice.key)) other.tabIndex = other === pad ? 0 : -1; });
-      pad.addEventListener('click', () => {
-        const row = rows()[voice.key], at = row.indexOf(step);
-        if (remixing) remix().session.toggle(voice.key, step);
-        else if (at === -1) row.push(step); else row.splice(at, 1);
-        edited(); if (at === -1) audition(voice.key);
-      });
+      pad.addEventListener('click', () => { if (toggleAt(voice.key, step)) audition(voice.key); pop(pad); });
       pad.addEventListener('keydown', event => {
         let column = step, row = laneIndex;
         if (event.key === 'ArrowRight') column = (step + 1) % 16;
@@ -302,7 +316,20 @@
         else if (event.key === 'ArrowUp') row = (laneIndex + 2) % 3;
         else if (event.key === 'Home') column = 0;
         else if (event.key === 'End') column = 15;
-        else return;
+        else {
+          if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+          let target = null;
+          if (event.shiftKey && SHIFT_DIGITS[event.key]) target = 8 + SHIFT_DIGITS[event.key] - 1;
+          else if (event.shiftKey && /^[1-8]$/.test(event.key)) target = 8 + Number(event.key) - 1;
+          else if (!event.shiftKey && /^[1-8]$/.test(event.key)) target = Number(event.key) - 1;
+          else if (event.key === '9') target = 8;
+          else if (event.key === '0') target = 9;
+          if (target === null) return;
+          event.preventDefault();
+          if (toggleAt(voice.key, target)) audition(voice.key);
+          pop(pads.get(voice.key)[target]);
+          return;
+        }
         event.preventDefault(); pads.get(G.VOICES[row].key)[column].focus();
       });
       return pad;

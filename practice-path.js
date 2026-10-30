@@ -44,6 +44,7 @@
       $('practice-session-title').textContent = session.title;
       $('practice-session-meta').textContent = `Session ${P.sessions.indexOf(session) + 1} · About ${session.minutes} min · ${session.skill}`;
       $('practice-session-outcome').textContent = session.outcome;
+      $('practice-session-goals').replaceChildren(...session.checks.map(check => make('li', check)));
       $('practice-session-listen').textContent = session.listen;
       const record = records[session.id];
       $('practice-session-note').hidden = !record.note;

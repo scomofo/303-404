@@ -188,6 +188,20 @@
     $('result-title').textContent = result ? (result.stars === 3 ? 'Locked in. That’s your groove!' : `${result.stars} of 3 instruments matched`) : (edited ? 'Your beat changed. Give it another listen.' : 'Three instruments. Three stars to find.');
     $('result-detail').textContent = result ? (result.stars === 3 ? 'All three patterns match. Choose “Remix this beat” to put your own spin on it, or try the next challenge.' : 'Solo an instrument, listen again, and adjust its pads. Dashed pads mark missing or extra hits.') : 'One star for each instrument that matches exactly. No timer, no lost stars. Hints are always welcome.';
     $('lane-results').replaceChildren(...(result?.lanes || []).map(lane => make('li', lane.matched ? `${lane.name}: matched ★` : `${lane.name}: ${lane.missing.length} missing ${lane.missing.length === 1 ? 'hit' : 'hits'}, ${lane.extra.length} extra ${lane.extra.length === 1 ? 'hit' : 'hits'}.`)));
+    // Adaptive coaching: name the instrument that misses and give one concrete
+    // listening move, so a failed check points at next action, not just a count.
+    const coach = $('result-coach');
+    if (result && result.stars < 3) {
+      coach.textContent = result.lanes.filter(lane => !lane.matched).map(lane => {
+        const missing = lane.missing.length, extra = lane.extra.length;
+        if (missing && extra) return `${lane.name}: ${missing} missing and ${extra} extra. Solo to “${lane.name} only”, press “Hear your beat”, and rebuild this row from silence.`;
+        if (missing) return `${lane.name}: ${missing} missing ${missing === 1 ? 'hit' : 'hits'}. Solo to “${lane.name} only”, listen again, and tap only the steps you hear — the dashed pads mark the gaps.`;
+        return `${lane.name}: ${extra} extra ${extra === 1 ? 'hit' : 'hits'}. Solo to “${lane.name} only” — the real pattern is sparser than it feels; clear the dashed pads.`;
+      }).join(' ');
+      coach.hidden = false;
+    } else {
+      coach.hidden = true;
+    }
   }
   function paintPosition(event) {
     if (remixing && event && mission().view(remix().session.project).active) {

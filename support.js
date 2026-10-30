@@ -853,6 +853,387 @@
   // runs its tests against this exact code, so the copies cannot drift.
   /* __DC_COURSE_SHARED_START__ */
   function makeCourseLogicBase(DCLogic) {
+    // ── course chrome: within-week progress, common-mistakes callouts ──
+    // Templates and guide logic stay untouched: one page-level keydown listener
+    // and one MutationObserver serve every course, painting small enhancements
+    // after each render. Logic instances swap on hot reload, so both delegate
+    // through the single `courseChrome.current` pointer.
+    const COURSE_COMMON_MISTAKES = {
+      'TR-06 Guide.dc.html': {
+        'Week 1': [
+          'Writing steps while the pattern is stopped — Step Record on the TR-06 wants Run engaged so you hear each placement as you tap it in.',
+          'Blaming the wrong voice for a thin beat: the 606 “kick” is a synthesized tone, so Tune changes its pitch — a weird kick is often just detuned.',
+          'Counting in eights — the TR-06 thinks in 16 steps. Beat 3 is step 9, not step 5; miscounting here puts the backbeat one step late.',
+        ],
+        'Week 2': [
+          'Leaving every step at 100% probability and wondering why nothing changes — probability only speaks when some steps are below 100 and the rest stay certain.',
+          'Tapping flam pairs without the sub-step button held — both hits must land inside the same sub-step or they become two plain steps.',
+          'Holding Step Loop past its purpose — it repeats only the marked steps; release it to let the bar run past the loop again.',
+        ],
+        'Week 3': [
+          'Reaching for Drive on every voice — it is a send, and drowning the hats in drive is the classic first sign of an overcooked kit.',
+          'Assuming an Inst variation rewrites the whole kit — each one replaces a single voice’s circuit model; your pattern always survives the swap.',
+          'Tuning BD or SD while the pattern runs — you chase the sweet spot forever. Write the pattern first, then edit sounds with the pattern stopped.',
+        ],
+        'Week 4': [
+          'Clocking a TD-3 from the trigger row while it sits in the wrong sync mode — the box politely ignores every pulse until you tell it to follow them.',
+          'Expecting the trigger row to fire on every step — only the accented rows send a pulse, so program accents deliberately or the 303 never advances.',
+          'Tuning the 303 against a busy drum pattern — mute the drums first; chasing pitch against the beat makes every note feel sharp or flat.',
+        ],
+        'Week 5': [
+          'Monitoring over USB while also listening to Mix In — you double-hear the drums, and the tiny latency fight makes the 303 feel permanently late.',
+          'Recording Mix In without selecting the TR-06 as the computer’s USB audio input — silence here is a routing choice, not a fault.',
+          'Assuming pattern changes follow each other — the 303 keeps its own bank; the pair only moves together when both are chained alike.',
+        ],
+      },
+      'Behringer Setup Guide.dc.html': {
+        'Week 1': [
+          'Grabbing any 3.5 mm or 6.3 mm cable: TD-3 and RD-6 outputs are mono TS — a stereo TRS cable wired as an insert cancels the signal or hums.',
+          'Tapping RD-6 pads that only audition — the pattern must be in Write before the pads program steps; otherwise you rehearse, not record.',
+          'Chasing “no kick” with the master volume — each RD-6 voice has its own level; a voice at zero is silent no matter how loud the mix.',
+        ],
+        'Week 2': [
+          'Fixing pitch with Tune before the notes exist — Tune shifts every note together. Write the line first, then tune the box to the track.',
+          'Sliding every step “for the acid sound” — a slide ties into the NEXT note, so a slide on the final step changes nothing at all.',
+          'Expecting harder taps to play harder notes — accent is programmed per step and shaped by the Accent amount knob, not by velocity.',
+        ],
+        'Week 3': [
+          'Leaving both boxes on INTERNAL — they drift apart within bars; one box must follow the other before any sync talk means anything.',
+          'Feeding the TD-3 the wrong clock flavor — it follows DIN sync or USB-MIDI clock, not audio pulses; the right port matters more than the right cable.',
+          'Judging the MO filter with cutoff slammed shut and resonance high — the bass disappears by design; sweep the cutoff up before you evaluate.',
+        ],
+        'Week 4': [
+          'Nudging the wrong deck — nudge the FOLLOWING deck to align its phase to the master; nudging the master moves the whole floor.',
+          'Stacking corrections: EQ cut plus fader dip at once — one move per problem, or the transition empties out before you notice.',
+          '“Latency” that is really cue mix — hearing the master in the phones while cueing a channel is the most common beginner panic.',
+        ],
+        'Week 5': [
+          'Triggering a fill without the right modifier — an engaged fill can record over your pattern instead of playing on top of it.',
+          'Chaining patterns that were never saved to their slots — chain mode reads bank order, and an empty slot becomes an unexpected silence.',
+          'Swinging one box only — the TD-3 and RD-6 each carry their own shuffle; mismatched swing feels like sloppy timing.',
+        ],
+        'Week 6': [
+          'Sending external clock while the RD-6 still runs INTERNAL — it silently ignores you and keeps its own time.',
+          'Soft Attack “killing” the kick — removing the click is the feature working; if the kick vanishes in the mix, that is the sound, not a fault.',
+          'Assuming a Pattern Group writes back to the pattern you came from — grouping writes the group slot; save first or lose the original.',
+        ],
+        'Week 7': [
+          'Blaming sync first — most “the boxes won’t talk” cases are one cable in the wrong port or both clocks set to INTERNAL.',
+          'Restoring a backup over the bank you meant to keep — a restore replaces a whole bank, never just one pattern.',
+          'Cutting power mid-restore — pattern writes finish fast, but a backup restore interrupted by power-down corrupts the bank.',
+        ],
+        'Week 8': [
+          'Chaining eight identical bars — a song card with no variation reads as a mistake; change one voice per section.',
+          'Never running the chain start to finish — test the full song before the gig, not during it.',
+          'Trusting memory for bank numbers — write the bank on the card; every stage “where is it?” moment was preventable.',
+        ],
+        'Week 9': [
+          'Transcribing in eights for a 16-step machine — every interesting detail of bar two hides in steps 9–16.',
+          'Leaving accents and slides off the sheet — they carry the groove; a bare grid always plays stiff.',
+          'Copying the whole sheet to the box at once — solo each voice and fix one row at a time, or errors hide behind each other.',
+        ],
+      },
+      'DDJ-FLX4 Guide.dc.html': {
+        'Week 1': [
+          'A charge-only or hubbed USB-C cable — the FLX4 needs a data port on the computer itself; “controller dead” is usually the cable.',
+          'Headphones playing the master while you hunt a deck — select channel cue, or a perfectly live deck sounds silent.',
+          'Memorizing button names before the signal path — master/cue routing first, labels second; everything else hangs off that.',
+        ],
+        'Week 2': [
+          'Chasing BPM forever with the fader — set tempo once, then fix phase with jog touches; moving both at once never converges.',
+          'Mixing up jog top and rim — the top stops the track in Vinyl mode while the rim only bends pitch; swapping them stalls the deck.',
+          'Trusting Sync to fix a bad mix — Sync matches tempo, not phrasing; beat one of both tracks still has to land together by ear.',
+        ],
+        'Week 3': [
+          'Cutting EQ and riding the fader in the same transition — remove one band at a time or the handover sounds empty.',
+          'Setting trim from the loudest track — quiet tracks stay buried; gain-stage each track against the same meter target.',
+          'Defaulting to the crossfader because videos do — house and techno ride channel faders; the crossfader is a scratch tool.',
+        ],
+        'Week 4': [
+          'Dropping hot cues off-phrase — a cue on beat three of a four-beat phrase feels wrong even at a locked BPM.',
+          'Looping without an exit plan — decide “one more bar, then out” before you trigger the loop, or four bars becomes eight.',
+          'Cuing from waveform peaks alone — grids lie on old pressings and live edits; trust the count, not the picture.',
+        ],
+        'Week 5': [
+          'Washing both decks in FX at once — one effect belongs to one deck; covering both hides the handover completely.',
+          'Bringing a track in with the filter fully open — enter filtered, then open as the outgoing track closes.',
+          'Transitions longer than a phrase — two bars builds tension; four bars loses the floor.',
+        ],
+        'Week 6': [
+          'Trusting key letters without listening — compatibility is a starting point; a clash at playing pitch still needs your ears.',
+          'Making every mix “compatible” — tension is a tool; save the intentional clash for the peak moment.',
+          'Matching keys while ignoring energy — compatible keys in the wrong energy order still clears the floor.',
+        ],
+        'Week 7': [
+          'Recording with notifications and room bleed — the take captures everything; silence the room before you press record.',
+          'Stopping the take after a mistake — record through it and edit later; a perfect first minute is not a set.',
+          'Never listening back the same day — ears lie in the moment; the recording does not.',
+        ],
+        'Week 8': [
+          'Normalizing a DJ mix to the ceiling — loudness comes from the arc of the set, not from a limiter crushing it.',
+          'Exporting without a tracklist — write cue points as you go, or reconstructing the set becomes archaeology.',
+          'Keeping one copy — the raw take and the polished export are different files; lose one, keep the other.',
+        ],
+        'Week 9': [
+          'Moving fader and platter at the same speed — chirps want a fast fader and a slow platter; same-speed motion scrubs, it does not chirp.',
+          'Practicing scratches at full tempo — learn the shape at 60% BPM, then let the speed come.',
+          'A slow crossfader curve blurring every cut — set a sharp curve before blaming your hands.',
+        ],
+      },
+      'Hybrid Live Set.dc.html': {
+        'Week 1': [
+          'Clock sent from two boxes at once — pick ONE master; two clocks make the slaved gear drift and double-trigger.',
+          'Sharing an audio channel with the clock run — ground hum on the signal path reads as “bad sync” and sends you chasing ghosts.',
+          'Testing only the running clock — DIN and USB start/stop messages differ between boxes; verify start, stop and continue, not just tempo.',
+        ],
+        'Week 2': [
+          'Swapping roles mid-phrase — drummer and bass keep one job per section; change roles only on phrase boundaries.',
+          'Rehearsing parts solo forever — the set fails at handovers; drill the last bar of A into the first bar of B.',
+          'Both boxes at “about 126” — lock one clock and leave it; “about” is a tempo and a problem.',
+        ],
+        'Week 3': [
+          'Two hands changing two things — one planned move per bar; the other hand keeps the groove alive.',
+          'Hot cues fired from “where it sounds cool” — cue from the phrase start or the running pattern fights you.',
+          'A four-bar loop repeated five times — twice is a feature; five times is a stall. Plan the exit before the loop.',
+        ],
+        'Week 4': [
+          'A map with no fallback column — write what you play when the 303 misses its entry; “skip and return” is a plan, not a failure.',
+          'Mapping more moves than hands — two planned moves per section beats six imagined ones.',
+          'Rehearsing only the easy sections — run the full map top to bottom, mistakes included, before adding polish.',
+        ],
+        'Week 5': [
+          'Skipping the soundcheck at show volume — room tone hides problems you heard perfectly at home.',
+          'A resync you have never rehearsed — re-catching the slave is a move like any other; practise dropping it and recovering.',
+          'Cable check by eye — wiggle every connector before doors; intermittents are invisible until they are not.',
+        ],
+        'Week 6': [
+          'Playing house at techno energy — house wants swing and space; pushing the tempo only makes it nervous.',
+          'Techno with a static 303 line — let the filter carry the phrase; a fixed cutoff reads as a loop, not a set.',
+          'Muting everything at the switch into breaks — keep one voice alive through the transition or the floor loses the thread.',
+        ],
+      },
+      'MPK Mini MK4 Guide.dc.html': {
+        'Week 1': [
+          'A USB-C cable that only charges — the MPK needs data; “pads light up but nothing plays” is usually the cable.',
+          'MIDI channel mismatch — the pads send on a channel your synth is not listening to; hits flash and stay silent.',
+          'Every note at full velocity — the pads respond to touch; practise quiet notes deliberately or dynamics never arrive.',
+        ],
+        'Week 2': [
+          'Programming drums on the wrong bank — Bank B is a different set of 16 pads; your beat did not vanish, it moved.',
+          'Quantize as a crutch — fixing every hit flattens the feel; record unquantized first, then quantize only what actually drags.',
+          'One-bar loops for an hour — copy bar 1 to bar 2 and change one voice; variation is the lesson, not more density.',
+        ],
+        'Week 3': [
+          'Scale mode on the wrong root — C-major shapes over an F track read as wrong notes even with scale lock on.',
+          'Chord mode before your fingers know the shape — practise the triad manually first, then let the pad hold it for you.',
+          'Every chord the same length — two bars of one chord and one of another is where a progression starts.',
+        ],
+        'Week 4': [
+          'Arp tempo from a wandering tap — sync the arpeggiator to the clock; tap tempo is for when no clock exists.',
+          'Mapping knobs while the track plays — arm, map and test with the transport stopped, then judge the result in context.',
+          'Every knob mapped to cutoff — give the second knob resonance, or the filter feels one-dimensional.',
+        ],
+        'Week 5': [
+          'Arranging by length instead of layers — copy the four-bar idea and add one element per pass, not eight more bars.',
+          'Deleting parts to make room — mute, do not delete; you will want the drums back in bar five.',
+          'No record of the routing — screenshot the map before you unplug anything.',
+        ],
+        'Week 6': [
+          'Changing style by adding gear — try the same eight pads slower with more swing before buying anything.',
+          'Skipping the revisit — old projects at your new velocity settings feel broken; they are just being played differently now.',
+          'Practising only what you can already play — one awkward chord per session beats an hour of favourites.',
+        ],
+      },
+      'SampleCircuit Guide.dc.html': {
+        'Week 1': [
+          'Samples that never finish loading — check card format and file size before blaming the pads.',
+          'Monitoring the Circuit on the channel you sample from — feedback hum prints into every “dirty sample” you make.',
+          'Building before the tempo exists — set the session tempo first; time-stretch surprises show up later, not sooner.',
+        ],
+        'Week 2': [
+          'Real-time recording with quantize off and shock at the result — record loose, quantize after, then undo the quantize on hats only.',
+          'Step-entry at one velocity — step mode defaults every hit to the same strength; add accents or the pattern sits flat.',
+          'Recording pass after pass without committing — the buffer keeps only the latest take; keep takes deliberately, not hopefully.',
+        ],
+        'Week 3': [
+          'Slicing on decay tails instead of hits — slice at the transient or every slice plays late.',
+          'Sixteen slices where eight carry the phrase — fewer, bigger slices play tighter than many tiny ones.',
+          'Chopping before tuning — pitch the sample to the session first, or every slice is out from the start.',
+        ],
+        'Week 4': [
+          'Motion-recording every parameter in one pass — record one knob’s motion per pass; layered motions fight each other.',
+          'Turning a page-2 knob while watching page 1 — the motion lands on a parameter you are not looking at.',
+          'P-locks with no way back — the last locked value carries past the pattern; add a “normal” lock on the downbeat to reset.',
+        ],
+        'Week 5': [
+          'Chains that skip the variation you meant — the chain reads patterns in slot order, not in the order you saved them.',
+          'Song mode as a jail — keep one pattern unchained for the moment the room changes.',
+          'Trusting the live chain to survive editing — save the chain as its own session before a late-night tweak overwrites it.',
+        ],
+        'Week 6': [
+          'Resampling with FX already printed — record dry and add FX on playback, or the take is stuck with them.',
+          'Sampling the master with the metronome on — the click becomes part of your loop forever.',
+          'Never committing — resampling is a decision: freeze the take and mute the sources.',
+        ],
+        'Week 7': [
+          'Master FX as a mix fix — FX is performance, not repair; set levels first.',
+          'Deleting a pattern to “mute” it — mute the track so the pattern survives for the recovery moment.',
+          'One FX on for the whole set — save a slot for the last section only.',
+        ],
+        'Week 8': [
+          'Exporting only the final mix — keep the stems; the next project starts from them.',
+          'Skipping the reflection notes — write what you would cut before the memory of the gig fades.',
+          'Deleting sessions to free space — back up first; the capstone is the portfolio.',
+        ],
+      },
+    };
+    const courseChrome = { current: null, paintedKey: '' };
+    function courseIdForLocation(loc) {
+      try {
+        const base = decodeURIComponent(String(loc && loc.pathname || '').split('/').pop() || '');
+        return COURSE_COMMON_MISTAKES[base] ? base : '';
+      } catch (e) {
+        return '';
+      }
+    }
+    function courseChromeKeydown(event) {
+      const inst = courseChrome.current;
+      if (!inst || !inst.state || inst.state.dialogOpen) return;
+      if (event.defaultPrevented || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target || {};
+      const tag = target.tagName;
+      // Text-entry fields keep every key; checkboxes, buttons and links have no
+      // native arrow behavior, so ← → still turn the page there.
+      if (tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) return;
+      if (tag === 'INPUT' && target.type !== 'checkbox' && target.type !== 'radio' && target.type !== 'button' && target.type !== 'range') return;
+      // Widget-owned arrow keys: the hybrid performance timeline and the sampler
+      // waveform move their own playheads — leave those regions alone.
+      if (typeof target.closest === 'function' &&
+          (target.closest('[data-performance-timeline]') || target.closest('[data-sampler-waveform]'))) return;
+      if (event.key === 'ArrowRight') { event.preventDefault(); inst.goNext(); }
+      else if (event.key === 'ArrowLeft') { event.preventDefault(); inst.goBack(); }
+    }
+    function courseChromePaint(inst) {
+      const doc = typeof document !== 'undefined' ? document : null;
+      if (!inst || !inst.STEPS || !inst.state || !doc || typeof doc.querySelector !== 'function') return;
+      const step = inst.STEPS[inst.state.step];
+      if (!step) return;
+      const courseId = courseIdForLocation(typeof location !== 'undefined' ? location : null);
+      const weekSteps = inst.STEPS.filter((s) => s.weekTag === step.weekTag);
+      const weekPos = weekSteps.length > 1
+        ? inst.STEPS.filter((s, i) => i <= inst.state.step && s.weekTag === step.weekTag).length
+        : 0;
+      const key = [courseId, inst.state.step, weekSteps.length, weekPos].join('|');
+      // Fast path: scheduler ticks re-render constantly, and none of them change
+      // what the chrome owns. Only re-paint when the step (or week) changed.
+      if (courseChrome.paintedKey === key) return;
+      // ── within-week progress next to the overall step counter ──
+      const bar = doc.querySelector('header [role="progressbar"]');
+      const row = bar && bar.parentElement ? bar.parentElement.firstElementChild : null;
+      let painted = false;
+      if (row) {
+        let counter = null;
+        for (const el of row.children) {
+          // The template compiler wraps interpolated values in child elements,
+          // so match on text, not on "has no children".
+          if (/^Step \d+ of \d+/.test(el.textContent || '')) { counter = el; break; }
+        }
+        if (counter) {
+          const suffix = weekSteps.length > 1
+            ? { long: ` · ${weekPos} of ${weekSteps.length} this week`, short: ` · ${weekPos}/${weekSteps.length}` }
+            : { long: '', short: '' };
+          if (counter.__dcWeekNode && counter.__dcWeekNode.parentNode === counter) {
+            if (counter.__dcWeekLong.textContent !== suffix.long) counter.__dcWeekLong.textContent = suffix.long;
+            if (counter.__dcWeekShort.textContent !== suffix.short) counter.__dcWeekShort.textContent = suffix.short;
+          } else if (suffix.long) {
+            const wrap = doc.createElement('span');
+            wrap.className = 'dc-week-suffix';
+            counter.__dcWeekLong = doc.createElement('span');
+            counter.__dcWeekLong.className = 'dc-week-long';
+            counter.__dcWeekLong.textContent = suffix.long;
+            counter.__dcWeekShort = doc.createElement('span');
+            counter.__dcWeekShort.className = 'dc-week-short';
+            counter.__dcWeekShort.textContent = suffix.short;
+            wrap.append(counter.__dcWeekLong, counter.__dcWeekShort);
+            counter.__dcWeekNode = wrap;
+            counter.appendChild(wrap);
+            // Keep the counter on one line so the flex header stays tidy on phones.
+            if (!counter.style.whiteSpace) counter.style.whiteSpace = 'nowrap';
+            if (!doc.getElementById('dc-week-suffix-style')) {
+              const style = doc.createElement('style');
+              style.id = 'dc-week-suffix-style';
+              style.textContent = '.dc-week-suffix .dc-week-short{display:none;}' +
+                '@media (max-width:640px){.dc-week-suffix .dc-week-long{display:none;}.dc-week-suffix .dc-week-short{display:inline;}}';
+              doc.head.appendChild(style);
+            }
+          }
+          painted = true;
+        }
+      }
+      // ── per-week "common mistakes" callout at the foot of the step card ──
+      const card = doc.querySelector('main .card');
+      const mistakes = (COURSE_COMMON_MISTAKES[courseId] || {})[step.weekTag];
+      const wantKey = mistakes ? courseId + '|' + step.weekTag : '';
+      const box = card ? card.querySelector('.dc-common-mistakes') : null;
+      if (!mistakes) {
+        if (box && box.__dcChrome) box.remove();
+      } else if (!box || !box.__dcChrome || box.dataset.weekKey !== wantKey) {
+        if (box) box.remove();
+        const next = doc.createElement('div');
+        next.__dcChrome = true;
+        next.className = 'dc-common-mistakes';
+        next.dataset.weekKey = wantKey;
+        next.setAttribute('style', 'margin-top:var(--space-5);padding:var(--space-4);border:1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);border-left:4px solid var(--color-accent);border-radius:var(--radius-md);background:var(--color-accent-100);display:flex;flex-direction:column;gap:8px;');
+        const label = doc.createElement('div');
+        label.setAttribute('style', 'font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--color-accent-700);');
+        label.textContent = 'Common mistakes this week';
+        const list = doc.createElement('ul');
+        list.setAttribute('style', 'margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:13.5px;line-height:1.5;');
+        for (const text of mistakes) {
+          const li = doc.createElement('li');
+          li.textContent = text;
+          list.appendChild(li);
+        }
+        next.append(label, list);
+        card.appendChild(next);
+      }
+      // ── one-time footer hint for the keyboard navigation ──
+      const footer = doc.querySelector('footer');
+      if (footer && !footer.__dcKeysHint) {
+        footer.__dcKeysHint = true;
+        const hint = doc.createElement('span');
+        hint.setAttribute('style', 'font-size:11px;opacity:.55;align-self:center;order:1;');
+        hint.textContent = 'Keyboard: ← → moves between steps';
+        footer.insertBefore(hint, footer.lastElementChild);
+      }
+      if (painted) courseChrome.paintedKey = key;
+    }
+    function installCourseChrome(inst) {
+      courseChrome.current = inst;
+      const doc = typeof document !== 'undefined' ? document : null;
+      // Browser-only: tests evaluate this block with stub window/document that
+      // carry no listeners, and the suite asserts the exact listener set that
+      // persistence attaches — so the chrome layer owns its hooks separately
+      // and never touches componentWillUnmount's bookkeeping.
+      if (!doc || typeof doc.addEventListener !== 'function') return;
+      if (installCourseChrome.done) return;
+      installCourseChrome.done = true;
+      doc.addEventListener('keydown', courseChromeKeydown);
+      if (doc.documentElement && typeof MutationObserver === 'function') {
+        let queued = false;
+        const observer = new MutationObserver(() => {
+          if (queued) return;
+          queued = true;
+          Promise.resolve().then(() => {
+            queued = false;
+            courseChromePaint(courseChrome.current);
+          });
+        });
+        observer.observe(doc.documentElement, { childList: true, subtree: true });
+      }
+      setTimeout(() => courseChromePaint(courseChrome.current), 60);
+      setTimeout(() => courseChromePaint(courseChrome.current), 400);
+    }
     return class DCCourseLogic extends DCLogic {
       // ── course-map dialog ──
       getDialogFocusables(dialog) {
@@ -1109,6 +1490,13 @@
       clearResumeNotice() {
         this.setState({ resumeAvailable: false });
       }
+      // The chrome layer (within-week progress, common-mistakes callouts,
+      // arrow-key step navigation) is page-level and lives outside the
+      // templates; wiring it here means every guide that persists progress
+      // gets the chrome without touching its own file.
+      enableCourseChrome() {
+        installCourseChrome(this);
+      }
       enablePersistence() {
         if (!this.persistenceKey) return;
         try {
@@ -1169,6 +1557,7 @@
           }
         } catch (e) {
         }
+        this.enableCourseChrome();
       }
       // Flush and detach. The runtime swaps logic instances on hot reload and
       // unmounts on navigation; without this each old instance stayed reachable

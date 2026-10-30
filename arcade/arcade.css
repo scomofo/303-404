@@ -66,6 +66,7 @@
 .beat-result p { margin-bottom: 0; }
 .beat-result ul:empty { display: none; }
 .beat-result ul { padding-left: 1.25rem; margin-bottom: 0; }
+.result-coach { margin-top: .65rem; padding: .6rem .8rem; border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--console-text); }
 .beat-result[data-complete="true"] h3 { color: var(--console-lime); animation: beat-win .45s ease-out; }
 .arcade-finish { justify-content: space-between; }
 .remix-entry { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin-bottom: 1rem; }

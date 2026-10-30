@@ -70,18 +70,20 @@
   function sourceLabel(source) {
     return `${source.edited ? 'Edited from' : 'Source'}: ${source.title} · ${source.type}${source.detail ? ' · ' + source.detail : ''}${source.review ? ' · Accent/slide transcription still needs source review.' : ''}`;
   }
+  function selectScene(id) {
+    if (!project.scenes.some(s => s.id === id)) return;
+    selectedScene = id; selectedNote = 0; undoGroup = null;
+    if (transport?.running && transport.mode === 'scene') { transport.queueScene(id); status(`Scene ${id} queued. It will launch on a bar boundary.`); }
+    renderEditor();
+    $('scene-tabs').querySelector(`[data-scene="${id}"]`)?.focus();
+  }
   function renderSceneTabs() {
     const tabs = project.scenes.map(s => {
       const button = make('button', '', { type: 'button', className: 'scene-tab' });
       button.dataset.scene = s.id; button.setAttribute('aria-pressed', String(selectedScene === s.id));
       button.setAttribute('aria-label', `Edit scene ${s.id}: ${s.name}`);
       button.append(make('strong', s.id), make('span', s.name));
-      button.addEventListener('click', () => {
-        selectedScene = s.id; selectedNote = 0; undoGroup = null;
-        if (transport?.running && transport.mode === 'scene') { transport.queueScene(s.id); status(`Scene ${s.id} queued. It will launch on a bar boundary.`); }
-        renderEditor();
-        $('scene-tabs').querySelector(`[data-scene="${s.id}"]`).focus();
-      });
+      button.addEventListener('click', () => selectScene(s.id));
       return button;
     });
     $('scene-tabs').replaceChildren(...tabs);
@@ -373,6 +375,24 @@
     try { const result = await A.renderArrangement(snapshot); download(new Blob([result.buffer], { type: 'audio/wav' }), `${filename(snapshot.name)}-arrangement.wav`); status(`Exported ${result.musicDuration.toFixed(1)} seconds of music plus release tails as a stereo WAV.`); }
     catch (err) { error(err.message); }
     finally { exporting = false; $('export-wav').disabled = false; }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.defaultPrevented || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target || {}, tag = target.tagName;
+    // Form fields keep every key; focused buttons keep their native Space
+    // activation, while digit shortcuts still work from a focused control.
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) return;
+    if (event.key === ' ') {
+      if (tag === 'BUTTON') return;
+      event.preventDefault();
+      if (transport?.running) stopPlayback('Stopped.');
+      else play('scene');
+      return;
+    }
+    if (/^[1-4]$/.test(event.key)) {
+      const next = project.scenes[Number(event.key) - 1];
+      if (next) { event.preventDefault(); selectScene(next.id); }
+    }
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { stopPlayback('Playback stopped while this tab was hidden.'); if (dirty) save(); } });
   window.addEventListener('pagehide', event => { stopPlayback(); if (dirty) save(); if (!event.persisted && takeUrl) URL.revokeObjectURL(takeUrl); });

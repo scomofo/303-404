@@ -181,3 +181,125 @@ test('auto-slice refuses files too short for two valid slices', () => {
   inst.autoSliceSelected();
   assert.match(inst.state.status, /at least 10 ms/);
 });
+
+function fakeFile(name) {
+  return { name, type:'audio/wav', arrayBuffer:async () => new ArrayBuffer(16) };
+}
+
+// An in-memory stand-in for the IndexedDB import store, attached at the same
+// methods the component uses, so the round trip exercises the real
+// import/restore code with only the storage swapped out.
+function memoryImportStore() {
+  const records = new Map();
+  return {
+    records,
+    attach(inst) {
+      inst.saveStoredImport = async record => { records.set(record.id, record); return true; };
+      inst.readStoredImports = async () => Array.from(records.values());
+      inst.clearStoredImports = async () => { records.clear(); };
+    },
+  };
+}
+
+test('multi-file import fills successive slots from the selected card, wrapping at the bank end', async () => {
+  const { inst, html, dispose } = loadComponent(FILE);
+  try {
+    assert.match(html, /<input type="file" multiple /);
+    inst.state.selectedCardId = 'SL-014';
+    await inst.importSample({ target:{ files:[fakeFile('a.wav'), fakeFile('b.mp3'), fakeFile('c.aif')] } });
+    const byId = Object.fromEntries(inst.SLICE_CARDS.map(card => [card.id, card]));
+    assert.equal(byId['SL-014'].sourceType, 'user_import');
+    assert.equal(byId['SL-015'].sourceType, 'user_import');
+    assert.equal(byId['SL-001'].sourceType, 'user_import');
+    assert.equal(byId['SL-002'].sourceType, 'original_synthesis');
+    assert.equal(byId['SL-014'].title, 'a.wav');
+    assert.equal(byId['SL-015'].title, 'b.mp3');
+    assert.equal(byId['SL-001'].title, 'c.aif');
+    assert.match(inst.state.status, /Imported 3 samples/);
+  } finally { dispose(); }
+});
+
+test('multi-file import stops at the 15 slots and reports the rest as skipped', async () => {
+  const { inst, dispose } = loadComponent(FILE);
+  try {
+    const files = Array.from({ length:17 }, (_, i) => fakeFile('f' + (i + 1) + '.wav'));
+    await inst.importSample({ target:{ files } });
+    assert.equal(inst.SLICE_CARDS.filter(card => card.sourceType === 'user_import').length, 15);
+    assert.match(inst.state.status, /Imported 15 samples/);
+    assert.match(inst.state.status, /Skipped 2: f16\.wav \(bank full/);
+  } finally { dispose(); }
+});
+
+test('multi-file import skips a file under 5 ms without consuming its slot', async () => {
+  const { inst, audioCtx, dispose } = loadComponent(FILE);
+  try {
+    let decodes = 0;
+    const realDecode = audioCtx.decodeAudioData;
+    audioCtx.decodeAudioData = async () => { decodes += 1; return audioCtx.createBuffer(2, decodes === 2 ? 100 : 48000, 48000); };
+    await inst.importSample({ target:{ files:[fakeFile('good-1.wav'), fakeFile('tiny.wav'), fakeFile('good-2.wav')] } });
+    audioCtx.decodeAudioData = realDecode;
+    const byId = Object.fromEntries(inst.SLICE_CARDS.map(card => [card.id, card]));
+    assert.equal(byId['SL-001'].title, 'good-1.wav');
+    assert.equal(byId['SL-002'].title, 'good-2.wav');
+    assert.equal(byId['SL-003'].sourceType, 'original_synthesis');
+    assert.match(inst.state.status, /tiny\.wav \(shorter than 5 ms\)/);
+  } finally { dispose(); }
+});
+
+test('imported samples survive a refresh: a new instance restores them from the store, playable', async () => {
+  const store = memoryImportStore();
+  const first = loadComponent(FILE);
+  try {
+    store.attach(first.inst);
+    first.inst.state.selectedCardId = 'SL-003';
+    await first.inst.importSample({ target:{ files:[fakeFile('kick.wav'), fakeFile('snare.wav')] } });
+    assert.equal(store.records.size, 2);
+    assert.match(first.inst.selectedCard().provenance, /Stored in this browser/);
+  } finally { first.dispose(); }
+
+  const second = loadComponent(FILE);
+  try {
+    store.attach(second.inst);
+    const restored = await second.inst.restoreImports();
+    assert.equal(restored, 2);
+    const byId = Object.fromEntries(second.inst.SLICE_CARDS.map(card => [card.id, card]));
+    assert.equal(byId['SL-003'].sourceType, 'user_import');
+    assert.equal(byId['SL-003'].title, 'kick.wav');
+    assert.equal(byId['SL-004'].title, 'snare.wav');
+    assert.equal(byId['SL-005'].sourceType, 'original_synthesis');
+    second.inst.state.selectedCardId = 'SL-003';
+    const trigger = second.inst.playSlice(0);
+    assert.equal(trigger.cardId, 'SL-003');
+    assert.equal(trigger.offset, 0);
+    assert.ok(trigger.duration > 0);
+  } finally { second.dispose(); }
+});
+
+test('slice edits on an imported card are stored with the import and restored', async () => {
+  const store = memoryImportStore();
+  const first = loadComponent(FILE);
+  let sliceCount;
+  try {
+    store.attach(first.inst);
+    await first.inst.importSample({ target:{ files:[fakeFile('loop.wav')] } });
+    first.inst.setSensitivity(85);
+    first.inst.autoSliceSelected();
+    const card = first.inst.selectedCard();
+    assert.equal(card.sourceType, 'user_import');
+    assert.ok(card.slices.length >= 2, 'auto-slice should split the imported buffer');
+    sliceCount = card.slices.length;
+    await first.inst.saveStoredImportSlices(card);
+    assert.equal(store.records.get('SL-001').slices.length, sliceCount);
+  } finally { first.dispose(); }
+
+  const second = loadComponent(FILE);
+  try {
+    store.attach(second.inst);
+    await second.inst.restoreImports();
+    const card = second.inst.SLICE_CARDS.find(entry => entry.id === 'SL-001');
+    assert.equal(card.sourceType, 'user_import');
+    assert.equal(card.slices.length, sliceCount);
+    assert.equal(card.autoSliced, true);
+    assert.equal(card.sensitivity, 85);
+  } finally { second.dispose(); }
+});

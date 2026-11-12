@@ -68,7 +68,7 @@
 
           <sc-if value="{{ currentStep.showSliceBank }}" hint-placeholder-val="{{ false }}">
             <section aria-label="Slice Bank" style="display:flex;flex-direction:column;gap:var(--space-4);border-top:1px solid var(--color-divider);padding-top:var(--space-5);">
-              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><span class="tag tag-accent-2">Slice Bank</span><h3 style="margin:8px 0 0;">15 original browser-generated sounds</h3></div><label class="btn btn-secondary" style="cursor:pointer;">Import audio<input type="file" accept=".wav,.wave,.aif,.aiff,.mp3,audio/wav,audio/aiff,audio/mpeg" onchange="{{ importSample }}" style="position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);" /></label></div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><span class="tag tag-accent-2">Slice Bank</span><h3 style="margin:8px 0 0;">15 original browser-generated sounds</h3></div><label class="btn btn-secondary" style="cursor:pointer;">Import audio<input type="file" multiple accept=".wav,.wave,.aif,.aiff,.mp3,audio/wav,audio/aiff,audio/mpeg" onchange="{{ importSample }}" style="position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);" /></label></div>
               <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;"><sc-for list="{{ sliceCards }}" as="card" hint-placeholder-count="15"><button type="button" onclick="{{ card.select }}" aria-pressed="{{ card.pressed }}" style="{{ card.style }}"><span style="font-size:11px;opacity:.65;">{{ card.id }}</span><span style="font-weight:700;">{{ card.title }}</span><span style="font-size:11px;opacity:.7;">{{ card.meta }}</span></button></sc-for></div>
               <div class="card" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-accent-100);">
                 <div style="display:flex;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;"><div><strong>{{ selectedCard.title }}</strong><div style="font-size:12px;opacity:.72;">{{ selectedCard.provenance }}</div></div><span class="tag tag-neutral">{{ selectedCard.tempoLabel }}</span></div>
@@ -108,7 +108,13 @@ class SamplerEngine {
 
   async loadSample(file, id) {
     if (!file || typeof file.arrayBuffer !== 'function') throw new Error('Choose a WAV, AIFF or MP3 file.');
-    var decoded = await this.ctx.decodeAudioData(await file.arrayBuffer());
+    return this.loadSampleBytes(await file.arrayBuffer(), id);
+  }
+
+  // Decodes a copy of the bytes: decodeAudioData detaches the buffer it is
+  // given, and the caller keeps its own copy for the import store.
+  async loadSampleBytes(bytes, id) {
+    var decoded = await this.ctx.decodeAudioData(bytes.slice(0));
     this.buffers.set(id, decoded);
     return decoded;
   }
@@ -300,15 +306,17 @@ class Component extends DCCourseLogic {
     this.sequences = {};
     this.enablePersistence();
     this.applySliceEdits();
+    this.importsRestore = this.restoreImports();
   }
   stopEngines() { this.stopTransport(); }
-  onRestart() { this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; }
+  onRestart() { this.SLICE_CARDS = this.buildSliceCards(); this.sampler = null; this.clearStoredImports(); }
 
   // Slice boundaries live on the card objects, not in state, so a saved pattern
   // would otherwise reload against default slices and collapse onto pad 1.
-  // Edits to bundled (generated) cards are mirrored into `sliceEdits`; imported
-  // audio is never persisted, so its slices are not either.
+  // Edits to bundled (generated) cards are mirrored into `sliceEdits`; edits to
+  // imported cards are written back to the import store, next to the audio.
   rememberSlices(card) {
+    if (card.sourceType === 'user_import') { this.saveStoredImportSlices(card); return; }
     if (card.sourceType !== 'original_synthesis') return;
     var entry = { slices:card.slices.map(function (sl) { return { start:sl.start, end:sl.end, label:sl.label }; }),
       autoSliced:!!card.autoSliced, algorithm:card.algorithm || null, sensitivity:card.sensitivity === undefined ? null : card.sensitivity };
@@ -330,6 +338,109 @@ class Component extends DCCourseLogic {
     });
   }
   // Persistence (versioned, namespaced localStorage) is inherited from DCCourseLogic.
+
+  // Imported audio cannot live in the localStorage snapshot — it is not JSON
+  // and would blow the quota — so the raw file bytes are kept in a small
+  // IndexedDB store under the same course namespace. Every method degrades
+  // to a no-op when IndexedDB is unavailable, which leaves imports
+  // session-only there (the previous behaviour) instead of failing them.
+  importDb() {
+    if (this._importDbPromise) return this._importDbPromise;
+    this._importDbPromise = new Promise(function (resolve) {
+      if (typeof indexedDB === 'undefined') { resolve(null); return; }
+      var request;
+      try { request = indexedDB.open('303-404/sample-circuit-imports', 1); } catch (e) { resolve(null); return; }
+      request.onupgradeneeded = function () { request.result.createObjectStore('imports', { keyPath:'id' }); };
+      request.onsuccess = function () { resolve(request.result); };
+      request.onerror = function () { resolve(null); };
+    });
+    return this._importDbPromise;
+  }
+  async readStoredImports() {
+    var db = await this.importDb();
+    if (!db) return [];
+    return new Promise(function (resolve) {
+      var out = [];
+      var request = db.transaction('imports', 'readonly').objectStore('imports').openCursor();
+      request.onsuccess = function () { var cursor = request.result; if (cursor) { out.push(cursor.value); cursor.continue(); } else resolve(out); };
+      request.onerror = function () { resolve(out); };
+    });
+  }
+  async saveStoredImport(record) {
+    var db = await this.importDb();
+    if (!db) return false;
+    return new Promise(function (resolve) {
+      var tx = db.transaction('imports', 'readwrite');
+      tx.objectStore('imports').put(record);
+      tx.oncomplete = function () { resolve(true); };
+      tx.onerror = function () { resolve(false); };
+    });
+  }
+  async saveStoredImportSlices(card) {
+    var records = await this.readStoredImports();
+    var record = null;
+    for (var i = 0; i < records.length; i += 1) if (records[i].id === card.id) record = records[i];
+    if (!record) return;
+    record.slices = card.slices.map(function (sl) { return { start:sl.start, end:sl.end, label:sl.label }; });
+    record.autoSliced = !!card.autoSliced; record.algorithm = card.algorithm || null; record.sensitivity = card.sensitivity === undefined ? null : card.sensitivity;
+    record.duration = card.duration; record.sampleRate = card.sampleRate;
+    await this.saveStoredImport(record);
+  }
+  async clearStoredImports() {
+    var db = await this.importDb();
+    if (!db) return;
+    return new Promise(function (resolve) {
+      var tx = db.transaction('imports', 'readwrite');
+      tx.objectStore('imports').clear();
+      tx.oncomplete = function () { resolve(); };
+      tx.onerror = function () { resolve(); };
+    });
+  }
+  // Rebuild imported cards from the store after a refresh. Runs once from the
+  // constructor; a stored file that no longer decodes (or is under 5 ms)
+  // leaves the generated card in place rather than breaking the bank.
+  async restoreImports() {
+    var records = await this.readStoredImports();
+    if (!records.length) return 0;
+    var sampler;
+    try { sampler = this.ensureSampler(); } catch (e) { return 0; }
+    var restored = 0;
+    for (var i = 0; i < records.length; i += 1) {
+      var record = records[i];
+      var card = null;
+      for (var j = 0; j < this.SLICE_CARDS.length; j += 1) if (this.SLICE_CARDS[j].id === record.id) card = this.SLICE_CARDS[j];
+      if (!card || !record.bytes) continue;
+      try {
+        var buffer = await sampler.loadSampleBytes(record.bytes, card.id);
+        var duration = buffer.length / buffer.sampleRate;
+        if (duration < 0.005) { sampler.buffers.delete(card.id); continue; }
+        card.title = record.name || card.title;
+        card.duration = duration;
+        card.sampleRate = buffer.sampleRate;
+        card.sourceType = 'user_import';
+        card.originalBpm = null;
+        card.bpmConfirmed = false;
+        card.license = 'User-provided; rights not verified';
+        card.waveform = this.waveformFromBuffer(buffer);
+        card.slices = this.validImportSlices(record.slices, duration);
+        card.autoSliced = !!record.autoSliced; card.algorithm = record.algorithm || null; card.sensitivity = record.sensitivity === undefined ? null : record.sensitivity;
+        card.provenance = 'User-imported local file: ' + (record.name || '') + '. Stored in this browser, so it is still here after a refresh.';
+        restored += 1;
+      } catch (e) { /* A stored file that no longer decodes leaves the generated card in place. */ }
+    }
+    if (restored) this.setState({ status:'Restored ' + restored + ' imported sample' + (restored === 1 ? '' : 's') + ' from this browser.' }, this.drawWaveform.bind(this));
+    return restored;
+  }
+  validImportSlices(slices, duration) {
+    var fallback = [{ index:0, start:0, end:duration, label:'Imported' }];
+    if (!Array.isArray(slices) || !slices.length) return fallback;
+    var valid = slices.every(function (sl, i) {
+      return sl && typeof sl.start === 'number' && typeof sl.end === 'number' && sl.start >= 0 && sl.end <= duration + 1e-6
+        && sl.end - sl.start >= 0.005 - 1e-9 && (i === 0 ? sl.start === 0 : Math.abs(sl.start - slices[i - 1].end) < 1e-6);
+    });
+    if (!valid) return fallback;
+    return slices.map(function (sl, i) { return { index:i, start:sl.start, end:sl.end, label:sl.label || ('Slice ' + (i + 1)) }; });
+  }
 
   makeSlices(count, duration, labels) {
     var width = duration / count;
@@ -448,25 +559,50 @@ class Component extends DCCourseLogic {
   setSensitivity(value) { var n = Number(value && value.target ? value.target.value : value); this.setState({ sensitivity:Math.max(0, Math.min(100, n)) }); }
 
   async importSample(event) {
-    var file = event && event.target && event.target.files && event.target.files[0];
-    if (!file) return;
-    var card = this.selectedCard();
-    try {
-      var sampler = this.ensureSampler();
-      var buffer = await sampler.loadSample(file, card.id);
-      if (buffer.length / buffer.sampleRate < 0.005) { sampler.buffers.delete(card.id); throw new Error('Imported audio must be at least 5 ms long.'); }
-      card.duration = buffer.length / buffer.sampleRate;
-      card.sampleRate = buffer.sampleRate;
-      card.sourceType = 'user_import';
-      card.originalBpm = null;
-      card.bpmConfirmed = false;
-      card.license = 'User-provided; rights not verified';
-      card.waveform = this.waveformFromBuffer(buffer);
-      card.slices = [{ index:0, start:0, end:card.duration, label:'Imported' }];
-      card.autoSliced = false; card.algorithm = null; card.sensitivity = null;
-      card.provenance = 'User-imported local file: ' + file.name + '. Not stored after refresh.';
-      this.setState({ status:'Imported ' + file.name }, this.drawWaveform.bind(this));
-    } catch (error) { this.setState({ status:error.message || 'Could not decode this file.' }); }
+    var files = event && event.target && event.target.files ? Array.from(event.target.files) : [];
+    if (!files.length) return;
+    var sampler;
+    try { sampler = this.ensureSampler(); } catch (error) { this.setState({ status:error.message || 'Could not decode this file.' }); return; }
+    // One file per slot: the selected card first, then the rest of the bank
+    // in order, wrapping once — so a multi-file pick fills up to all 15
+    // slots. A file that fails (undecodable, under 5 ms) is skipped and
+    // does not consume a slot.
+    var start = Math.max(0, this.SLICE_CARDS.indexOf(this.selectedCard()));
+    var slots = [];
+    for (var s = 0; s < this.SLICE_CARDS.length; s += 1) slots.push(this.SLICE_CARDS[(start + s) % this.SLICE_CARDS.length]);
+    var imported = [], skipped = [], nextSlot = 0;
+    for (var f = 0; f < files.length; f += 1) {
+      var file = files[f], name = (file && file.name) || 'Untitled';
+      if (!file || typeof file.arrayBuffer !== 'function') { skipped.push(name + ' (not a WAV, AIFF or MP3 file)'); continue; }
+      if (nextSlot >= slots.length) { skipped.push(name + ' (bank full — 15 slots)'); continue; }
+      var card = slots[nextSlot];
+      try {
+        var bytes = await file.arrayBuffer();
+        var buffer = await sampler.loadSampleBytes(bytes, card.id);
+        if (buffer.length / buffer.sampleRate < 0.005) { sampler.buffers.delete(card.id); throw new Error('shorter than 5 ms'); }
+        card.title = name;
+        card.duration = buffer.length / buffer.sampleRate;
+        card.sampleRate = buffer.sampleRate;
+        card.sourceType = 'user_import';
+        card.originalBpm = null;
+        card.bpmConfirmed = false;
+        card.license = 'User-provided; rights not verified';
+        card.waveform = this.waveformFromBuffer(buffer);
+        card.slices = [{ index:0, start:0, end:card.duration, label:'Imported' }];
+        card.autoSliced = false; card.algorithm = null; card.sensitivity = null;
+        var saved = await this.saveStoredImport({ id:card.id, name:name, type:file.type || '', bytes:bytes, duration:card.duration, sampleRate:card.sampleRate, slices:card.slices, autoSliced:false, algorithm:null, sensitivity:null });
+        card.provenance = 'User-imported local file: ' + name + (saved ? '. Stored in this browser, so it is still here after a refresh.' : '. Not stored after refresh.');
+        imported.push(name);
+        nextSlot += 1;
+      } catch (error) { skipped.push(name + ' (' + (error.message || 'could not decode this file') + ')'); }
+    }
+    if (event.target) event.target.value = '';
+    var parts = [];
+    if (imported.length === 1) parts.push('Imported ' + imported[0] + '.');
+    else if (imported.length > 1) parts.push('Imported ' + imported.length + ' samples: ' + imported.join(', ') + '.');
+    if (skipped.length) parts.push('Skipped ' + skipped.length + ': ' + skipped.join('; ') + '.');
+    if (!imported.length && !skipped.length) parts.push('Nothing imported.');
+    this.setState({ status:parts.join(' ') }, this.drawWaveform.bind(this));
   }
 
   waveformFromBuffer(buffer) {
